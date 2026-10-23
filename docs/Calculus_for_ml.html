@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculus for ML</title>
+<meta name="description" content="Part 2 of the Mathematics for Machine Learning series: derivatives, the chain rule, gradients, gradient descent, backpropagation and optimisers explained from zero, with interactive visuals and verified NumPy code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#FBFAF7; --surface:#FFFFFF; --ink:#1C2426; --muted:#5B6668; --line:#E3E1DA;
+  --petrol:#0F5E6E; --petrol-soft:#E3EFF1; --verm:#D2452A; --verm-soft:#FBEAE5;
+  --green:#2B7A4B; --green-soft:#E4F1E9; --code-bg:#F3F1EC; --grid:#E9E7E0; --axis:#B9B6AC;
+  --shadow:0 1px 2px rgba(20,30,30,.06),0 4px 16px rgba(20,30,30,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101517; --surface:#171F22; --ink:#E5EAEA; --muted:#9AA7A9; --line:#2A3539;
+    --petrol:#5BB7C8; --petrol-soft:#15333A; --verm:#F2785F; --verm-soft:#3A221C;
+    --green:#62C28E; --green-soft:#17321F; --code-bg:#0C1113; --grid:#20292C; --axis:#45535A;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101517; --surface:#171F22; --ink:#E5EAEA; --muted:#9AA7A9; --line:#2A3539;
+  --petrol:#5BB7C8; --petrol-soft:#15333A; --verm:#F2785F; --verm-soft:#3A221C;
+  --green:#62C28E; --green-soft:#17321F; --code-bg:#0C1113; --grid:#20292C; --axis:#45535A;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;font-size:18.5px;line-height:1.68;-webkit-font-smoothing:antialiased}
+main{max-width:800px;margin:0 auto;padding:0 16px 80px}
+h1,h2,h3,h4,.ui,button,input,select,table,.pill,.kicker,.toc,.readout{font-family:"IBM Plex Sans",system-ui,sans-serif}
+h1{font-size:clamp(2rem,5.4vw,3rem);line-height:1.1;letter-spacing:-.02em;margin:.3em 0 .35em}
+h2{font-size:1.7rem;line-height:1.2;margin:2.6em 0 .5em;letter-spacing:-.01em;padding-top:.6em;border-top:1px solid var(--line)}
+h2 .num{color:var(--petrol);font-weight:500;margin-right:.35em}
+h3{font-size:1.2rem;margin:1.9em 0 .4em}
+h4{font-size:1rem;margin:1.2em 0 .3em}
+p{margin:.75em 0}
+a{color:var(--petrol)}
+strong{font-weight:600}
+code{font-family:"JetBrains Mono",monospace;font-size:.84em;background:var(--code-bg);padding:.08em .35em;border-radius:4px}
+.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;color:var(--petrol);font-weight:600;margin-top:48px}
+.dek{font-size:1.22rem;color:var(--muted);margin:0 0 1em}
+.meta{font-family:"IBM Plex Sans",sans-serif;font-size:.86rem;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.theme-btn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:.8rem;cursor:pointer}
+.toc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:28px 0;box-shadow:var(--shadow);font-size:.92rem}
+.toc ol{margin:.4em 0 0;padding-left:1.5em;columns:2;column-gap:28px}
+.toc li{margin:.15em 0;break-inside:avoid}
+@media (max-width:600px){.toc ol{columns:1}}
+.toc a{text-decoration:none;color:var(--ink)}
+.toc a:hover{color:var(--petrol)}
+/* labelled boxes */
+.box{border-radius:10px;padding:14px 18px;margin:1.2em 0;border:1px solid var(--line);background:var(--surface)}
+.box > :first-child{margin-top:0}.box > :last-child{margin-bottom:0}
+.box .tag{display:inline-block;font-family:"IBM Plex Sans",sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.intuition{background:var(--petrol-soft);border-color:transparent}
+.intuition .tag{color:var(--petrol)}
+.mathbox{border-left:4px solid var(--petrol)}
+.mathbox .tag{color:var(--petrol)}
+.byhand{border-style:dashed}
+.byhand .tag{color:var(--muted)}
+.ml{border-left:4px solid var(--green)} .ml .tag{color:var(--green)}
+.biz{border-left:4px solid #B98A1E} .biz .tag{color:#B98A1E}
+:root[data-theme="dark"] .biz{border-left-color:#E0B54F} :root[data-theme="dark"] .biz .tag{color:#E0B54F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .biz{border-left-color:#E0B54F}:root:not([data-theme="light"]) .biz .tag{color:#E0B54F}}
+.mistake{background:var(--verm-soft);border-color:transparent}
+.mistake .tag{color:var(--verm)}
+.eq{font-family:"JetBrains Mono",monospace;font-size:.95rem;background:var(--code-bg);border-radius:8px;padding:10px 14px;margin:.7em 0;overflow-x:auto;white-space:pre}
+details.check{border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:1.2em 0;background:var(--surface)}
+details.check summary{cursor:pointer;font-family:"IBM Plex Sans",sans-serif;font-weight:600;color:var(--green)}
+details.check[open] summary{margin-bottom:6px}
+/* code */
+.code,.out{border-radius:10px;overflow:hidden;margin:1em 0 0;border:1px solid var(--line)}
+.out{margin:0 0 1.2em;border-top:none;border-radius:0 0 10px 10px}
+.code{border-radius:10px 10px 0 0}
+.code-h{font-family:"IBM Plex Sans",sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.code-h button{font-size:.7rem;background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer}
+pre{margin:0;padding:12px 14px;overflow-x:auto;background:var(--code-bg);font-family:"JetBrains Mono",monospace;font-size:.8rem;line-height:1.55}
+pre code{background:none;padding:0;font-size:inherit}
+.out pre{background:var(--surface);color:var(--muted)}
+.hljs-comment{color:var(--muted);font-style:italic}
+.hljs-string{color:var(--green)}
+.hljs-number,.hljs-literal{color:var(--verm)}
+.hljs-keyword,.hljs-built_in{color:var(--petrol);font-weight:600}
+.hljs-title,.hljs-title.function_{color:var(--petrol)}
+/* tables */
+.tw{overflow-x:auto;margin:1em 0}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+td code{font-size:.82em}
+/* widgets */
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:1.6em 0;box-shadow:var(--shadow);font-family:"IBM Plex Sans",sans-serif;font-size:.9rem}
+.widget .wt{font-weight:700;font-size:.95rem;margin:0 0 2px}
+.widget .wh{color:var(--muted);font-size:.82rem;margin:0 0 10px}
+.wgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:640px){.wgrid{grid-template-columns:1fr}}
+svg.plane{width:100%;height:auto;display:block;touch-action:none;background:var(--bg);border-radius:10px;border:1px solid var(--line)}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--axis);stroke-width:1.4}
+.vec line{stroke-width:3;stroke-linecap:round}
+.vec text{font-family:"IBM Plex Sans",sans-serif;font-size:14px;font-weight:700}
+.v-a line{stroke:var(--petrol)} .v-a polygon,.v-a text{fill:var(--petrol)}
+.v-b line{stroke:var(--green)} .v-b polygon,.v-b text{fill:var(--green)}
+.v-r line{stroke:var(--verm)} .v-r polygon,.v-r text{fill:var(--verm)}
+.ghost line{stroke:var(--axis);stroke-width:2} .ghost polygon{fill:var(--axis)}
+.dashed line{stroke-dasharray:6 5;stroke-width:2}
+.handle{cursor:grab;stroke:var(--surface);stroke-width:2.5}
+.handle.h-a{fill:var(--petrol)} .handle.h-b{fill:var(--green)} .handle.h-r{fill:var(--verm)}
+.handle:active{cursor:grabbing}
+.tline{stroke:var(--petrol);stroke-width:1;opacity:.45}
+.readout{font-size:.86rem;line-height:1.6}
+.readout .big{font-size:1.3rem;font-weight:700}
+.readout .k{color:var(--muted)}
+.readout code{font-size:.82rem}
+.verdict{margin-top:8px;padding:8px 10px;border-radius:8px;font-weight:600}
+.verdict.pos{background:var(--green-soft);color:var(--green)}
+.verdict.zero{background:var(--petrol-soft);color:var(--petrol)}
+.verdict.neg{background:var(--verm-soft);color:var(--verm)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
+.ctrls label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+input[type=range]{accent-color:var(--petrol);width:140px}
+input[type=number]{width:62px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:.9rem}
+.btn{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.82rem}
+.btn:hover{border-color:var(--petrol);color:var(--petrol)}
+.btn.primary{background:var(--petrol);color:var(--surface);border-color:var(--petrol)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:none;color:var(--muted);padding:5px 12px;cursor:pointer;font-size:.82rem}
+.seg button.on{background:var(--petrol);color:var(--surface)}
+.mat{display:inline-grid;gap:2px;padding:4px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;vertical-align:middle}
+.mat span{min-width:34px;text-align:center;padding:3px 4px;border-radius:5px;font-family:"JetBrains Mono",monospace;font-size:.85rem;transition:background .2s}
+.mat span.hl-r{background:var(--petrol-soft);color:var(--petrol);font-weight:600}
+.mat span.hl-c{background:var(--green-soft);color:var(--green);font-weight:600}
+.mat span.hl-o{background:var(--verm);color:var(--surface);font-weight:700}
+.mat span.dim{opacity:.25}
+.mrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.mrow .op{font-size:1.2rem;color:var(--muted)}
+.calc{font-family:"JetBrains Mono",monospace;font-size:.85rem;text-align:center;min-height:2.6em;color:var(--ink)}
+.dt{width:100%;font-family:"JetBrains Mono",monospace;font-size:.8rem}
+.dt th,.dt td{text-align:right;padding:6px 8px;cursor:pointer;user-select:none}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt tr.sel td{background:var(--petrol-soft);color:var(--petrol);font-weight:600}
+.dt td.selc,.dt th.selc{background:var(--green-soft);color:var(--green);font-weight:600}
+.domino{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace;font-size:1rem;margin:6px 0}
+.domino b{padding:3px 8px;border-radius:6px;border:1.5px solid var(--line)}
+.domino b.in-ok{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.domino b.in-bad{border-color:var(--verm);background:var(--verm-soft);color:var(--verm)}
+.quiz .q{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--bg)}
+.quiz .q p{margin:0 0 8px;font-weight:600}
+.quiz .opts{display:flex;flex-direction:column;gap:6px}
+.quiz .opts button{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink);cursor:pointer;font-size:.86rem}
+.quiz .opts button.right{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.quiz .opts button.wrong{border-color:var(--verm);background:var(--verm-soft);color:var(--verm)}
+.quiz .fb{font-size:.84rem;color:var(--muted);margin-top:6px;display:none}
+.score{font-weight:700;color:var(--petrol)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:.6em 0 1em}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.p1{background:var(--petrol-soft);color:var(--petrol);border-color:transparent}
+.pill.p2{background:var(--green-soft);color:var(--green);border-color:transparent}
+.pill.p3{background:var(--verm-soft);color:var(--verm);border-color:transparent}
+.shapes{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-family:"JetBrains Mono",monospace;font-size:.85rem;margin:1em 0}
+.shapes .s{border:1.5px solid var(--petrol);border-radius:8px;padding:8px 12px;text-align:center;background:var(--surface)}
+.shapes .s small{display:block;color:var(--muted);font-family:"IBM Plex Sans",sans-serif;font-size:.72rem}
+.shapes .s.g{border-color:var(--green)} .shapes .s.r{border-color:var(--verm)}
+footer{color:var(--muted);font-size:.9rem;font-family:"IBM Plex Sans",sans-serif;border-top:1px solid var(--line);margin-top:3em;padding-top:1em}
+
+.code.solo{border-radius:10px;margin-bottom:1.2em}
+
+/* ---- article-2 extras ---- */
+svg.chart{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:10px;touch-action:none}
+.chart text{font-family:"IBM Plex Sans",sans-serif;font-size:11px;fill:var(--muted)}
+.chart .ttl{font-size:12px;font-weight:600;fill:var(--ink)}
+.c-line{fill:none;stroke:var(--petrol);stroke-width:2.5}
+.c-pt{fill:var(--petrol);opacity:.85}
+.c-res{stroke:var(--verm);stroke-width:1.5;opacity:.7}
+.c-fit{stroke:var(--green);stroke-width:3}
+.c-cur{fill:var(--verm);stroke:var(--surface);stroke-width:2}
+.c-tan{stroke:var(--verm);stroke-width:2;stroke-dasharray:6 4}
+.c-path{fill:none;stroke:var(--verm);stroke-width:1.8}
+.c-step{fill:var(--verm)}
+.c-ell{fill:none;stroke:var(--petrol);stroke-width:1;opacity:.55}
+.c-min{fill:var(--green)}
+.node rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5;rx:8}
+.node.op rect{fill:var(--petrol-soft);stroke:var(--petrol)}
+.node.act rect{stroke:var(--verm);stroke-width:2}
+.node text{font-family:"IBM Plex Sans",sans-serif;font-size:12px;fill:var(--ink);text-anchor:middle}
+.node .val{font-family:"JetBrains Mono",monospace;font-size:11px;fill:var(--petrol);font-weight:600}
+.node .grd{font-family:"JetBrains Mono",monospace;font-size:11px;fill:var(--verm);font-weight:600}
+.edge{stroke:var(--axis);stroke-width:1.6;fill:none}
+.edge.hot{stroke:var(--verm);stroke-width:2.5}
+canvas.db{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line);image-rendering:auto}
+.status{display:inline-block;padding:2px 9px;border-radius:999px;font-weight:600;font-size:.8rem}
+.status.ok{background:var(--green-soft);color:var(--green)}
+.status.warn{background:var(--petrol-soft);color:var(--petrol)}
+.status.bad{background:var(--verm-soft);color:var(--verm)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;font-family:"IBM Plex Sans",sans-serif;font-size:.85rem;margin:1em 0}
+.flow span.b{border:1.5px solid var(--petrol);border-radius:8px;padding:6px 10px;background:var(--surface)}
+.flow span.b.r{border-color:var(--verm)} .flow span.b.g{border-color:var(--green)}
+.flow span.ar{color:var(--muted)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;margin:6px 0}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+</style>
+</head>
+<body>
+<main>
+
+<div class="kicker">Mathematics for Machine Learning · Part 2</div>
+<h1>Calculus for Machine Learning</h1>
+<p class="dek">How a model actually learns: loss, slopes, gradient descent, the chain rule and backpropagation, built from zero on one running business example and taken all the way to a working neural network.</p>
+<div class="meta"><span>~60 min read</span><span>Python 3 + NumPy</span><span>Needs Part 1 (vectors, dot products, shapes)</span><button class="theme-btn" id="themeBtn">Toggle theme</button></div>
+
+<p>Think back to learning to ride a bicycle. You wobble, you lean too far left, you correct a little to the right, you wobble less. Nobody hands you the formula for balance. You learn it from a loop: <strong>try → see how wrong you were → figure out which way to adjust → adjust a little → repeat.</strong></p>
+
+<p>Every machine learning model trains with that exact loop. Part 1 gave us the machinery to <em>make</em> a prediction (a dot product, a matrix multiplication). This article answers the harder question: <strong>how does the model find good weights in the first place?</strong> The answer is calculus, and specifically one idea from it: the <em>slope</em>. If you know which way is downhill on your error, you know which way to adjust.</p>
+
+<p>We will use one running story the whole way through. A marketing team has 20 months of data: how much they spent on ads and how much they sold. They want a model that predicts sales from ad spend. We'll train that model one weight at a time, then two, then switch to a classification problem, and finish with a neural network that learns a pattern no straight line can.</p>
+
+<p>By the end you will be able to:</p>
+<ul>
+<li>explain what a loss function is and why training means "minimise the loss",</li>
+<li>read and compute a derivative, a partial derivative and a gradient, and say what their <strong>sign</strong> and <strong>size</strong> mean,</li>
+<li>write gradient descent from scratch and diagnose a learning rate that is too small, about right or too large,</li>
+<li>trace backpropagation through a computational graph and check it numerically,</li>
+<li>explain vanishing gradients, why Adam is popular, and what <code>loss.backward()</code> in PyTorch actually does.</li>
+</ul>
+
+<h4 class="ui">How each concept is taught</h4>
+<div class="legend">
+<span class="pill p1">Intuition</span><span class="pill">Try it</span><span class="pill p1">Math, decoded</span><span class="pill">By hand</span><span class="pill">Code</span><span class="pill p2">In ML</span><span class="pill">In business</span><span class="pill p2">Check yourself</span>
+</div>
+
+<nav class="toc">
+<strong>Contents</strong>
+<ol start="0">
+<li><a href="#s0">Notation decoder and the learning loop</a></li>
+<li><a href="#s1">Learning = minimising a loss</a></li>
+<li><a href="#s2">The derivative: slope of the loss</a></li>
+<li><a href="#s3">Gradient descent with one weight</a></li>
+<li><a href="#s4">Two weights: partial derivatives and the gradient</a></li>
+<li><a href="#s5">The chain rule and computational graphs</a></li>
+<li><a href="#s6">Logistic regression and cross-entropy</a></li>
+<li><a href="#s7">Backpropagation in a real neural network</a></li>
+<li><a href="#s8">Vanishing and exploding gradients</a></li>
+<li><a href="#s9">Mini-batches, momentum, RMSProp and Adam</a></li>
+<li><a href="#s10">Learning-rate schedules</a></li>
+<li><a href="#s11">How autograd works (what PyTorch does)</a></li>
+<li><a href="#s12">Bridge to DL/ML, mistakes, quiz, cheat sheet</a></li>
+</ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="s0"><span class="num">0</span>Notation decoder and the learning loop</h2>
+
+<div class="tw"><table>
+<thead><tr><th>You see</th><th>Say it as</th><th>What it means</th></tr></thead>
+<tbody>
+<tr><td><code>L</code>, <code>L(w)</code></td><td>"loss", "loss of w"</td><td>One number measuring how wrong the model is. Written as a function of the weights because changing the weights changes it.</td></tr>
+<tr><td><code>f′(x)</code>, <code>df/dx</code></td><td>"f prime", "d f by d x"</td><td>The <strong>derivative</strong>: how fast f changes when x is nudged. A slope.</td></tr>
+<tr><td><code>∂L/∂w</code></td><td>"partial L by partial w"</td><td>A <strong>partial derivative</strong>: the slope along w while every other weight is held still. The curly ∂ just signals "there are other variables".</td></tr>
+<tr><td><code>∇L</code></td><td>"grad L", "nabla L"</td><td>The <strong>gradient</strong>: a vector of all the partial derivatives, one per weight.</td></tr>
+<tr><td><code>α</code>, <code>lr</code>, <code>η</code></td><td>"alpha", "learning rate", "eta"</td><td>How big a step to take each update.</td></tr>
+<tr><td><code>w ← w − α ∇L</code></td><td>"w becomes w minus alpha grad L"</td><td>The gradient-descent update. The arrow means "replace with".</td></tr>
+<tr><td><code>argmin<sub>w</sub> L(w)</code></td><td>"the w that minimises L"</td><td>Not the smallest loss, but the <em>weight value</em> where it happens.</td></tr>
+<tr><td><code>Σ</code>, <code>(1/n) Σ</code></td><td>"sum", "average"</td><td>Add up over all examples; with 1/n in front, take the mean.</td></tr>
+<tr><td><code>σ(z)</code></td><td>"sigma of z"</td><td>The sigmoid function: squashes any number into (0, 1).</td></tr>
+<tr><td><code>ŷ</code>, <code>p</code></td><td>"y hat", "p"</td><td>The model's prediction (a number, or a probability).</td></tr>
+<tr><td><code>log</code></td><td>"log"</td><td>Natural logarithm (NumPy's <code>np.log</code>).</td></tr>
+</tbody></table></div>
+
+<p>Here is the whole article in one picture. Every section zooms into one box.</p>
+<div class="flow">
+<span class="b">data + current weights</span><span class="ar">→</span>
+<span class="b">predict<br><small>(Part 1)</small></span><span class="ar">→</span>
+<span class="b r">loss<br><small>§1</small></span><span class="ar">→</span>
+<span class="b r">slopes (gradient)<br><small>§2, 4, 5, 7</small></span><span class="ar">→</span>
+<span class="b g">step downhill<br><small>§3, 9, 10</small></span><span class="ar">↺ repeat</span>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="num">1</span>Learning = minimising a loss</h2>
+
+<div class="box intuition"><span class="tag">Intuition · archery in the dark</span>
+<p>You're practising archery in a dark room. After each arrow, a friend calls out how far you missed the bullseye. You can't see the target, but that one number is enough to improve: try a slightly different angle, hear whether the number went up or down, adjust. The number your friend calls out is the <strong>loss</strong>. Your stance and angle are the <strong>weights</strong>.</p>
+</div>
+
+<p>Let's make that concrete with the marketing data. Our model is a straight line, <code>sales = w × ad_spend + b</code>. For now we fix the base <code>b = 5.5</code> and only learn <code>w</code>, the extra sales each ₹1 lakh of ads brings in. To score a guess for <code>w</code>:</p>
+<ol>
+<li>predict sales for all 20 months,</li>
+<li>compute each month's <strong>error</strong> (prediction − actual),</li>
+<li>square the errors (so misses in either direction count, and big misses count a lot more),</li>
+<li>average them. That average is the <strong>mean squared error (MSE)</strong>, our loss.</li>
+</ol>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">L(w) = (1/n) Σᵢ ( w·xᵢ + b − yᵢ )²</div>
+<p>"For each month i, take the prediction <code>w·xᵢ + b</code>, subtract the actual sales <code>yᵢ</code>, square it, then average over all n months." Notice the data (x, y) is fixed. The only thing that can change is <code>w</code>. So the loss is a <strong>function of the weight</strong>, and training means finding the w where it's smallest.</p>
+</div>
+
+<div class="widget" id="w-loss">
+<p class="wt">Try it: one slider, two views</p>
+<p class="wh">Move w. Left: the line and its errors (vermilion). Right: the loss for that w. The curve on the right is every possible w at once.</p>
+<div class="ctrls"><label>w <input type="range" id="lw-w" min="0" max="6.5" step="0.05" value="1.5"> <b id="lw-wv">1.5</b></label></div>
+<div class="wgrid" style="grid-template-columns:1fr 1fr">
+<svg class="chart" id="lw-data"></svg>
+<svg class="chart" id="lw-curve"></svg>
+</div>
+<div class="readout" id="lw-out"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">import numpy as np
+
+rng = np.random.default_rng(7)
+ad_spend = rng.uniform(1, 10, 20).round(1)                           # ₹ lakh spent on ads, 20 months
+sales = (3.0 * ad_spend + 8 + rng.normal(0, 2, 20)).round(1)         # ₹ lakh of sales those months
+
+def predict(w, b, x):
+    return w * x + b                       # the model: a straight line
+
+def mse(w, b):
+    errors = predict(w, b, ad_spend) - sales
+    return np.mean(errors ** 2)            # mean squared error = the loss
+
+b = 5.5                                    # fix the base for now; we learn only w
+for w in [1.0, 2.0, 3.0, 3.24, 4.0, 5.0]:
+    print(f&quot;w = {w:4}  →  loss = {mse(w, b):7.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>w =  1.0  →  loss =  228.19
+w =  2.0  →  loss =   72.05
+w =  3.0  →  loss =    5.24
+w = 3.24  →  loss =    2.50
+w =  4.0  →  loss =   27.77
+w =  5.0  →  loss =  139.64</pre></div>
+
+<p>The loss is high when the line is too flat (w = 1), drops to about 2.5 near w ≈ 3.24, and climbs again when the line is too steep. The curve on the right of the widget is a <strong>bowl</strong>. Training is finding the bottom of the bowl.</p>
+
+<h3>Why squared error, and not something else?</h3>
+<p>Choosing a loss is choosing what "wrong" means. Squaring makes one big miss far worse than several small ones, and gives a smooth bowl that's easy to slide down. Other losses make other choices: absolute error (MAE) treats all misses proportionally; cross-entropy (Section 6) is the right choice for probabilities.</p>
+
+<div class="box biz"><span class="tag">In business</span>
+<p>The loss is where business priorities enter the maths. A retailer that loses far more from stock-outs than from overstock should not use a symmetric loss; an asymmetric one (such as quantile loss) pushes forecasts up. Agreeing on the loss with stakeholders is often more important than choosing the algorithm.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Errors for three months are −2, 1 and 3. What is the MSE? <em>Answer: (4 + 1 + 9) / 3 ≈ 4.67.</em></p>
+<p><strong>2.</strong> Why is the loss written L(w) and not L(x)? <em>Answer: during training the data is fixed; only the weights change, so the loss is a function of the weights.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="num">2</span>The derivative: the slope of the loss</h2>
+
+<p>We can see the bottom of the bowl in the widget because we drew the whole curve. A real model with a million weights can't draw its loss. It only knows the loss at the weights it currently has. So it needs a local clue: <strong>if I nudge this weight a little, does the loss go up or down, and how fast?</strong> That clue is the derivative.</p>
+
+<div class="box intuition"><span class="tag">Intuition · the speedometer and the nudge test</span>
+<p>Your car's trip meter tells you how far you've gone. The speedometer tells you something different: how fast that distance is changing <em>right now</em>. The derivative is the speedometer of a function.</p>
+<p>You can measure it with a <strong>nudge test</strong>: move w a tiny bit to the right and see how much the loss changes. Divide the change in loss by the size of the nudge. That ratio is the slope.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">L′(w) ≈ [ L(w + h) − L(w − h) ] / (2h)      with h tiny, e.g. 0.0001</div>
+<p>"Nudge a hair to the right and a hair to the left; rise over run." Textbooks write this with a limit (h → 0), which only means "make the nudge as small as you like". The two things that matter:</p>
+<div class="tw"><table>
+<thead><tr><th>Slope</th><th>Means</th><th>To reduce loss</th></tr></thead>
+<tbody>
+<tr><td>Negative</td><td>Loss goes <em>down</em> as w increases</td><td>Increase w</td></tr>
+<tr><td>Positive</td><td>Loss goes <em>up</em> as w increases</td><td>Decrease w</td></tr>
+<tr><td>Zero</td><td>Flat: at the bottom (or a flat spot)</td><td>Stop</td></tr>
+<tr><td>Large size</td><td>Steep: far from the bottom, usually</td><td>Big moves help</td></tr>
+</tbody></table></div>
+<p>In one line: <strong>always move w in the opposite direction to the slope.</strong></p>
+</div>
+
+<div class="widget" id="w-tan">
+<p class="wt">Try it: the tangent line</p>
+<p class="wh">The dashed line touches the curve at w and has the same slope. Watch the sign flip as you cross the bottom.</p>
+<div class="ctrls"><label>w <input type="range" id="tn-w" min="0.3" max="6.2" step="0.05" value="1.5"> <b id="tn-wv">1.5</b></label></div>
+<div class="wgrid">
+<svg class="chart" id="tn-svg"></svg>
+<div class="readout" id="tn-out"></div>
+</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def loss_w(w):
+    return mse(w, b)                        # loss as a function of the one weight we are tuning
+
+def nudge_slope(f, w, h=1e-4):
+    return (f(w + h) - f(w - h)) / (2 * h)  # nudge a tiny bit each way, see how much f moves
+
+for w in [1.0, 3.24, 5.0]:
+    print(f&quot;w = {w:4}:  slope ≈ {nudge_slope(loss_w, w):8.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>w =  1.0:  slope ≈  -200.81
+w = 3.24:  slope ≈    -0.70
+w =  5.0:  slope ≈   156.54</pre></div>
+
+<p>Left of the bottom the slope is strongly negative (increase w). Near the bottom it's almost zero. Right of the bottom it's positive (decrease w). The nudge test works for <em>any</em> function, but it costs two loss evaluations per weight. With a million weights that's two million passes over the data for a single step. We need formulas.</p>
+
+<h3>The handful of derivative rules ML actually uses</h3>
+<div class="tw"><table>
+<thead><tr><th>Function</th><th>Derivative</th><th>Plain English</th><th>Where it shows up</th></tr></thead>
+<tbody>
+<tr><td><code>c</code> (constant)</td><td><code>0</code></td><td>Doesn't change, no slope</td><td>Bias terms in sums</td></tr>
+<tr><td><code>c·x</code></td><td><code>c</code></td><td>A straight line's slope is its multiplier</td><td><code>z = w·x</code> → dz/dw = x</td></tr>
+<tr><td><code>xⁿ</code></td><td><code>n·xⁿ⁻¹</code></td><td>Bring the power down, reduce it by one</td><td>Squared error</td></tr>
+<tr><td><code>f + g</code></td><td><code>f′ + g′</code></td><td>Slope of a sum is the sum of slopes</td><td>Averages over examples</td></tr>
+<tr><td><code>eˣ</code></td><td><code>eˣ</code></td><td>Its own slope</td><td>Softmax, sigmoid</td></tr>
+<tr><td><code>log x</code></td><td><code>1/x</code></td><td>Steep near 0, flat for large x</td><td>Cross-entropy</td></tr>
+<tr><td><code>σ(z)</code></td><td><code>σ(z)(1 − σ(z))</code></td><td>Largest (0.25) at z = 0</td><td>Logistic regression</td></tr>
+<tr><td><code>tanh z</code></td><td><code>1 − tanh² z</code></td><td>Largest (1) at z = 0</td><td>Hidden layers, RNNs</td></tr>
+<tr><td><code>max(0, z)</code> (ReLU)</td><td><code>1</code> if z &gt; 0, else <code>0</code></td><td>On or off</td><td>Most modern deep nets</td></tr>
+</tbody></table></div>
+
+<div class="box byhand"><span class="tag">By hand · the derivative of our loss</span>
+<div class="eq">L(w)  = (1/n) Σ ( w·xᵢ + b − yᵢ )²
+
+Call the error eᵢ = w·xᵢ + b − yᵢ.  Then L = (1/n) Σ eᵢ²
+
+slope of eᵢ²  with respect to eᵢ :  2·eᵢ          (power rule)
+slope of eᵢ   with respect to w  :  xᵢ            (c·x rule; b and yᵢ are constants)
+multiply them (Section 5 explains why): 2·eᵢ·xᵢ
+
+L′(w) = (1/n) Σ 2·eᵢ·xᵢ   =   "average of 2 × error × input"</div>
+<p>Read the result: if predictions are too high (errors positive) for months with big ad spend, the slope is positive, so lower w. That's exactly what common sense says.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def dloss_dw(w, b=5.5):
+    errors = predict(w, b, ad_spend) - sales
+    return np.mean(2 * errors * ad_spend)   # the formula we derived by hand
+
+for w in [1.0, 3.24, 5.0]:
+    print(f&quot;w = {w:4}:  formula = {dloss_dw(w):8.2f}   nudge = {nudge_slope(loss_w, w):8.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>w =  1.0:  formula =  -200.81   nudge =  -200.81
+w = 3.24:  formula =    -0.70   nudge =    -0.70
+w =  5.0:  formula =   156.54   nudge =   156.54</pre></div>
+
+<p>The formula and the nudge test agree to every digit shown. The formula costs one pass over the data and gives the slope for w directly. Comparing a formula against the nudge test is called a <strong>gradient check</strong>, and it is how you catch bugs in hand-written gradients (we'll do it again for a neural network in Section 7).</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Every trainable model needs the slope of its loss with respect to each weight. Linear and logistic regression, neural networks and gradient boosting all use the rules in that table. Gradient boosting (XGBoost, LightGBM) even uses the <em>second</em> derivative, which we meet next.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Economists have used derivatives for a long time under the name <strong>marginal analysis</strong>. "What extra sales does the next ₹1 lakh of ads bring?" is a derivative. So is "how much does demand drop if we raise the price by ₹1?" (price elasticity). Any time someone says "at the margin", they mean a slope.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> At the current w, the slope of the loss is +40. Should you increase or decrease w? <em>Answer: decrease. Positive slope means the loss rises as w rises.</em></p>
+<p><strong>2.</strong> What is the derivative of 5w² + 3w + 7? <em>Answer: 10w + 3.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="num">3</span>Gradient descent with one weight</h2>
+
+<div class="box intuition"><span class="tag">Intuition · walking downhill in fog</span>
+<p>You're on a hillside in thick fog and want to reach the valley floor. You can't see the valley, but you can feel the ground under your feet. Feel which way it tilts, take a step downhill, feel again, step again. Steep ground: you're probably far from the bottom. Flat ground: you've arrived.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded · the update rule</span>
+<div class="eq">w_new = w_old − α × L′(w_old)</div>
+<p>"Take the slope, scale it by the learning rate α, and step the opposite way." The minus sign does the "opposite" for you: a negative slope makes <code>−α × slope</code> positive, so w increases, and vice versa. Steep slopes produce big steps automatically, and the steps shrink as you approach the flat bottom.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">w = 0.0          # start from a bad guess
+lr = 0.01        # learning rate: how big each step is
+
+for step in range(1, 31):
+    grad = dloss_dw(w)
+    w = w - lr * grad                       # step AGAINST the slope
+    if step in (1, 2, 3, 5, 10, 20, 30):
+        print(f&quot;step {step:2d}: w = {w:6.3f}   loss = {loss_w(w):7.3f}   slope = {dloss_dw(w):8.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>step  1: w =  2.901   loss =   7.855   slope =  -30.938
+step  2: w =  3.211   loss =   2.559   slope =   -3.299
+step  3: w =  3.244   loss =   2.499   slope =   -0.352
+step  5: w =  3.248   loss =   2.498   slope =   -0.004
+step 10: w =  3.248   loss =   2.498   slope =   -0.000
+step 20: w =  3.248   loss =   2.498   slope =    0.000
+step 30: w =  3.248   loss =   2.498   slope =    0.000</pre></div>
+
+<p>Starting from w = 0, three steps get us very close to the answer, and the slope shrinks towards zero as we arrive. That shrinking slope is also how you know when to <strong>stop</strong>: when the slope (or the improvement in loss) is below a small tolerance, or when a validation metric stops improving.</p>
+
+<h3>The learning rate: the one setting that makes or breaks training</h3>
+<div class="box intuition"><span class="tag">Intuition · seasoning soup</span>
+<p>The soup needs salt. A pinch at a time, tasting in between, gets you there. A grain at a time takes all evening. Tipping the shaker in at once overshoots so badly you can never recover. The learning rate is the size of the pinch.</p>
+</div>
+
+<div class="widget" id="w-gd">
+<p class="wt">Try it: gradient descent, step by step</p>
+<p class="wh">Pick a learning rate and a starting point, then press Step or Run. Try 0.002, 0.01, 0.02 and 0.023.</p>
+<div class="ctrls">
+<label>learning rate <input type="range" id="gd-lr" min="0.001" max="0.026" step="0.001" value="0.005"> <b id="gd-lrv">0.005</b></label>
+<label>start w <input type="range" id="gd-w0" min="0" max="6.5" step="0.5" value="0.5"> <b id="gd-w0v">0.5</b></label>
+</div>
+<div class="ctrls"><button class="btn" id="gd-step">Step</button><button class="btn primary" id="gd-run">Run 20 steps</button><button class="btn" id="gd-reset">Reset</button> <span id="gd-status"></span></div>
+<div class="wgrid">
+<svg class="chart" id="gd-svg"></svg>
+<div class="readout" id="gd-out"></div>
+</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def run(lr, steps=25, w=0.0):
+    for _ in range(steps):
+        w = w - lr * dloss_dw(w)
+    return w, loss_w(w)
+
+for lr in [0.001, 0.01, 0.02, 0.03]:
+    w_end, loss_end = run(lr)
+    print(f&quot;lr = {lr:&lt;6} → w = {w_end:12.3f}   loss = {loss_end:14.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>lr = 0.001  → w =        2.935   loss =           6.87
+lr = 0.01   → w =        3.248   loss =           2.50
+lr = 0.02   → w =        3.256   loss =           2.50
+lr = 0.03   → w =  1396471.721   loss = 87109122655643.75</pre></div>
+
+<p>Too small (0.001): after 25 steps we still haven't arrived. About right (0.01 to 0.02): we land on 3.25. Too big (0.03): every step overshoots further than the last, and the weight explodes to over a million. In real training this shows up as a loss that becomes <code>nan</code> or <code>inf</code>.</p>
+
+<h3>Why 0.03 explodes: curvature and the second derivative</h3>
+<p>The <strong>second derivative</strong> is the slope of the slope. It measures <em>curvature</em>: how quickly the ground steepens. A narrow, sharply curved bowl punishes big steps because you jump straight past the bottom and up the other side. For a bowl-shaped loss there's a neat rule: the learning rate must stay below <strong>2 ÷ curvature</strong>.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">curvature = 2 * np.mean(ad_spend ** 2)     # second derivative of the loss with respect to w
+print(f&quot;curvature L&#x27;&#x27;(w) = {curvature:.1f}&quot;)
+print(f&quot;largest safe learning rate ≈ 2 / curvature = {2 / curvature:.4f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>curvature L&#x27;&#x27;(w) = 89.3
+largest safe learning rate ≈ 2 / curvature = 0.0224</pre></div>
+
+<p>0.02 is just under the limit (it zig-zags but settles), and 0.03 is over it (it zig-zags outward forever). You can watch both in the widget above. In practice you don't compute curvature for a deep network; you try a few learning rates spaced by about 3× (0.001, 0.003, 0.01, 0.03…) and keep the largest one that trains stably.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Learning rate is the first hyperparameter to tune for any neural network. Second-derivative information is used directly by Newton's method and L-BFGS, and by XGBoost and LightGBM, which use first <em>and</em> second derivatives of the loss when choosing each tree's splits and leaf values.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Training time is compute cost. A learning rate that's too small can multiply your cloud bill; one that's too large wastes a run that has to be restarted. Teams usually run a quick learning-rate sweep on a small sample of the data before committing to a full training job.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> w = 2, slope = −30, α = 0.01. What is the new w? <em>Answer: 2 − 0.01 × (−30) = 2.3.</em></p>
+<p><strong>2.</strong> Your training loss jumps to <code>nan</code> after a few steps. What's the first thing to try? <em>Answer: lower the learning rate (and check for unscaled features).</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="num">4</span>Two weights: partial derivatives and the gradient</h2>
+
+<p>Now let the model learn <code>b</code> too. With two weights the loss is no longer a curve; it's a <strong>surface</strong>, a landscape over the (w, b) plane. We draw it from above as a contour map, like a hiking map: each ring connects points with the same loss, and the bottom of the valley is in the middle.</p>
+
+<div class="box intuition"><span class="tag">Intuition · one knob at a time</span>
+<p>A sound engineer has two knobs, bass and treble. To understand each one, she holds treble still and turns only bass, listening to the change. Then the other way round. A <strong>partial derivative</strong> is that: the slope along one weight while every other weight is frozen. The <strong>gradient</strong> collects all the partial derivatives into one vector, one entry per knob.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">∂L/∂w = (1/n) Σ 2·eᵢ·xᵢ          (b treated as a constant)
+∂L/∂b = (1/n) Σ 2·eᵢ·1           (w treated as a constant)
+
+∇L = [ ∂L/∂w , ∂L/∂b ]          the gradient: a vector (Part 1!)
+[w, b] ← [w, b] − α ∇L           same update rule, now for a vector</div>
+<p>Two facts make gradient descent work. The gradient points in the direction of <strong>steepest uphill</strong>, so its negative is steepest downhill. And it is always <strong>perpendicular to the contour line</strong> you're standing on: the fastest way off a level path is straight across it.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def gradient(w, b, x=ad_spend):
+    errors = predict(w, b, x) - sales
+    dL_dw = np.mean(2 * errors * x)         # slope along w, holding b still
+    dL_db = np.mean(2 * errors)             # slope along b, holding w still
+    return np.array([dL_dw, dL_db])
+
+def descend(lr, x=ad_spend, tol=1e-3, max_steps=20_000):
+    params = np.array([0.0, 0.0])           # [w, b]
+    for step in range(1, max_steps + 1):
+        params = params - lr * gradient(*params, x=x)
+        if np.linalg.norm(gradient(*params, x=x)) &lt; tol:   # gradient ≈ 0 → at the bottom
+            return params, step
+    return params, max_steps
+
+params, steps = descend(lr=0.02)
+print(f&quot;raw ad spend    : w = {params[0]:.3f}, b = {params[1]:.3f}  after {steps} steps&quot;)
+print(&quot;numpy&#x27;s exact fit:&quot;, np.polyfit(ad_spend, sales, 1).round(3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>raw ad spend    : w = 3.241, b = 5.548  after 1285 steps
+numpy&#x27;s exact fit: [3.241 5.552]</pre></div>
+
+<p>We got the same answer as NumPy's exact fit, but it took <strong>1,285 steps</strong>. Why so many for two weights? The widget shows it.</p>
+
+<div class="widget" id="w-cont">
+<p class="wt">Try it: the loss landscape from above</p>
+<p class="wh">Click anywhere to start gradient descent from that point. Then switch to <em>scaled</em> ad spend and try again.</p>
+<div class="ctrls"><div class="seg" id="ct-mode"><button class="on" data-m="raw">raw ad spend</button><button data-m="scaled">scaled ad spend</button></div></div>
+<div class="wgrid">
+<svg class="chart" id="ct-svg"></svg>
+<div class="readout" id="ct-out"></div>
+</div>
+</div>
+
+<p>With raw ad spend, the valley is a long, narrow trench. The gradient points mostly across the trench (the steep direction), so gradient descent zig-zags from wall to wall and creeps along the floor. The learning rate can't be raised to speed things up, because the steep direction would then explode (Section 3's 2 ÷ curvature limit).</p>
+<p>Standardising the feature (mean 0, spread 1) turns the trench into a round bowl. Now the gradient points straight at the bottom.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">mu, sd = ad_spend.mean(), ad_spend.std()
+ad_scaled = (ad_spend - mu) / sd            # standardise: mean 0, spread 1
+
+params_s, steps_s = descend(lr=0.1, x=ad_scaled)
+w_raw = params_s[0] / sd                    # convert back to &quot;per ₹ lakh&quot; units
+b_raw = params_s[1] - params_s[0] * mu / sd
+print(f&quot;scaled ad spend : w = {w_raw:.3f}, b = {b_raw:.3f}  after {steps_s} steps&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>scaled ad spend : w = 3.241, b = 5.551  after 49 steps</pre></div>
+
+<p><strong>49 steps instead of 1,285</strong>, for exactly the same model. This is the calculus reason behind the advice from Part 1 to scale your features. It's also one of the reasons deep networks use <strong>batch normalisation</strong> and <strong>layer normalisation</strong>: keeping each layer's inputs well-scaled keeps the landscape closer to round.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>A neural network's gradient has one entry per weight, often millions or billions. It's still "a vector of partial derivatives", and the update is still <code>w ← w − α∇L</code>. Everything in later sections is either a faster way to compute ∇L (backprop) or a smarter way to use it (optimisers).</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Partial derivatives answer "what if we change only this?" questions: the effect of price on revenue with the ad budget held fixed, or of discount depth on margin with volume held fixed. Sensitivity tables in financial models are partial derivatives laid out in a grid.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> ∇L = [4, −1]. Which way should w and b move? <em>Answer: w down, b up (opposite signs to the gradient).</em></p>
+<p><strong>2.</strong> Gradient descent is zig-zagging and slow. Name two fixes. <em>Answer: scale the features; use momentum or an adaptive optimiser (Section 9).</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="num">5</span>The chain rule and computational graphs</h2>
+
+<p>Real models are chains: inputs go into a weighted sum, the sum goes into an activation, the activation goes into a loss. To get the slope of the loss with respect to a weight at the start of the chain, we need the <strong>chain rule</strong>.</p>
+
+<div class="box intuition"><span class="tag">Intuition · gears</span>
+<p>Gear A turns gear B, which turns gear C. If B spins 3 times for every turn of A, and C spins 4 times for every turn of B, then C spins 3 × 4 = 12 times for every turn of A. <strong>Rates along a chain multiply.</strong> That is the entire chain rule.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">if  y = f(u)  and  u = g(x),   then   dy/dx = dy/du × du/dx</div>
+<p>"Slope of the outside (at the inside value) times slope of the inside." It can be as long as you need: <code>dL/dw = dL/dp × dp/dz × dz/dw</code>.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand</span>
+<div class="eq">y = (3x + 2)⁴
+inside   u = 3x + 2    du/dx = 3
+outside  y = u⁴        dy/du = 4u³
+dy/dx = 4(3x + 2)³ × 3            at x = 0:  4 × 8 × 3 = 96</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python"># y = (3x + 2)^4.  Inside: u = 3x + 2 (du/dx = 3).  Outside: y = u^4 (dy/du = 4u^3)
+def y(x):           return (3 * x + 2) ** 4
+def dy_dx_chain(x): return 4 * (3 * x + 2) ** 3 * 3    # outer slope × inner slope
+
+for x in [-1.0, 0.0, 1.0]:
+    print(f&quot;x = {x:4}:  chain rule = {dy_dx_chain(x):8.1f}   nudge = {nudge_slope(y, x):8.1f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>x = -1.0:  chain rule =    -12.0   nudge =    -12.0
+x =  0.0:  chain rule =     96.0   nudge =     96.0
+x =  1.0:  chain rule =   1500.0   nudge =   1500.0</pre></div>
+
+<h3>Computational graphs: the chain rule as a picture</h3>
+<p>Draw every small operation as a box and connect them in order. That drawing is a <strong>computational graph</strong>. Here is one neuron classifying one example (input x = 2, true label 1), using the sigmoid and the "log loss" you'll meet properly in Section 6.</p>
+
+<p>Training on this graph happens in two sweeps:</p>
+<ul>
+<li><strong>Forward pass</strong> (left to right): compute each box's value and <em>remember it</em>.</li>
+<li><strong>Backward pass</strong> (right to left): start with "the slope of L with respect to itself is 1". At each box, multiply the incoming slope by that box's <em>local</em> slope and pass it left. When you reach a weight, you have its gradient.</li>
+</ul>
+
+<div class="widget" id="w-graph">
+<p class="wt">Try it: forward, then backward</p>
+<p class="wh">Step through. Values (petrol) flow right; gradients (vermilion) flow left. Change w or b and step again.</p>
+<div class="ctrls">
+<label>w <input type="number" id="cg-w" value="0.5" step="0.1"></label>
+<label>b <input type="number" id="cg-b" value="-0.5" step="0.1"></label>
+<label>x <input type="number" id="cg-x" value="2" step="0.5"></label>
+<span class="ui" style="color:var(--muted)">true label y = 1</span>
+</div>
+<svg class="chart" id="cg-svg" style="background:var(--bg)"></svg>
+<div class="calc" id="cg-calc" style="margin-top:8px"></div>
+<div class="ctrls" style="justify-content:center"><button class="btn" id="cg-prev">← Prev</button><button class="btn primary" id="cg-next">Next →</button><button class="btn" id="cg-reset">Reset</button></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+x, y_true = 2.0, 1.0          # one training example (label 1)
+w, b = 0.5, -0.5              # current weights
+
+# ---- forward: compute and remember every intermediate value ----
+z = w * x + b                 # 0.5
+p = sigmoid(z)                # predicted probability
+L = -np.log(p)                # loss when the true label is 1
+
+# ---- backward: local slopes, multiplied right to left ----
+dL_dp = -1 / p                # slope of -log(p)
+dp_dz = p * (1 - p)           # slope of the sigmoid
+dL_dz = dL_dp * dp_dz         # chain rule
+dL_dw = dL_dz * x             # z = w·x + b  → dz/dw = x
+dL_db = dL_dz * 1             #              → dz/db = 1
+
+print(f&quot;forward : z = {z:.4f}, p = {p:.4f}, L = {L:.4f}&quot;)
+print(f&quot;backward: dL/dz = {dL_dz:.4f}  (equals p − y = {p - y_true:.4f})&quot;)
+print(f&quot;          dL/dw = {dL_dw:.4f},  dL/db = {dL_db:.4f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>forward : z = 0.5000, p = 0.6225, L = 0.4741
+backward: dL/dz = -0.3775  (equals p − y = -0.3775)
+          dL/dw = -0.7551,  dL/db = -0.3775</pre></div>
+
+<p>Look at the second output line. The two messy local slopes, <code>−1/p</code> from the log and <code>p(1 − p)</code> from the sigmoid, multiply out to simply <strong>p − y</strong>: predicted probability minus true label. That tidy result is no accident, and it's the main reason sigmoid and log loss are always used together.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>The computational graph is how every deep-learning framework sees your model. PyTorch, TensorFlow and JAX record the forward pass as a graph, then run the backward sweep automatically. Section 11 builds a tiny version of that engine. Backpropagation is nothing more than the chain rule applied to this graph, reusing the values saved on the way forward.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Business metrics are chains too: price → demand → revenue → profit. If raising price by ₹1 cuts demand by 50 units, and each unit is worth ₹200 of profit, the effect of price on profit through that path is −50 × 200 = −₹10,000. That is the chain rule. It's what driver-tree models in FP&amp;A teams compute.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> y = (5x)² . What is dy/dx? <em>Answer: 2(5x) × 5 = 50x.</em></p>
+<p><strong>2.</strong> Why must the forward pass store its intermediate values? <em>Answer: the backward pass needs them to compute each local slope (for example p(1 − p) needs p).</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="num">6</span>Logistic regression and cross-entropy</h2>
+
+<p>Our marketing model predicted a number. Many business questions need a <strong>probability</strong> instead: will this borrower default? will this customer churn? Logistic regression takes the familiar weighted sum <code>z = w·x + b</code> and squashes it through the sigmoid, <code>p = σ(z)</code>, into a value between 0 and 1.</p>
+
+<h3>Why not just use squared error?</h3>
+<div class="box intuition"><span class="tag">Intuition · a confident wrong answer deserves a loud correction</span>
+<p>A student who answers "definitely B" when the answer is A needs a strong correction, more than one who said "maybe A or B". A good loss should give a <em>big</em> slope when the model is confidently wrong. Squared error on top of a sigmoid does the opposite: when the sigmoid is saturated (p near 0 or 1), its slope is almost zero, and that tiny number gets multiplied into the gradient.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded · binary cross-entropy (log loss)</span>
+<div class="eq">L = −[ y·log(p) + (1 − y)·log(1 − p) ]       averaged over examples</div>
+<p>Only one of the two terms is "on" for each example. If y = 1, the loss is <code>−log(p)</code>: near 0 when p ≈ 1, huge when p ≈ 0. If y = 0, it's <code>−log(1 − p)</code>. Combined with the sigmoid, its slope with respect to z is just <code>p − y</code> (Section 5).</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">y_true = 1.0
+for z in [-6.0, -2.0, 0.0, 2.0]:
+    p = sigmoid(z)
+    grad_mse = 2 * (p - y_true) * p * (1 - p)     # d/dz of (p − y)²
+    grad_ce  = p - y_true                          # d/dz of cross-entropy
+    print(f&quot;z = {z:5}  p = {p:.4f}   MSE grad = {grad_mse:8.4f}   cross-entropy grad = {grad_ce:8.4f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>z =  -6.0  p = 0.0025   MSE grad =  -0.0049   cross-entropy grad =  -0.9975
+z =  -2.0  p = 0.1192   MSE grad =  -0.1850   cross-entropy grad =  -0.8808
+z =   0.0  p = 0.5000   MSE grad =  -0.2500   cross-entropy grad =  -0.5000
+z =   2.0  p = 0.8808   MSE grad =  -0.0250   cross-entropy grad =  -0.1192</pre></div>
+
+<p>At z = −6 the model says 0.25% chance when the truth is "yes". Squared error's gradient is a feeble −0.005; cross-entropy's is −0.998, about 200 times stronger. With MSE, a badly wrong model can sit almost frozen for a long time. With cross-entropy, it gets pushed hardest exactly when it's most wrong.</p>
+
+<h3>Training a loan-default model from scratch</h3>
+<p>A lender has 400 past loans with two standardised features, credit score and debt-to-income ratio, and whether each loan defaulted. The whole training loop is the gradient descent you already know, using <code>p − y</code> as the error signal and Part 1's matrix multiplication to handle all 400 loans at once.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">rng = np.random.default_rng(1)
+n = 400
+credit = rng.normal(0, 1, n)                  # standardised credit score
+dti    = rng.normal(0, 1, n)                  # standardised debt-to-income ratio
+true_logit = -1.0 - 1.8 * credit + 1.4 * dti
+default = (rng.uniform(size=n) &lt; sigmoid(true_logit)).astype(float)   # 1 = defaulted
+
+X = np.column_stack([credit, dti])
+w, b, lr = np.zeros(2), 0.0, 0.5
+
+for epoch in range(1, 301):
+    p = sigmoid(X @ w + b)                     # forward: probabilities for all 400
+    grad_z = (p - default) / n                 # the famous p − y (averaged)
+    w -= lr * (X.T @ grad_z)                   # chain rule: dz/dw = x
+    b -= lr * grad_z.sum()
+    if epoch in (1, 10, 50, 300):
+        loss = -np.mean(default * np.log(p) + (1 - default) * np.log(1 - p))
+        acc = np.mean((p &gt; 0.5) == default)
+        print(f&quot;epoch {epoch:3d}: loss = {loss:.4f}  accuracy = {acc:.1%}  w = {w.round(2)}  b = {b:.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>epoch   1: loss = 0.6931  accuracy = 65.8%  w = [-0.09  0.09]  b = -0.08
+epoch  10: loss = 0.5083  accuracy = 80.0%  w = [-0.62  0.55]  b = -0.49
+epoch  50: loss = 0.4382  accuracy = 79.0%  w = [-1.37  1.05]  b = -0.96
+epoch 300: loss = 0.4337  accuracy = 79.2%  w = [-1.69  1.25]  b = -1.14</pre></div>
+
+<p>The learned weights make business sense: a higher credit score lowers the default probability (negative weight) and a higher debt-to-income raises it (positive weight). Accuracy settles near 79%; the data was generated with real randomness, so no model can be perfect here.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Softmax + cross-entropy is the multi-class version, and it's the output layer of almost every classifier: image models, text classifiers, and language models predicting the next token. Its gradient with respect to the scores is again "predicted probabilities minus the one-hot truth". If you understand <code>p − y</code>, you understand the last layer of GPT-style training.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Credit-risk scorecards, churn propensity, fraud scoring and click-through prediction are logistic regression or its descendants. Because the output is a probability, it plugs straight into expected-value decisions: approve the loan if <code>p × loss_if_default</code> is less than the expected interest earned.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> True label 1, predicted p = 0.9. What is the cross-entropy loss and the gradient w.r.t. z? <em>Answer: −log(0.9) ≈ 0.105; gradient p − y = −0.1.</em></p>
+<p><strong>2.</strong> Why does MSE train logistic regression slowly when predictions are confidently wrong? <em>Answer: the sigmoid's slope p(1 − p) is near zero there, and MSE's gradient is multiplied by it.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="num">7</span>Backpropagation in a real neural network</h2>
+
+<p>Linear and logistic models draw straight lines. Plenty of business patterns aren't straight: customers respond to an offer only in a <em>middle band</em> of age and income, not at either extreme. Here's such a pattern: class 1 sits inside a circle.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">rng = np.random.default_rng(0)
+n = 400
+Xc = rng.uniform(-1, 1, size=(n, 2))                     # two features, e.g. scaled age &amp; income
+yc = (np.sum(Xc ** 2, axis=1) &lt; 0.45).astype(float)      # class 1 = inside a circle
+
+# A straight-line model can&#x27;t draw a circle:
+w, b = np.zeros(2), 0.0
+for _ in range(2000):
+    p = sigmoid(Xc @ w + b)
+    w -= 0.5 * Xc.T @ (p - yc) / n
+    b -= 0.5 * np.mean(p - yc)
+print(f&quot;logistic regression accuracy: {np.mean((p &gt; 0.5) == yc):.1%}  (class-1 share: {yc.mean():.1%})&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>logistic regression accuracy: 63.2%  (class-1 share: 36.8%)</pre></div>
+
+<p>63.2% accuracy is the same as always guessing "class 0" (63.2% of points are class 0). A straight line simply can't wrap around a circle. We need a hidden layer.</p>
+
+<h3>The network and its backward pass</h3>
+<div class="shapes"><div class="s">X<small>(400, 2)</small></div><span>@ W1 + b1 →</span><div class="s g">Z1 → tanh → H<small>(400, 8)</small></div><span>@ W2 + b2 →</span><div class="s r">sigmoid → p<small>(400,)</small></div><span>→</span><div class="s r">loss</div></div>
+
+<div class="box intuition"><span class="tag">Intuition · blame flows backwards</span>
+<p>A factory's product fails inspection. The inspector asks the last station how much its output contributed, then asks the station before that, and so on, multiplying sensitivities as she walks back up the line. Backpropagation is that walk. At each layer it does two things: work out the gradient for that layer's weights, and pass the blame further back through those same weights (a transpose, from Part 1).</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded · the four lines of backprop</span>
+<div class="eq">dZ2 = p − y                      output error (Section 5's gift)
+dW2 = Hᵀ @ dZ2                   gradient for layer-2 weights
+dH  = dZ2 @ W2ᵀ                  send the error back through W2
+dZ1 = dH ⊙ (1 − H²)              through tanh: multiply by its local slope
+dW1 = Xᵀ @ dZ1                   gradient for layer-1 weights</div>
+<p>Every line is Part 1 (matrix multiplication, transpose, element-wise product) combined with Section 5 (multiply by the local slope). Deeper networks just repeat the middle pair once per extra layer.</p>
+</div>
+
+<div class="code solo"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def init(hidden=8, seed=0):
+    r = np.random.default_rng(seed)
+    return {&quot;W1&quot;: r.normal(0, 1, (2, hidden)), &quot;b1&quot;: np.zeros(hidden),
+            &quot;W2&quot;: r.normal(0, 1, (hidden, 1)) / np.sqrt(hidden), &quot;b2&quot;: np.zeros(1)}
+
+def forward(P, X):
+    Z1 = X @ P[&quot;W1&quot;] + P[&quot;b1&quot;]          # (n, 8)
+    H  = np.tanh(Z1)                    # hidden layer
+    Z2 = H @ P[&quot;W2&quot;] + P[&quot;b2&quot;]          # (n, 1)
+    p  = sigmoid(Z2).ravel()            # (n,)
+    return Z1, H, p
+
+def loss_fn(P, X, y):
+    _, _, p = forward(P, X)
+    p = np.clip(p, 1e-9, 1 - 1e-9)
+    return -np.mean(y * np.log(p) + (1 - y) * np.log(1 - p))
+
+def backward(P, X, y):
+    Z1, H, p = forward(P, X)
+    dZ2 = ((p - y) / len(y))[:, None]   # output layer: p − y again   (n, 1)
+    dW2 = H.T @ dZ2                     # (8, 1)
+    db2 = dZ2.sum(axis=0)
+    dH  = dZ2 @ P[&quot;W2&quot;].T               # send the error back through W2   (n, 8)
+    dZ1 = dH * (1 - H ** 2)             # through tanh: slope is 1 − tanh²
+    dW1 = X.T @ dZ1                     # (2, 8)
+    db1 = dZ1.sum(axis=0)
+    return {&quot;W1&quot;: dW1, &quot;b1&quot;: db1, &quot;W2&quot;: dW2, &quot;b2&quot;: db2}</code></pre></div>
+
+<p>Hand-written backprop is easy to get subtly wrong, so we check it against the nudge test from Section 2 on a few individual weights:</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">P = init()
+grads = backward(P, Xc, yc)
+
+# Gradient check: nudge ONE weight and compare with backprop&#x27;s answer
+h = 1e-5
+for name, idx in [(&quot;W1&quot;, (0, 3)), (&quot;W2&quot;, (5, 0)), (&quot;b1&quot;, (2,))]:
+    old = P[name][idx]
+    P[name][idx] = old + h; up = loss_fn(P, Xc, yc)
+    P[name][idx] = old - h; down = loss_fn(P, Xc, yc)
+    P[name][idx] = old
+    print(f&quot;{name}{list(idx)}: backprop = {grads[name][idx]: .6f}   nudge = {(up - down) / (2 * h): .6f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>W1[0, 3]: backprop =  0.011335   nudge =  0.011335
+W2[5, 0]: backprop =  0.004486   nudge =  0.004486
+b1[2]: backprop =  0.009044   nudge =  0.009044</pre></div>
+
+<p>Six matching digits. Now we can trust the gradients and train, using the same update rule as for a single weight, applied to every weight matrix:</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">P = init()
+lr = 1.0
+history = []
+for epoch in range(1, 3001):
+    g = backward(P, Xc, yc)
+    for k in P:
+        P[k] -= lr * g[k]                       # same update rule as one weight, for every weight
+    if epoch in (1, 100, 500, 1000, 3000):
+        _, _, p = forward(P, Xc)
+        print(f&quot;epoch {epoch:4d}: loss = {loss_fn(P, Xc, yc):.4f}  accuracy = {np.mean((p &gt; 0.5) == yc):.1%}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>epoch    1: loss = 0.6801  accuracy = 57.0%
+epoch  100: loss = 0.3560  accuracy = 91.2%
+epoch  500: loss = 0.1091  accuracy = 98.0%
+epoch 1000: loss = 0.0742  accuracy = 99.0%
+epoch 3000: loss = 0.0433  accuracy = 99.8%</pre></div>
+
+<div class="widget" id="w-db">
+<p class="wt">Try it: watch the network learn</p>
+<p class="wh">The background shows the network's predicted probability of class 1 at each point (vermilion = high, petrol = low). Slide through training.</p>
+<div class="ctrls"><label>epoch <input type="range" id="db-e" min="0" max="5" step="1" value="0"> <b id="db-ev">0</b></label></div>
+<div class="wgrid">
+<canvas class="db" id="db-cv" width="400" height="400"></canvas>
+<div><svg class="chart" id="db-curve"></svg><div class="readout" id="db-out"></div></div>
+</div>
+</div>
+
+<p>At epoch 0 the random network predicts noise. By epoch 200 a rough blob has formed, and by 3,000 it hugs the circle at 99.8% accuracy on the training data. Every one of those improvements came from the same five backprop lines and one update rule.</p>
+
+<div class="box mistake"><span class="tag">Honesty note</span>
+<p>99.8% is <em>training</em> accuracy. A real project would hold out validation data to check that the network generalises rather than memorising. That topic (overfitting and regularisation) builds directly on this section.</p>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>CNNs, RNNs and transformers are trained with exactly this procedure; only the layers differ. Convolution layers and attention layers each have their own local slope rules, and backprop chains them together. In RNNs it's called <strong>backpropagation through time</strong>, because the chain runs back across time steps.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Non-linear patterns are common: response that peaks at mid-range prices, risk that rises only when two factors are both high. Tree ensembles and neural networks both capture them. Knowing that a linear model is stuck at the "always say no" baseline, as above, is the signal to reach for one.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Why does backprop compute <code>dH = dZ2 @ W2ᵀ</code> with a transpose? <em>Answer: W2 maps 8 hidden units to 1 output; going backwards you map 1 error to 8 hidden units, which needs the transposed shape (Part 1, Section 5).</em></p>
+<p><strong>2.</strong> What is a gradient check, and when should you run one? <em>Answer: comparing backprop's gradient to a nudge-test estimate; run it whenever you hand-write gradients or a custom layer.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="num">8</span>Vanishing and exploding gradients</h2>
+
+<p>Backprop multiplies a local slope at every layer. Multiply many numbers together and two things can happen: if they're mostly below 1, the product <strong>shrinks towards zero</strong>; if they're mostly above 1, it <strong>blows up</strong>. Deep networks live or die by this.</p>
+
+<div class="box intuition"><span class="tag">Intuition · a photocopy of a photocopy</span>
+<p>Photocopy a page, then copy the copy, and repeat twenty times. If each copy is a bit fainter, the twentieth is blank. If each copy is a bit darker, it's a black smudge. Each layer in backprop is one more photocopy of the error signal. The sigmoid's slope is at most 0.25, so with sigmoid layers every copy is fainter.</p>
+</div>
+
+<div class="widget" id="w-van">
+<p class="wt">Try it: the multiplication chain</p>
+<p class="wh">A simplified model: each layer multiplies the gradient by the same factor. Real networks vary layer to layer, but the effect is the same.</p>
+<div class="ctrls">
+<label>factor per layer <input type="range" id="vn-f" min="0.1" max="1.6" step="0.05" value="0.25"> <b id="vn-fv">0.25</b></label>
+<label>layers <input type="range" id="vn-d" min="2" max="30" step="1" value="10"> <b id="vn-dv">10</b></label>
+</div>
+<svg class="chart" id="vn-svg"></svg>
+<div class="readout" id="vn-out"></div>
+</div>
+
+<p>Here is a real experiment rather than a toy: build networks of increasing depth, run one backward pass, and measure how large the gradient is when it reaches the <em>first</em> layer.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def first_layer_grad(depth, act, width=32, seed=0):
+    r = np.random.default_rng(seed)
+    X = r.normal(0, 1, (64, width))
+    Ws, Hs, Zs = [], [X], []
+    for _ in range(depth):                                   # forward through `depth` layers
+        scale = np.sqrt(2 / width) if act == &quot;relu&quot; else np.sqrt(1 / width)
+        W = r.normal(0, scale, (width, width)); Ws.append(W)
+        Z = Hs[-1] @ W; Zs.append(Z)
+        Hs.append(np.maximum(0, Z) if act == &quot;relu&quot; else sigmoid(Z))
+    dH = np.ones_like(Hs[-1]) / 64                           # pretend loss = mean of outputs
+    for i in reversed(range(depth)):                         # backward, layer by layer
+        local = (Zs[i] &gt; 0).astype(float) if act == &quot;relu&quot; else Hs[i+1] * (1 - Hs[i+1])
+        dZ = dH * local
+        if i == 0:
+            return np.linalg.norm(Hs[0].T @ dZ)              # size of gradient reaching layer 1
+        dH = dZ @ Ws[i].T
+
+for depth in [2, 5, 10, 20, 30]:
+    print(f&quot;depth {depth:2d}:  sigmoid → {first_layer_grad(depth, &#x27;sigmoid&#x27;):.2e}   &quot;
+          f&quot;relu → {first_layer_grad(depth, &#x27;relu&#x27;):.2e}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>depth  2:  sigmoid → 2.18e-01   relu → 5.09e+00
+depth  5:  sigmoid → 3.53e-03   relu → 8.23e+00
+depth 10:  sigmoid → 1.41e-06   relu → 9.54e+00
+depth 20:  sigmoid → 4.36e-13   relu → 7.14e+00
+depth 30:  sigmoid → 4.88e-19   relu → 5.77e+00</pre></div>
+
+<p>With sigmoid, the first layer of a 30-layer network gets a gradient around 10⁻¹⁹. It effectively stops learning while later layers carry on. With ReLU and matched initialisation, the gradient stays roughly the same size at every depth.</p>
+
+<h3>The standard fixes, and what each one does</h3>
+<div class="tw"><table>
+<thead><tr><th>Fix</th><th>How it helps</th></tr></thead>
+<tbody>
+<tr><td><strong>ReLU-family activations</strong></td><td>Slope is exactly 1 for positive inputs, so the signal isn't shrunk. (Caveat: a neuron whose input is always negative has slope 0 and stops learning, a "dead ReLU". Leaky ReLU and GELU soften this.)</td></tr>
+<tr><td><strong>Careful initialisation</strong></td><td>Xavier/Glorot (for tanh/sigmoid) and He (for ReLU) choose the starting weight scale so the signal neither grows nor shrinks layer to layer. The experiment above used both.</td></tr>
+<tr><td><strong>Residual (skip) connections</strong></td><td>ResNets and transformers add a layer's input back to its output, <code>out = x + layer(x)</code>. The "+ x" gives the gradient a direct path backwards with slope 1.</td></tr>
+<tr><td><strong>Normalisation layers</strong></td><td>Batch norm and layer norm keep activations in a sensible range, which keeps local slopes away from the flat ends.</td></tr>
+<tr><td><strong>Gating (LSTM, GRU)</strong></td><td>Recurrent networks use gates to control how much signal passes through time, reducing vanishing gradients over long sequences.</td></tr>
+<tr><td><strong>Gradient clipping</strong></td><td>For exploding gradients: if the gradient is too long, shrink it to a maximum length while keeping its direction.</td></tr>
+</tbody></table></div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def clip_by_norm(grad, max_norm=5.0):
+    norm = np.linalg.norm(grad)
+    if norm &gt; max_norm:
+        grad = grad * (max_norm / norm)     # same direction, capped length
+    return grad
+
+g = np.array([300.0, -400.0])               # an &quot;exploded&quot; gradient, length 500
+print(clip_by_norm(g), &quot;length&quot;, np.linalg.norm(clip_by_norm(g)))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>[ 3. -4.] length 5.0</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Gradient clipping is standard in RNN and transformer training (for example <code>torch.nn.utils.clip_grad_norm_</code> in PyTorch). If your training loss suddenly spikes or becomes <code>nan</code> partway through, exploding gradients are a prime suspect.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Ten layers each multiply the gradient by 0.5. What fraction reaches the first layer? <em>Answer: 0.5¹⁰ ≈ 0.001, about a thousandth.</em></p>
+<p><strong>2.</strong> Why does <code>out = x + layer(x)</code> help gradients? <em>Answer: the derivative of the "+ x" path is 1, so some gradient always passes straight through.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="num">9</span>Mini-batches, momentum, RMSProp and Adam</h2>
+
+<h3>Mini-batches: estimate the slope from a sample</h3>
+<div class="box intuition"><span class="tag">Intuition · tasting a spoonful</span>
+<p>To check whether a big pot of soup needs salt, you taste a spoonful, not the whole pot. The spoonful gives a slightly noisy but fast answer. Computing the gradient on all of the data for every step (<strong>batch</strong> gradient descent) is tasting the whole pot. Using one example (<strong>stochastic</strong> gradient descent) is tasting one drop. A <strong>mini-batch</strong> of 32 to 512 examples is the spoonful, and it's what almost everyone uses.</p>
+</div>
+<p>The mini-batch gradient points roughly downhill, with some noise. Much faster steps more than make up for the noise, and the noise even helps a little, nudging the model out of flat spots and shallow dips. One full pass over the data is called an <strong>epoch</strong>.</p>
+
+<h3>Smarter steps</h3>
+<p>Plain gradient descent struggled in the stretched valley of Section 4. Three classic upgrades target that problem:</p>
+<div class="tw"><table>
+<thead><tr><th>Optimiser</th><th>Analogy</th><th>Idea</th></tr></thead>
+<tbody>
+<tr><td><strong>Momentum</strong></td><td>A ball rolling downhill builds speed</td><td>Keep a running average of past gradients. Consistent directions add up; zig-zags across the valley cancel out.</td></tr>
+<tr><td><strong>RMSProp</strong></td><td>A hiker who shortens her stride on steep, jumpy ground</td><td>Keep a running average of each gradient's <em>size</em>, and divide by it. Steep directions get smaller steps, shallow directions bigger ones. Each weight gets its own effective learning rate.</td></tr>
+<tr><td><strong>Adam</strong></td><td>Both of the above</td><td>Momentum for direction plus RMSProp for step size, with a small correction for the first few steps.</td></tr>
+</tbody></table></div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python"># A stretched valley: steep across (w2), shallow along (w1) — like unscaled features
+def valley_loss(p): return 0.5 * (p[0] ** 2 + 25 * p[1] ** 2)
+def valley_grad(p): return np.array([p[0], 25 * p[1]])
+
+def sgd(p, g, s, lr):      return p - lr * g, s
+def momentum(p, g, s, lr, beta=0.9):
+    s[&quot;v&quot;] = beta * s.get(&quot;v&quot;, 0) + g                      # running direction
+    return p - lr * s[&quot;v&quot;], s
+def rmsprop(p, g, s, lr, beta=0.9, eps=1e-8):
+    s[&quot;sq&quot;] = beta * s.get(&quot;sq&quot;, 0) + (1 - beta) * g ** 2  # running size of each slope
+    return p - lr * g / (np.sqrt(s[&quot;sq&quot;]) + eps), s
+def adam(p, g, s, lr, b1=0.9, b2=0.999, eps=1e-8):
+    s[&quot;t&quot;] = s.get(&quot;t&quot;, 0) + 1
+    s[&quot;m&quot;] = b1 * s.get(&quot;m&quot;, 0) + (1 - b1) * g             # momentum part
+    s[&quot;v&quot;] = b2 * s.get(&quot;v&quot;, 0) + (1 - b2) * g ** 2        # RMSProp part
+    m_hat = s[&quot;m&quot;] / (1 - b1 ** s[&quot;t&quot;])                    # early-step bias correction
+    v_hat = s[&quot;v&quot;] / (1 - b2 ** s[&quot;t&quot;])
+    return p - lr * m_hat / (np.sqrt(v_hat) + eps), s
+
+def steps_to_converge(opt, lr, start=(-4.0, 1.5), tol=1e-4, max_steps=5000):
+    p, s = np.array(start), {}
+    for t in range(1, max_steps + 1):
+        p, s = opt(p, valley_grad(p), s, lr)
+        if not np.all(np.isfinite(p)) or valley_loss(p) &gt; 1e6:
+            return None                                    # diverged
+        if valley_loss(p) &lt; tol:
+            return t
+    return None
+
+# Fair comparison: give every optimiser its own best learning rate from the same grid
+grid = [0.001, 0.003, 0.01, 0.03, 0.05, 0.07, 0.1, 0.3, 0.5, 1.0]
+for name, opt in [(&quot;SGD&quot;, sgd), (&quot;Momentum&quot;, momentum), (&quot;RMSProp&quot;, rmsprop), (&quot;Adam&quot;, adam)]:
+    results = {lr: steps_to_converge(opt, lr) for lr in grid}
+    ok = {lr: s for lr, s in results.items() if s}
+    best_lr = min(ok, key=ok.get)
+    print(f&quot;{name:9s} best lr = {best_lr:&lt;5}  steps = {ok[best_lr]:4d}   (diverged at {sum(v is None for v in results.values())} of {len(grid)} rates)&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>SGD       best lr = 0.07   steps =   78   (diverged at 5 of 10 rates)
+Momentum  best lr = 0.05   steps =   78   (diverged at 3 of 10 rates)
+RMSProp   best lr = 0.5    steps =   11   (diverged at 3 of 10 rates)
+Adam      best lr = 0.3    steps =   96   (diverged at 1 of 10 rates)</pre></div>
+
+<p>Read these results honestly:</p>
+<ul>
+<li>On this particular valley, RMSProp reached the bottom fastest. Plain SGD and momentum tied, and Adam was slowest <em>in steps</em>.</li>
+<li>But look at the right-hand column. SGD diverged at half of the learning rates in the grid; Adam diverged at only one. Adam's real strength is <strong>robustness</strong>: it trains reasonably across a wide range of settings and on very different layers at once. That is why it (and its variant AdamW) became the default for deep learning, not because it always wins a race.</li>
+<li>Results depend on the problem. Well-tuned SGD with momentum is still a strong choice for some vision models.</li>
+</ul>
+
+<div class="widget" id="w-opt">
+<p class="wt">Try it: optimiser race on a stretched valley</p>
+<p class="wh">Each optimiser starts at its best learning rate from the code above. Use the multiplier to make every learning rate larger or smaller and see who survives.</p>
+<div class="ctrls"><label>learning-rate multiplier <input type="range" id="op-m" min="0.25" max="3" step="0.25" value="1"> <b id="op-mv">1×</b></label><label>steps shown <input type="range" id="op-s" min="5" max="150" step="5" value="60"> <b id="op-sv">60</b></label></div>
+<div class="lg" id="op-lg"></div>
+<svg class="chart" id="op-svg"></svg>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>In PyTorch these are <code>torch.optim.SGD(…, momentum=0.9)</code>, <code>RMSprop</code>, <code>Adam</code> and <code>AdamW</code>. AdamW applies <strong>weight decay</strong> (shrinking weights a little every step, the gradient of an L2 penalty from Part 1) separately from the adaptive scaling, which works better with Adam. It's the usual choice for transformers.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Mini-batches are what make training on millions of transactions practical: each step touches a few hundred rows, so models can be retrained daily, and data can stream from storage without fitting in memory.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> 10,000 examples, batch size 100. How many update steps in one epoch? <em>Answer: 100.</em></p>
+<p><strong>2.</strong> Why does momentum reduce zig-zagging? <em>Answer: the across-the-valley components alternate in sign and cancel in the running average, while the along-the-valley component accumulates.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="num">10</span>Learning-rate schedules</h2>
+
+<div class="box intuition"><span class="tag">Intuition · parking a car</span>
+<p>Pulling out of a parking space, you start slowly. On the open road you drive at full speed. Approaching your spot, you slow right down to place the car precisely. A learning-rate schedule does the same: a short <strong>warmup</strong> while the random starting weights produce wild gradients, full speed in the middle, then a gradual <strong>decay</strong> so the final steps can settle into the bottom of the valley instead of bouncing around it.</p>
+</div>
+
+<div class="widget" id="w-sch">
+<p class="wt">Try it: warmup + cosine decay</p>
+<p class="wh">Change the warmup length. Compare with a constant rate and step decay.</p>
+<div class="ctrls"><label>warmup (% of training) <input type="range" id="sc-w" min="0" max="30" step="1" value="10"> <b id="sc-wv">10%</b></label></div>
+<div class="lg"><span><i style="background:var(--verm)"></i>warmup + cosine</span><span><i style="background:var(--petrol)"></i>step decay</span><span><i style="background:var(--axis)"></i>constant</span></div>
+<svg class="chart" id="sc-svg"></svg>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def warmup_cosine(step, total=1000, warmup=100, lr_max=1e-3, lr_min=1e-5):
+    if step &lt; warmup:
+        return lr_max * (step + 1) / warmup                  # ramp up gently
+    progress = (step - warmup) / (total - warmup)            # 0 → 1 after warmup
+    return lr_min + 0.5 * (lr_max - lr_min) * (1 + np.cos(np.pi * progress))
+
+for step in [0, 50, 99, 100, 300, 550, 800, 999]:
+    print(f&quot;step {step:4d}: lr = {warmup_cosine(step):.2e}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>step    0: lr = 1.00e-05
+step   50: lr = 5.10e-04
+step   99: lr = 1.00e-03
+step  100: lr = 1.00e-03
+step  300: lr = 8.84e-04
+step  550: lr = 5.05e-04
+step  800: lr = 1.26e-04
+step  999: lr = 1.00e-05</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Warmup followed by cosine or linear decay is a common recipe in transformer training and in fine-tuning pretrained models. Frameworks provide schedulers (for example <code>torch.optim.lr_scheduler</code>), and libraries such as Hugging Face Transformers ship warmup schedules ready to use.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s11"><span class="num">11</span>How autograd works (what PyTorch does)</h2>
+
+<p>In Section 7 we wrote backprop by hand for one specific network. Frameworks do it automatically for any network you can write. The trick: make every number remember <em>which operation produced it</em> and <em>how to pass a gradient back through that operation</em>. Then <code>backward()</code> just walks the computational graph in reverse. Here's a complete working version in about 50 lines.</p>
+
+<div class="code solo"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">import math
+
+class Value:
+    &quot;&quot;&quot;A number that remembers how it was made, so it can send gradients back.&quot;&quot;&quot;
+    def __init__(self, data, parents=(), op=&quot;&quot;):
+        self.data, self.grad = data, 0.0
+        self._parents, self._op = parents, op
+        self._backward = lambda: None
+
+    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data + other.data, (self, other), &quot;+&quot;)
+        def _backward():                       # d(a+b)/da = 1, d(a+b)/db = 1
+            self.grad += out.grad
+            other.grad += out.grad
+        out._backward = _backward
+        return out
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data * other.data, (self, other), &quot;*&quot;)
+        def _backward():                       # d(ab)/da = b, d(ab)/db = a
+            self.grad += other.data * out.grad
+            other.grad += self.data * out.grad
+        out._backward = _backward
+        return out
+
+    def sigmoid(self):
+        s = 1 / (1 + math.exp(-self.data))
+        out = Value(s, (self,), &quot;sigmoid&quot;)
+        def _backward():
+            self.grad += s * (1 - s) * out.grad
+        out._backward = _backward
+        return out
+
+    def log(self):
+        out = Value(math.log(self.data), (self,), &quot;log&quot;)
+        def _backward():
+            self.grad += (1 / self.data) * out.grad
+        out._backward = _backward
+        return out
+
+    def backward(self):
+        order, seen = [], set()
+        def visit(v):                          # topological order: parents before children
+            if v not in seen:
+                seen.add(v)
+                for p in v._parents:
+                    visit(p)
+                order.append(v)
+        visit(self)
+        self.grad = 1.0                        # dL/dL = 1
+        for v in reversed(order):              # walk the graph backwards
+            v._backward()</code></pre></div>
+
+<p>Each operation stores a tiny <code>_backward</code> function containing its local slope rule from the table in Section 2. Now rebuild the one-neuron example from Section 5 and let the engine do the calculus:</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">w, b, x = Value(0.5), Value(-0.5), Value(2.0)
+L = ((w * x + b).sigmoid().log()) * -1      # same one-neuron example as Section 5
+L.backward()
+print(f&quot;L = {L.data:.4f}   dL/dw = {w.grad:.4f}   dL/db = {b.grad:.4f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>L = 0.4741   dL/dw = -0.7551   dL/db = -0.3775</pre></div>
+
+<p>Exactly the numbers we computed by hand in Section 5. In PyTorch the same example reads as follows (PyTorch isn't installed in the environment used to run this article, so run it yourself; you should see the same three numbers):</p>
+
+<div class="code"><div class="code-h"><span>Python · PyTorch (not run here)</span><button>Copy</button></div><pre><code class="language-python">import torch
+
+w = torch.tensor(0.5, requires_grad=True)
+b = torch.tensor(-0.5, requires_grad=True)
+x = torch.tensor(2.0)
+
+L = -torch.log(torch.sigmoid(w * x + b))
+L.backward()                        # walks the recorded graph in reverse
+print(L.item(), w.grad.item(), b.grad.item())</code></pre></div>
+<div style="height:1.2em"></div>
+
+<p>When you later write <code>loss.backward()</code> followed by <code>optimizer.step()</code> in a PyTorch training loop, you'll know what both lines mean: the first is Sections 5 and 7 (chain rule on the graph), the second is Sections 3 and 9 (an update rule).</p>
+
+<!-- ============================================================ -->
+<h2 id="s12"><span class="num">12</span>Bridge to DL/ML, mistakes, quiz and cheat sheet</h2>
+
+<h3>Where you'll meet these ideas next</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea from this article</th><th>Shows up later as…</th></tr></thead>
+<tbody>
+<tr><td>Loss functions (MSE, cross-entropy)</td><td>Softmax cross-entropy in every classifier; next-token loss in language models; custom losses for ranking and forecasting</td></tr>
+<tr><td><code>p − y</code></td><td>The output-layer gradient of logistic regression, softmax classifiers and LLMs</td></tr>
+<tr><td>Negative gradient</td><td><strong>Gradient boosting</strong>: each new tree is fitted to the negative gradient of the loss ("pseudo-residuals")</td></tr>
+<tr><td>Second derivative / curvature</td><td>XGBoost and LightGBM's use of second-order information; Newton and L-BFGS solvers in scikit-learn</td></tr>
+<tr><td>Feature scaling and round valleys</td><td>StandardScaler; batch norm and layer norm in deep nets</td></tr>
+<tr><td>Chain rule, computational graphs</td><td>Backprop in CNNs, RNNs (through time) and transformers; autograd in PyTorch, TensorFlow and JAX</td></tr>
+<tr><td>Vanishing / exploding gradients</td><td>ReLU/GELU, He/Xavier init, residual connections, LSTM/GRU gates, gradient clipping</td></tr>
+<tr><td>L2 penalty's gradient (2λw)</td><td>Weight decay and AdamW</td></tr>
+<tr><td>Mini-batches, epochs</td><td>DataLoaders, batch size tuning, distributed training</td></tr>
+<tr><td>Momentum, RMSProp, Adam</td><td><code>torch.optim</code>; optimiser choice for vision vs language models</td></tr>
+<tr><td>Learning-rate schedules</td><td>Warmup in transformer training and fine-tuning</td></tr>
+<tr><td>Gradient w.r.t. the <em>input</em></td><td>Saliency maps for explaining predictions; adversarial examples</td></tr>
+</tbody></table></div>
+
+<h3>Where each idea earns money</h3>
+<div class="tw"><table>
+<thead><tr><th>Concept</th><th>Business use</th></tr></thead>
+<tbody>
+<tr><td>Loss function choice</td><td>Encoding real costs: asymmetric losses for inventory, cost-weighted losses for fraud</td></tr>
+<tr><td>Derivative</td><td>Marginal return on ad spend, price elasticity</td></tr>
+<tr><td>Partial derivatives</td><td>"What if we change only this lever?" sensitivity tables</td></tr>
+<tr><td>Chain rule</td><td>Driver trees: price → demand → revenue → profit</td></tr>
+<tr><td>Logistic regression + cross-entropy</td><td>Credit risk, churn propensity, click-through prediction</td></tr>
+<tr><td>Neural networks + backprop</td><td>Non-linear response, images, text, recommendations</td></tr>
+<tr><td>Mini-batch training</td><td>Daily retraining on millions of rows</td></tr>
+<tr><td>Learning-rate tuning</td><td>Lower compute cost, fewer failed training runs</td></tr>
+</tbody></table></div>
+
+<h3>Common mistakes and fixes</h3>
+<div class="box mistake"><span class="tag">Mistakes and fixes</span>
+<ol>
+<li><strong>Stepping <em>with</em> the gradient.</strong> <code>w += lr * grad</code> climbs uphill. The update subtracts.</li>
+<li><strong>Loss becomes <code>nan</code>.</strong> Learning rate too high, unscaled features, or <code>log(0)</code>. Lower the rate, scale inputs, clip probabilities before taking logs.</li>
+<li><strong>Training is painfully slow.</strong> Features on very different scales (zig-zag valley). Standardise them.</li>
+<li><strong>MSE for classification.</strong> Use cross-entropy; MSE + sigmoid gives weak gradients when confidently wrong.</li>
+<li><strong>Trusting hand-written gradients.</strong> Run a gradient check against the nudge test.</li>
+<li><strong>Deep sigmoid networks.</strong> Use ReLU-family activations with He initialisation, and residual connections for depth.</li>
+<li><strong>Reading training accuracy as success.</strong> Always check on held-out data.</li>
+</ol>
+</div>
+
+<h3>Quiz</h3>
+<div class="widget quiz" id="quiz"><p class="wt">Eight questions. Click an answer to see why.</p><div id="quiz-body"></div><p class="readout">Score: <span class="score" id="quiz-score">0 / 8</span></p></div>
+
+<h3>Cheat sheet</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea</th><th>One line</th><th>Formula / code</th></tr></thead>
+<tbody>
+<tr><td>Loss (MSE)</td><td>Average squared error</td><td><code>np.mean((pred - y)**2)</code></td></tr>
+<tr><td>Loss (cross-entropy)</td><td>Punishes confident wrong probabilities</td><td><code>-mean(y·log p + (1-y)·log(1-p))</code></td></tr>
+<tr><td>Derivative</td><td>Slope; sign says which way is uphill</td><td><code>(f(w+h) - f(w-h)) / 2h</code></td></tr>
+<tr><td>Partial derivative</td><td>Slope along one weight, others frozen</td><td><code>∂L/∂w</code></td></tr>
+<tr><td>Gradient</td><td>Vector of all partials; points uphill</td><td><code>∇L</code></td></tr>
+<tr><td>Gradient descent</td><td>Step against the gradient</td><td><code>w -= lr * grad</code></td></tr>
+<tr><td>Safe learning rate</td><td>Below 2 ÷ curvature (bowl-shaped loss)</td><td>try 0.001, 0.003, 0.01, 0.03…</td></tr>
+<tr><td>Chain rule</td><td>Rates along a chain multiply</td><td><code>dL/dw = dL/dp · dp/dz · dz/dw</code></td></tr>
+<tr><td>Sigmoid + cross-entropy</td><td>Gradient w.r.t. z is simple</td><td><code>p - y</code></td></tr>
+<tr><td>Backprop (one layer)</td><td>Weight gradient, then pass error back</td><td><code>dW = Xᵀ @ dZ</code>, <code>dX = dZ @ Wᵀ</code></td></tr>
+<tr><td>Gradient check</td><td>Compare backprop with the nudge test</td><td>agree to ~6 digits</td></tr>
+<tr><td>Clipping</td><td>Cap gradient length</td><td><code>g * max_norm / ‖g‖</code></td></tr>
+<tr><td>Momentum / RMSProp / Adam</td><td>Smooth direction / per-weight step size / both</td><td><code>torch.optim.*</code></td></tr>
+</tbody></table></div>
+
+<h3>Wrapping up the series</h3>
+<p>Part 1 gave you the language: data as vectors and matrices, predictions as dot products, layers as matrix multiplications. Part 2 gave you the engine: a loss to measure error, derivatives to find which way is downhill, the chain rule to push that information back through every layer, and update rules to take the step. The bicycle loop from the introduction (try, measure, adjust, repeat) is now something you can write in NumPy. Every algorithm in the rest of the series, from regularised regression to gradient boosting to transformers, is a variation on these two parts.</p>
+
+<footer>Mathematics for Machine Learning · Part 2 of 2. All Python outputs shown were produced by running the NumPy code in this article (the PyTorch snippet is marked as not run). Interactive figures run in your browser, using the same data and formulas.</footer>
+</main>
+
+<script>const DATA = {"ad":[6.6,9.1,8.0,3.0,3.7,8.9,1.0,8.4,8.2,5.2,3.7,3.5,3.3,5.0,5.5,6.0,10.0,8.1,6.6,9.9],"sales":[24.1,34.8,29.5,17.5,19.4,34.3,6.0,32.1,32.5,23.8,16.0,17.5,15.9,21.4,26.6,24.4,37.9,34.1,26.6,37.5],"cx":[[0.274,-0.46],[-0.918,-0.967],[0.627,0.826],[0.213,0.459],[0.087,0.87],[0.632,-0.995],[0.715,-0.933],[0.459,-0.649],[0.726,0.083],[-0.401,-0.155],[-0.943,-0.751],[0.341,0.294],[0.231,-0.233],[0.994,0.962],[0.371,0.301],[0.377,-0.222],[-0.73,0.443],[0.051,-0.38],[-0.028,0.779],[0.868,-0.284],[0.143,-0.356],[0.189,-0.324],[-0.217,0.781],[-0.546,0.246],[-0.832,0.665],[0.574,-0.521],[0.753,-0.883],[-0.328,-0.699],[-0.099,0.593],[-0.539,-0.896],[-0.191,-0.603],[-0.818,0.161],[-0.403,0.344],[-0.601,0.884],[-0.27,-0.789],[0.258,0.854],[-0.119,0.909],[-0.0,-0.15],[0.24,0.99],[0.898,-0.08],[0.515,-0.005],[0.059,0.572],[-0.171,0.469],[0.422,0.864],[-0.77,0.458],[0.855,0.936],[-0.971,0.727],[0.962,0.914],[-0.702,0.945],[0.78,0.645],[-0.04,-0.535],[0.604,0.847],[-0.468,0.078],[-0.114,0.862],[-0.919,0.464],[0.229,-0.943],[0.438,-0.968],[0.516,0.026],[0.858,-0.868],[0.683,-0.867],[-0.311,-0.139],[0.932,0.124],[-0.482,-0.517],[0.776,-0.548],[-0.751,-0.423],[0.172,0.108],[0.619,0.121],[-0.423,-0.174],[0.636,0.253],[0.918,-0.261],[0.105,0.188],[0.697,-0.709],[-0.187,0.82],[-0.914,0.645],[-0.169,0.66],[-0.98,-0.27],[-0.843,0.305],[-0.452,0.405],[0.888,-0.746],[0.73,-0.881],[-0.238,-0.14],[-0.022,0.953],[0.551,-0.382],[-0.46,0.726],[0.763,0.021],[-0.311,0.99],[-0.368,-0.635],[0.76,0.625],[0.336,0.917],[0.851,0.496],[0.721,-0.506],[-0.718,0.34],[0.429,-0.666],[-0.209,0.821],[0.123,0.157],[-0.612,0.052],[0.047,-0.822],[0.964,0.143],[-0.987,0.545],[0.957,0.18],[-0.361,-0.625],[0.345,-0.61],[0.155,0.204],[0.925,-0.855],[-0.0,0.488],[-0.646,-0.224],[-0.874,0.452],[-0.824,-0.21],[0.747,-0.055],[0.825,0.532],[0.831,-0.745],[-0.853,-0.859],[0.738,0.268],[-0.007,-0.673],[0.347,-0.364],[0.422,-0.079],[0.015,0.579],[-0.815,0.158],[-0.606,0.616],[-0.022,0.977],[-0.634,0.926],[0.602,-0.037],[0.627,0.206],[0.31,0.827],[-0.869,0.67],[-0.236,-0.349],[0.988,0.562],[-0.029,-0.155],[0.755,-0.826],[0.417,0.578],[0.598,-0.355],[0.593,-0.549],[-0.275,-0.165],[0.083,-0.775],[-0.186,-0.999],[0.489,0.704],[-0.722,0.408],[0.642,0.964],[0.688,-0.152],[0.959,0.948],[0.007,0.507],[0.828,-0.048],[0.728,0.403],[-0.412,0.535],[0.141,-0.812],[-0.217,-0.853],[-0.048,-0.143],[-0.153,0.173],[-0.755,0.868],[0.368,0.648],[0.794,0.167],[-0.92,0.423],[0.138,0.652],[0.064,0.626],[0.994,-0.299],[-0.658,-0.217],[0.506,-0.122],[0.177,-0.745],[0.452,-0.44],[-0.619,0.726],[0.129,-0.031],[0.798,-0.828],[0.392,-0.344],[-0.649,0.35],[-0.274,-0.34],[0.887,-0.601],[0.024,-0.952],[-0.673,0.767],[0.578,0.114],[-0.555,0.115],[-0.976,0.426],[0.434,0.292],[0.223,-0.853],[-0.507,0.149],[-0.212,0.984],[0.847,-0.696],[0.18,0.392],[-0.727,-0.375],[0.432,0.802],[-0.317,-0.522],[0.644,0.17],[-0.047,-0.488],[-0.855,-0.964],[0.16,-0.618],[0.951,-0.785],[-0.096,-0.211],[-0.535,0.498],[0.287,0.452],[-0.834,-0.295],[0.04,-0.147],[-0.919,-0.612],[0.89,-0.675],[0.704,0.644],[-0.217,-0.066],[0.648,0.361],[0.674,0.515],[0.383,0.826],[0.646,-0.642],[0.496,-0.827],[-0.148,-0.206],[-0.596,0.876],[-0.81,-0.99],[-0.354,0.981],[-0.471,0.661],[-0.654,0.173],[0.917,0.433],[0.961,0.149],[0.967,0.674],[0.556,0.777],[0.263,-0.287],[0.057,-0.547],[0.555,-0.66],[0.154,0.072],[0.344,0.521],[-0.78,0.25],[-0.172,0.228],[0.388,0.171],[0.466,0.04],[-0.074,-0.426],[-0.542,0.391],[0.391,-0.609],[0.944,0.342],[0.062,0.682],[-0.027,-0.048],[-0.483,-0.688],[0.423,0.688],[0.356,-0.262],[0.151,0.127],[0.873,-0.225],[-0.67,0.754],[0.789,-0.903],[-0.604,0.273],[0.578,0.213],[-0.617,-0.765],[0.012,0.631],[-0.566,-0.85],[0.102,-0.616],[-0.865,0.547],[0.642,-0.203],[-0.412,-0.446],[-0.278,0.154],[0.056,-0.289],[0.275,0.352],[0.117,-0.225],[0.248,0.184],[-0.319,-0.394],[0.091,0.225],[0.222,-0.234],[0.132,0.972],[-0.144,0.686],[-0.837,0.75],[0.883,-0.476],[-0.976,-0.034],[-0.635,0.943],[0.795,0.921],[0.208,0.03],[0.665,0.305],[-0.503,0.869],[-0.121,0.547],[0.002,-0.633],[-0.408,0.149],[-0.714,-0.973],[-0.132,0.524],[0.228,-0.352],[0.434,-0.031],[0.999,0.552],[0.661,-0.481],[-0.695,-0.601],[-0.135,0.024],[-0.611,0.56],[0.737,-0.368],[0.016,0.189],[0.445,-0.705],[-0.438,0.461],[0.136,0.8],[-0.104,-0.187],[-0.387,-0.537],[0.302,-0.471],[0.725,-0.459],[0.347,0.136],[0.257,0.791],[-0.66,-0.7],[-0.756,-0.847],[0.068,-0.669],[0.614,-0.955],[-0.251,-0.054],[-0.567,-0.288],[-0.554,-0.436],[0.854,-0.166],[-0.228,0.222],[0.328,0.321],[-0.83,0.164],[0.472,0.591],[0.177,-0.739],[-0.833,-0.354],[0.855,-0.055],[0.791,-0.081],[0.51,-0.03],[0.417,-0.366],[0.78,-0.469],[-0.988,0.442],[0.353,0.314],[0.375,0.173],[-0.769,0.338],[-0.987,-0.634],[-0.158,-0.243],[-0.762,-0.146],[0.247,-0.245],[0.417,-0.538],[-0.712,0.498],[0.337,-0.141],[-0.726,0.327],[0.5,-0.672],[0.379,-0.289],[0.83,0.503],[-0.453,0.876],[-0.95,-0.63],[-0.516,0.464],[0.052,-0.071],[-0.555,0.513],[-0.766,-0.505],[0.613,-0.098],[0.754,0.203],[0.579,-0.625],[-0.368,-0.247],[-0.012,-0.055],[0.645,-0.654],[0.703,0.778],[-0.849,-0.981],[-0.414,-0.199],[0.941,-0.857],[0.563,-0.049],[-0.74,-0.268],[-0.238,-0.513],[-0.411,-0.16],[0.925,-0.082],[0.9,-0.939],[-0.868,-0.944],[0.332,-0.56],[0.153,0.591],[-0.336,-0.509],[0.451,-0.048],[-0.702,-0.825],[0.474,0.721],[0.781,0.02],[-0.693,-0.549],[-0.093,0.704],[0.3,-0.452],[0.512,-0.129],[0.966,-0.143],[0.674,-0.971],[0.436,-0.203],[-0.002,-0.602],[0.859,-0.601],[0.123,0.195],[0.717,-0.067],[0.66,0.048],[0.913,0.433],[0.824,0.885],[0.604,-0.755],[-0.751,0.232],[-0.458,-0.23],[-0.652,0.524],[0.709,-0.734],[0.034,-0.21],[0.58,-0.07],[0.462,0.132],[0.956,-0.161],[0.975,-0.169],[-0.635,0.564],[-0.457,0.132],[0.292,-0.601],[-0.931,0.974],[0.635,-0.753],[0.696,-0.484],[-0.505,0.545],[0.515,0.692],[-0.727,0.495],[-0.06,-0.348],[0.469,0.69],[-0.355,-0.69],[0.983,0.838],[-0.42,0.629],[-0.821,0.825],[0.549,-0.606],[-0.409,0.191],[-0.288,0.472],[0.185,-0.586],[0.22,-0.972],[-0.777,-0.678],[-0.293,-0.976],[0.86,-0.521],[-0.459,-0.249],[0.881,-0.296],[-0.138,-0.403],[0.952,-0.27],[-0.833,0.316],[0.433,-0.256],[-0.577,-0.181],[-0.122,0.991]],"cy":[1,0,0,1,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0,1,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1,1,0,1,0,1,0,0,1,0,0,1,1,1,0,1,0,1,0,1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,1,1,1,1,1,0,0,0,1,0,0,1,1,0,0,0,1,1,0,1,0,1,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,1,1,1,0,1,1,1,0,0,0,1,0,0,1,0,1,0,1,1,1,0,1,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,1,0,0,0,1,0,1,0,1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,1,1,0,1,0,1,0,0,0,0,1,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,0,0,0,0,1,0,1,0,0,1,1,0],"snaps":{"0":{"grid":[0.406,0.407,0.408,0.409,0.411,0.412,0.414,0.415,0.417,0.419,0.421,0.423,0.426,0.428,0.431,0.433,0.436,0.439,0.442,0.445,0.448,0.451,0.454,0.457,0.46,0.463,0.466,0.469,0.472,0.475,0.478,0.481,0.484,0.487,0.489,0.492,0.495,0.497,0.5,0.502,0.505,0.408,0.409,0.41,0.411,0.412,0.414,0.415,0.417,0.418,0.42,0.422,0.424,0.427,0.429,0.431,0.434,0.437,0.439,0.442,0.445,0.448,0.451,0.454,0.457,0.46,0.463,0.466,0.469,0.472,0.475,0.478,0.481,0.484,0.487,0.49,0.492,0.495,0.498,0.5,0.503,0.505,0.41,0.411,0.412,0.413,0.414,0.416,0.417,0.418,0.42,0.422,0.424,0.426,0.428,0.43,0.432,0.435,0.437,0.44,0.443,0.446,0.448,0.451,0.454,0.457,0.46,0.464,0.467,0.47,0.473,0.476,0.479,0.482,0.484,0.487,0.49,0.493,0.496,0.498,0.501,0.503,0.506,0.412,0.413,0.414,0.415,0.417,0.418,0.419,0.42,0.422,0.423,0.425,0.427,0.429,0.431,0.433,0.436,0.438,0.441,0.443,0.446,0.449,0.452,0.455,0.458,0.461,0.464,0.467,0.47,0.473,0.476,0.479,0.482,0.485,0.488,0.491,0.493,0.496,0.499,0.502,0.504,0.507,0.414,0.415,0.416,0.418,0.419,0.42,0.421,0.422,0.424,0.425,0.427,0.429,0.43,0.432,0.435,0.437,0.439,0.442,0.444,0.447,0.45,0.453,0.455,0.458,0.461,0.464,0.467,0.471,0.474,0.477,0.48,0.483,0.486,0.488,0.491,0.494,0.497,0.5,0.502,0.505,0.508,0.416,0.417,0.419,0.42,0.421,0.422,0.424,0.425,0.426,0.427,0.429,0.431,0.432,0.434,0.436,0.438,0.44,0.443,0.445,0.448,0.451,0.453,0.456,0.459,0.462,0.465,0.468,0.471,0.474,0.477,0.48,0.483,0.486,0.489,0.492,0.495,0.498,0.501,0.504,0.506,0.509,0.418,0.42,0.421,0.422,0.424,0.425,0.426,0.427,0.428,0.43,0.431,0.433,0.434,0.436,0.438,0.44,0.442,0.444,0.447,0.449,0.452,0.455,0.457,0.46,0.463,0.466,0.469,0.472,0.475,0.478,0.481,0.484,0.487,0.49,0.493,0.496,0.499,0.502,0.505,0.508,0.51,0.42,0.422,0.423,0.425,0.426,0.427,0.429,0.43,0.431,0.432,0.434,0.435,0.437,0.438,0.44,0.442,0.444,0.446,0.448,0.451,0.453,0.456,0.459,0.461,0.464,0.467,0.47,0.473,0.476,0.479,0.482,0.485,0.488,0.491,0.494,0.497,0.5,0.503,0.506,0.509,0.512,0.422,0.424,0.426,0.427,0.429,0.43,0.431,0.433,0.434,0.435,0.436,0.438,0.439,0.441,0.442,0.444,0.446,0.448,0.45,0.453,0.455,0.458,0.46,0.463,0.466,0.469,0.472,0.475,0.478,0.481,0.484,0.487,0.49,0.493,0.496,0.499,0.502,0.505,0.508,0.511,0.513,0.425,0.426,0.428,0.43,0.431,0.433,0.434,0.435,0.437,0.438,0.439,0.441,0.442,0.444,0.445,0.447,0.449,0.451,0.453,0.455,0.457,0.46,0.462,0.465,0.467,0.47,0.473,0.476,0.479,0.482,0.485,0.488,0.491,0.494,0.498,0.501,0.504,0.507,0.51,0.513,0.515,0.427,0.429,0.431,0.432,0.434,0.436,0.437,0.438,0.44,0.441,0.442,0.444,0.445,0.447,0.448,0.45,0.451,0.453,0.455,0.457,0.459,0.462,0.464,0.467,0.469,0.472,0.475,0.478,0.481,0.484,0.487,0.49,0.493,0.496,0.499,0.503,0.506,0.509,0.512,0.515,0.518,0.429,0.431,0.433,0.435,0.437,0.438,0.44,0.442,0.443,0.444,0.446,0.447,0.448,0.45,0.451,0.453,0.454,0.456,0.458,0.46,0.462,0.464,0.467,0.469,0.472,0.475,0.477,0.48,0.483,0.486,0.489,0.492,0.495,0.498,0.502,0.505,0.508,0.511,0.514,0.517,0.52,0.431,0.434,0.436,0.438,0.44,0.441,0.443,0.445,0.446,0.448,0.449,0.451,0.452,0.453,0.455,0.456,0.458,0.46,0.461,0.463,0.465,0.467,0.47,0.472,0.474,0.477,0.48,0.483,0.486,0.489,0.492,0.495,0.498,0.501,0.504,0.507,0.51,0.513,0.516,0.52,0.523,0.434,0.436,0.438,0.44,0.442,0.444,0.446,0.448,0.45,0.451,0.453,0.454,0.456,0.457,0.459,0.46,0.462,0.463,0.465,0.467,0.469,0.471,0.473,0.475,0.477,0.48,0.483,0.485,0.488,0.491,0.494,0.497,0.5,0.503,0.507,0.51,0.513,0.516,0.519,0.522,0.525,0.436,0.439,0.441,0.443,0.445,0.447,0.449,0.451,0.453,0.455,0.456,0.458,0.46,0.461,0.462,0.464,0.465,0.467,0.469,0.47,0.472,0.474,0.476,0.479,0.481,0.483,0.486,0.489,0.491,0.494,0.497,0.5,0.503,0.506,0.509,0.513,0.516,0.519,0.522,0.525,0.528,0.439,0.441,0.444,0.446,0.448,0.451,0.453,0.455,0.457,0.459,0.46,0.462,0.464,0.465,0.467,0.468,0.47,0.471,0.473,0.475,0.476,0.478,0.48,0.482,0.485,0.487,0.489,0.492,0.495,0.498,0.5,0.503,0.506,0.509,0.513,0.516,0.519,0.522,0.525,0.528,0.531,0.441,0.444,0.446,0.449,0.451,0.454,0.456,0.458,0.46,0.462,0.464,0.466,0.468,0.469,0.471,0.473,0.474,0.476,0.477,0.479,0.481,0.482,0.484,0.486,0.489,0.491,0.493,0.496,0.498,0.501,0.504,0.507,0.51,0.513,0.516,0.519,0.522,0.525,0.528,0.532,0.535,0.444,0.447,0.449,0.452,0.455,0.457,0.459,0.462,0.464,0.466,0.468,0.47,0.472,0.474,0.475,0.477,0.479,0.48,0.482,0.484,0.485,0.487,0.489,0.491,0.493,0.495,0.497,0.5,0.502,0.505,0.508,0.51,0.513,0.516,0.519,0.522,0.525,0.529,0.532,0.535,0.538,0.447,0.45,0.452,0.455,0.458,0.46,0.463,0.465,0.468,0.47,0.472,0.474,0.476,0.478,0.48,0.482,0.483,0.485,0.487,0.488,0.49,0.492,0.494,0.495,0.497,0.499,0.502,0.504,0.506,0.509,0.511,0.514,0.517,0.52,0.523,0.526,0.529,0.532,0.535,0.538,0.541,0.45,0.453,0.455,0.458,0.461,0.464,0.466,0.469,0.472,0.474,0.476,0.479,0.481,0.483,0.485,0.487,0.488,0.49,0.492,0.493,0.495,0.497,0.498,0.5,0.502,0.504,0.506,0.508,0.511,0.513,0.515,0.518,0.521,0.523,0.526,0.529,0.532,0.535,0.538,0.541,0.544,0.453,0.456,0.459,0.462,0.464,0.467,0.47,0.473,0.475,0.478,0.481,0.483,0.485,0.487,0.489,0.491,0.493,0.495,0.497,0.498,0.5,0.502,0.503,0.505,0.507,0.509,0.511,0.513,0.515,0.517,0.519,0.522,0.525,0.527,0.53,0.533,0.536,0.538,0.541,0.544,0.547,0.456,0.459,0.462,0.465,0.468,0.471,0.474,0.477,0.479,0.482,0.485,0.487,0.489,0.492,0.494,0.496,0.498,0.5,0.502,0.503,0.505,0.507,0.508,0.51,0.512,0.513,0.515,0.517,0.519,0.521,0.524,0.526,0.528,0.531,0.534,0.536,0.539,0.542,0.545,0.547,0.55,0.459,0.462,0.465,0.468,0.471,0.474,0.477,0.48,0.483,0.486,0.489,0.491,0.494,0.496,0.498,0.501,0.503,0.505,0.506,0.508,0.51,0.512,0.513,0.515,0.517,0.518,0.52,0.522,0.524,0.526,0.528,0.53,0.532,0.535,0.537,0.54,0.542,0.545,0.548,0.55,0.553,0.462,0.465,0.468,0.471,0.475,0.478,0.481,0.484,0.487,0.49,0.492,0.495,0.498,0.5,0.503,0.505,0.507,0.509,0.511,0.513,0.515,0.516,0.518,0.52,0.521,0.523,0.525,0.526,0.528,0.53,0.532,0.534,0.536,0.538,0.541,0.543,0.545,0.548,0.551,0.553,0.556,0.465,0.468,0.472,0.475,0.478,0.481,0.484,0.487,0.49,0.493,0.496,0.499,0.502,0.504,0.507,0.509,0.511,0.514,0.516,0.518,0.519,0.521,0.523,0.524,0.526,0.527,0.529,0.531,0.532,0.534,0.536,0.538,0.54,0.542,0.544,0.546,0.549,0.551,0.554,0.556,0.559,0.469,0.472,0.475,0.478,0.481,0.484,0.487,0.491,0.494,0.497,0.5,0.502,0.505,0.508,0.511,0.513,0.515,0.518,0.52,0.522,0.524,0.525,0.527,0.529,0.53,0.532,0.533,0.535,0.536,0.538,0.54,0.541,0.543,0.545,0.547,0.549,0.552,0.554,0.556,0.559,0.561,0.472,0.475,0.478,0.481,0.484,0.487,0.491,0.494,0.497,0.5,0.503,0.506,0.509,0.511,0.514,0.517,0.519,0.521,0.524,0.526,0.528,0.53,0.531,0.533,0.535,0.536,0.538,0.539,0.54,0.542,0.544,0.545,0.547,0.549,0.551,0.553,0.555,0.557,0.559,0.561,0.564,0.475,0.478,0.481,0.484,0.487,0.49,0.493,0.497,0.5,0.503,0.506,0.509,0.512,0.515,0.517,0.52,0.523,0.525,0.527,0.529,0.531,0.533,0.535,0.537,0.538,0.54,0.541,0.543,0.544,0.546,0.547,0.549,0.55,0.552,0.554,0.556,0.558,0.56,0.562,0.564,0.566,0.477,0.48,0.484,0.487,0.49,0.493,0.496,0.499,0.502,0.505,0.508,0.511,0.514,0.517,0.52,0.523,0.526,0.528,0.53,0.533,0.535,0.537,0.539,0.54,0.542,0.544,0.545,0.547,0.548,0.549,0.551,0.552,0.554,0.555,0.557,0.559,0.56,0.562,0.564,0.566,0.569,0.48,0.483,0.486,0.489,0.492,0.495,0.498,0.502,0.505,0.508,0.511,0.514,0.517,0.52,0.523,0.525,0.528,0.531,0.533,0.536,0.538,0.54,0.542,0.544,0.546,0.547,0.549,0.55,0.552,0.553,0.554,0.556,0.557,0.558,0.56,0.562,0.563,0.565,0.567,0.569,0.571,0.482,0.485,0.488,0.491,0.494,0.497,0.501,0.504,0.507,0.51,0.513,0.516,0.519,0.522,0.525,0.528,0.531,0.533,0.536,0.538,0.541,0.543,0.545,0.547,0.549,0.55,0.552,0.553,0.555,0.556,0.558,0.559,0.56,0.562,0.563,0.564,0.566,0.568,0.569,0.571,0.573,0.485,0.487,0.49,0.493,0.496,0.499,0.502,0.506,0.509,0.512,0.515,0.518,0.521,0.524,0.527,0.53,0.533,0.535,0.538,0.54,0.543,0.545,0.547,0.549,0.551,0.553,0.555,0.556,0.558,0.559,0.561,0.562,0.563,0.565,0.566,0.567,0.569,0.57,0.572,0.574,0.575,0.487,0.489,0.492,0.495,0.498,0.501,0.504,0.507,0.51,0.513,0.516,0.519,0.522,0.525,0.528,0.531,0.534,0.537,0.54,0.542,0.545,0.547,0.55,0.552,0.554,0.556,0.558,0.559,0.561,0.562,0.564,0.565,0.566,0.567,0.569,0.57,0.571,0.573,0.574,0.576,0.578,0.488,0.491,0.494,0.497,0.5,0.503,0.506,0.509,0.512,0.515,0.518,0.521,0.524,0.527,0.53,0.533,0.536,0.539,0.541,0.544,0.547,0.549,0.552,0.554,0.556,0.558,0.56,0.562,0.563,0.565,0.566,0.568,0.569,0.57,0.571,0.573,0.574,0.575,0.577,0.578,0.58,0.49,0.492,0.495,0.498,0.501,0.504,0.507,0.51,0.513,0.516,0.519,0.522,0.525,0.528,0.531,0.534,0.537,0.54,0.543,0.545,0.548,0.551,0.553,0.556,0.558,0.56,0.562,0.564,0.566,0.567,0.569,0.57,0.572,0.573,0.574,0.575,0.576,0.578,0.579,0.58,0.582,0.491,0.494,0.496,0.499,0.502,0.505,0.508,0.511,0.514,0.517,0.52,0.523,0.526,0.529,0.532,0.535,0.538,0.541,0.544,0.547,0.549,0.552,0.555,0.557,0.56,0.562,0.564,0.566,0.568,0.569,0.571,0.573,0.574,0.575,0.576,0.578,0.579,0.58,0.581,0.583,0.584,0.492,0.495,0.498,0.5,0.503,0.506,0.509,0.512,0.514,0.517,0.52,0.523,0.526,0.529,0.533,0.536,0.539,0.542,0.545,0.547,0.55,0.553,0.556,0.558,0.561,0.563,0.565,0.568,0.57,0.571,0.573,0.575,0.576,0.578,0.579,0.58,0.581,0.582,0.584,0.585,0.586,0.493,0.496,0.498,0.501,0.504,0.507,0.509,0.512,0.515,0.518,0.521,0.524,0.527,0.53,0.533,0.536,0.539,0.542,0.545,0.548,0.551,0.554,0.557,0.559,0.562,0.564,0.567,0.569,0.571,0.573,0.575,0.577,0.578,0.58,0.581,0.582,0.583,0.585,0.586,0.587,0.588,0.494,0.497,0.499,0.502,0.504,0.507,0.51,0.513,0.516,0.518,0.521,0.524,0.527,0.53,0.533,0.536,0.54,0.543,0.546,0.549,0.552,0.554,0.557,0.56,0.563,0.565,0.568,0.57,0.572,0.574,0.576,0.578,0.58,0.582,0.583,0.584,0.586,0.587,0.588,0.589,0.59,0.495,0.497,0.5,0.502,0.505,0.508,0.51,0.513,0.516,0.519,0.522,0.525,0.528,0.531,0.534,0.537,0.54,0.543,0.546,0.549,0.552,0.555,0.558,0.561,0.563,0.566,0.569,0.571,0.573,0.576,0.578,0.58,0.582,0.583,0.585,0.586,0.588,0.589,0.59,0.591,0.592,0.495,0.498,0.5,0.503,0.505,0.508,0.511,0.513,0.516,0.519,0.522,0.525,0.528,0.531,0.534,0.537,0.54,0.543,0.546,0.549,0.552,0.555,0.558,0.561,0.564,0.567,0.569,0.572,0.574,0.577,0.579,0.581,0.583,0.585,0.586,0.588,0.589,0.591,0.592,0.593,0.594],"loss":0.7038,"acc":0.47},"50":{"grid":[0.479,0.48,0.481,0.481,0.479,0.477,0.473,0.468,0.462,0.454,0.445,0.435,0.425,0.413,0.401,0.388,0.376,0.363,0.35,0.338,0.327,0.316,0.306,0.297,0.289,0.282,0.275,0.269,0.264,0.259,0.256,0.252,0.25,0.247,0.246,0.244,0.243,0.242,0.241,0.241,0.241,0.481,0.484,0.486,0.486,0.486,0.485,0.482,0.478,0.473,0.466,0.459,0.45,0.44,0.429,0.417,0.405,0.392,0.379,0.366,0.354,0.342,0.33,0.319,0.309,0.3,0.292,0.284,0.278,0.272,0.267,0.262,0.258,0.255,0.252,0.25,0.248,0.247,0.245,0.245,0.244,0.244,0.484,0.487,0.489,0.491,0.492,0.491,0.49,0.487,0.483,0.478,0.471,0.463,0.454,0.444,0.433,0.421,0.409,0.396,0.383,0.37,0.357,0.345,0.333,0.323,0.313,0.303,0.295,0.287,0.281,0.275,0.269,0.265,0.261,0.258,0.255,0.253,0.251,0.249,0.248,0.247,0.247,0.485,0.489,0.492,0.495,0.496,0.497,0.497,0.495,0.492,0.488,0.483,0.476,0.468,0.459,0.448,0.437,0.425,0.413,0.4,0.386,0.373,0.361,0.349,0.337,0.326,0.316,0.306,0.298,0.29,0.283,0.277,0.272,0.268,0.264,0.26,0.258,0.255,0.253,0.252,0.251,0.25,0.487,0.491,0.495,0.498,0.501,0.502,0.503,0.502,0.5,0.497,0.493,0.488,0.481,0.473,0.463,0.453,0.441,0.429,0.417,0.404,0.39,0.377,0.364,0.352,0.34,0.329,0.319,0.31,0.301,0.293,0.286,0.28,0.275,0.27,0.267,0.263,0.26,0.258,0.256,0.255,0.253,0.487,0.492,0.497,0.501,0.504,0.506,0.508,0.508,0.508,0.506,0.503,0.498,0.493,0.486,0.477,0.468,0.457,0.446,0.434,0.421,0.408,0.394,0.381,0.368,0.356,0.344,0.333,0.322,0.313,0.304,0.296,0.289,0.283,0.278,0.273,0.269,0.266,0.263,0.261,0.259,0.257,0.488,0.493,0.498,0.503,0.507,0.51,0.512,0.513,0.514,0.513,0.511,0.508,0.503,0.498,0.491,0.482,0.473,0.462,0.45,0.438,0.425,0.412,0.398,0.385,0.372,0.359,0.347,0.336,0.325,0.316,0.307,0.299,0.292,0.286,0.281,0.276,0.272,0.269,0.266,0.263,0.261,0.488,0.494,0.499,0.504,0.509,0.512,0.516,0.518,0.519,0.519,0.519,0.517,0.513,0.509,0.503,0.496,0.487,0.477,0.466,0.455,0.442,0.429,0.416,0.402,0.388,0.375,0.363,0.351,0.339,0.329,0.319,0.31,0.302,0.295,0.289,0.284,0.279,0.275,0.271,0.268,0.266,0.488,0.494,0.5,0.505,0.51,0.515,0.518,0.521,0.524,0.525,0.525,0.524,0.522,0.519,0.514,0.508,0.5,0.492,0.482,0.471,0.459,0.446,0.433,0.419,0.406,0.392,0.379,0.366,0.354,0.342,0.332,0.322,0.313,0.305,0.298,0.292,0.286,0.282,0.277,0.274,0.271,0.488,0.494,0.5,0.506,0.511,0.516,0.521,0.524,0.527,0.529,0.531,0.531,0.53,0.527,0.524,0.519,0.513,0.505,0.496,0.486,0.475,0.463,0.45,0.437,0.423,0.409,0.396,0.382,0.369,0.357,0.345,0.335,0.325,0.316,0.308,0.301,0.294,0.289,0.284,0.28,0.276,0.488,0.494,0.5,0.506,0.512,0.517,0.522,0.527,0.53,0.533,0.535,0.536,0.536,0.535,0.533,0.529,0.524,0.518,0.51,0.501,0.491,0.479,0.467,0.454,0.441,0.427,0.413,0.399,0.385,0.372,0.36,0.348,0.337,0.327,0.318,0.31,0.303,0.296,0.291,0.286,0.281,0.487,0.494,0.5,0.506,0.512,0.518,0.523,0.528,0.532,0.536,0.539,0.541,0.542,0.541,0.54,0.538,0.534,0.529,0.522,0.514,0.505,0.495,0.483,0.471,0.458,0.444,0.43,0.416,0.402,0.388,0.375,0.362,0.35,0.339,0.329,0.32,0.312,0.304,0.298,0.292,0.287,0.487,0.493,0.499,0.506,0.512,0.518,0.524,0.529,0.534,0.538,0.541,0.544,0.546,0.547,0.546,0.545,0.542,0.538,0.533,0.526,0.518,0.509,0.498,0.486,0.474,0.46,0.446,0.432,0.418,0.404,0.39,0.376,0.364,0.352,0.341,0.33,0.321,0.313,0.305,0.299,0.293,0.486,0.492,0.498,0.505,0.511,0.517,0.523,0.529,0.534,0.539,0.543,0.546,0.549,0.551,0.551,0.551,0.549,0.546,0.542,0.537,0.53,0.521,0.512,0.501,0.489,0.476,0.463,0.448,0.434,0.419,0.405,0.391,0.377,0.364,0.352,0.341,0.331,0.321,0.313,0.305,0.298,0.484,0.491,0.497,0.503,0.51,0.516,0.522,0.528,0.534,0.539,0.544,0.547,0.551,0.553,0.555,0.555,0.555,0.553,0.55,0.545,0.539,0.532,0.524,0.514,0.503,0.491,0.477,0.464,0.449,0.435,0.42,0.405,0.391,0.377,0.364,0.352,0.34,0.33,0.32,0.312,0.304,0.483,0.489,0.495,0.502,0.508,0.514,0.521,0.527,0.532,0.538,0.543,0.547,0.551,0.554,0.557,0.558,0.558,0.557,0.555,0.552,0.547,0.541,0.534,0.525,0.515,0.503,0.491,0.478,0.463,0.449,0.434,0.419,0.404,0.389,0.375,0.362,0.35,0.338,0.327,0.318,0.309,0.481,0.487,0.493,0.499,0.505,0.512,0.518,0.524,0.53,0.536,0.541,0.546,0.55,0.554,0.557,0.559,0.56,0.56,0.559,0.557,0.553,0.548,0.542,0.534,0.525,0.514,0.502,0.49,0.476,0.462,0.447,0.431,0.416,0.401,0.386,0.372,0.358,0.346,0.334,0.323,0.313,0.478,0.484,0.49,0.496,0.502,0.508,0.514,0.521,0.527,0.533,0.538,0.543,0.548,0.552,0.556,0.558,0.56,0.561,0.56,0.559,0.556,0.552,0.547,0.54,0.532,0.523,0.512,0.5,0.486,0.472,0.458,0.442,0.427,0.411,0.396,0.381,0.366,0.353,0.34,0.328,0.317,0.474,0.48,0.486,0.491,0.497,0.504,0.51,0.516,0.522,0.528,0.534,0.539,0.544,0.548,0.552,0.555,0.558,0.559,0.56,0.559,0.557,0.554,0.55,0.544,0.537,0.528,0.518,0.507,0.494,0.481,0.466,0.451,0.436,0.42,0.404,0.388,0.373,0.358,0.344,0.331,0.319,0.47,0.475,0.48,0.486,0.492,0.498,0.504,0.51,0.516,0.522,0.527,0.533,0.538,0.543,0.547,0.55,0.553,0.555,0.556,0.556,0.555,0.553,0.55,0.545,0.538,0.531,0.522,0.511,0.5,0.487,0.473,0.458,0.442,0.426,0.41,0.394,0.378,0.362,0.347,0.333,0.32,0.464,0.469,0.474,0.479,0.485,0.49,0.496,0.502,0.508,0.513,0.519,0.524,0.53,0.534,0.539,0.543,0.546,0.548,0.55,0.551,0.55,0.549,0.546,0.542,0.537,0.53,0.522,0.512,0.501,0.489,0.476,0.461,0.446,0.43,0.414,0.397,0.381,0.364,0.349,0.334,0.32,0.457,0.461,0.466,0.471,0.476,0.481,0.487,0.492,0.498,0.503,0.509,0.514,0.519,0.524,0.529,0.533,0.536,0.539,0.541,0.542,0.542,0.541,0.54,0.536,0.532,0.526,0.519,0.51,0.5,0.488,0.476,0.462,0.447,0.431,0.415,0.398,0.382,0.365,0.349,0.333,0.318,0.448,0.452,0.456,0.461,0.465,0.47,0.475,0.48,0.485,0.491,0.496,0.501,0.506,0.511,0.515,0.52,0.523,0.526,0.529,0.53,0.531,0.531,0.529,0.527,0.523,0.518,0.512,0.504,0.495,0.484,0.472,0.459,0.445,0.43,0.414,0.397,0.38,0.364,0.347,0.331,0.315,0.437,0.44,0.444,0.448,0.452,0.457,0.461,0.466,0.471,0.476,0.481,0.486,0.49,0.495,0.5,0.504,0.507,0.511,0.513,0.515,0.516,0.517,0.516,0.514,0.511,0.507,0.502,0.495,0.487,0.477,0.466,0.454,0.44,0.426,0.41,0.394,0.377,0.361,0.344,0.328,0.312,0.424,0.427,0.43,0.434,0.437,0.441,0.445,0.45,0.454,0.459,0.463,0.468,0.472,0.477,0.481,0.485,0.489,0.492,0.495,0.497,0.499,0.5,0.5,0.499,0.496,0.493,0.488,0.482,0.475,0.467,0.457,0.445,0.433,0.419,0.404,0.389,0.373,0.357,0.34,0.324,0.308,0.409,0.411,0.414,0.417,0.42,0.424,0.427,0.431,0.435,0.439,0.443,0.447,0.452,0.456,0.46,0.464,0.468,0.471,0.474,0.477,0.479,0.48,0.481,0.48,0.479,0.476,0.472,0.468,0.461,0.454,0.445,0.435,0.424,0.411,0.397,0.383,0.367,0.352,0.336,0.32,0.304,0.392,0.394,0.396,0.398,0.401,0.404,0.407,0.41,0.414,0.417,0.421,0.425,0.429,0.433,0.437,0.441,0.445,0.448,0.452,0.454,0.457,0.458,0.459,0.46,0.459,0.457,0.455,0.451,0.446,0.44,0.432,0.423,0.413,0.402,0.389,0.376,0.362,0.347,0.331,0.316,0.3,0.373,0.374,0.376,0.378,0.38,0.383,0.385,0.388,0.391,0.395,0.398,0.402,0.405,0.409,0.413,0.417,0.421,0.424,0.428,0.431,0.433,0.436,0.437,0.438,0.438,0.438,0.436,0.433,0.429,0.424,0.418,0.411,0.402,0.392,0.381,0.369,0.356,0.342,0.327,0.313,0.298,0.353,0.354,0.355,0.357,0.359,0.361,0.363,0.365,0.368,0.371,0.374,0.378,0.381,0.385,0.389,0.392,0.396,0.4,0.403,0.407,0.41,0.413,0.415,0.416,0.417,0.417,0.417,0.415,0.413,0.409,0.404,0.398,0.391,0.382,0.373,0.362,0.35,0.337,0.324,0.31,0.296,0.332,0.333,0.334,0.335,0.337,0.338,0.34,0.342,0.345,0.348,0.351,0.354,0.357,0.361,0.364,0.368,0.372,0.376,0.38,0.383,0.387,0.39,0.393,0.395,0.397,0.398,0.398,0.398,0.396,0.394,0.39,0.386,0.38,0.373,0.365,0.356,0.345,0.334,0.322,0.309,0.296,0.311,0.312,0.313,0.314,0.315,0.316,0.318,0.32,0.323,0.325,0.328,0.331,0.334,0.338,0.342,0.345,0.349,0.353,0.357,0.361,0.365,0.369,0.372,0.375,0.378,0.38,0.381,0.381,0.381,0.38,0.378,0.375,0.37,0.365,0.358,0.35,0.342,0.332,0.321,0.309,0.297,0.291,0.292,0.292,0.293,0.294,0.296,0.298,0.3,0.302,0.304,0.307,0.31,0.313,0.317,0.32,0.324,0.328,0.333,0.337,0.341,0.345,0.349,0.353,0.357,0.36,0.363,0.365,0.366,0.367,0.367,0.366,0.365,0.362,0.358,0.352,0.346,0.339,0.33,0.321,0.31,0.299,0.272,0.273,0.274,0.275,0.276,0.277,0.279,0.281,0.283,0.285,0.288,0.291,0.294,0.298,0.302,0.306,0.31,0.314,0.318,0.323,0.327,0.332,0.336,0.34,0.344,0.348,0.351,0.353,0.355,0.356,0.356,0.356,0.354,0.351,0.348,0.343,0.337,0.33,0.322,0.312,0.302,0.255,0.256,0.257,0.258,0.259,0.26,0.262,0.264,0.266,0.269,0.271,0.274,0.278,0.281,0.285,0.289,0.293,0.298,0.302,0.307,0.312,0.317,0.321,0.326,0.33,0.334,0.338,0.341,0.344,0.346,0.347,0.348,0.347,0.346,0.344,0.34,0.336,0.33,0.323,0.315,0.306,0.241,0.241,0.242,0.243,0.244,0.246,0.248,0.25,0.252,0.254,0.257,0.26,0.263,0.267,0.271,0.275,0.279,0.284,0.288,0.293,0.298,0.303,0.308,0.313,0.318,0.323,0.327,0.331,0.335,0.337,0.34,0.341,0.342,0.342,0.341,0.338,0.335,0.331,0.325,0.318,0.311,0.228,0.229,0.23,0.231,0.232,0.234,0.235,0.237,0.24,0.242,0.245,0.248,0.251,0.255,0.259,0.263,0.267,0.272,0.276,0.281,0.287,0.292,0.297,0.302,0.308,0.313,0.318,0.322,0.326,0.33,0.333,0.335,0.337,0.338,0.338,0.337,0.335,0.332,0.327,0.322,0.315,0.217,0.218,0.219,0.22,0.222,0.223,0.225,0.227,0.229,0.232,0.235,0.238,0.241,0.245,0.248,0.253,0.257,0.262,0.266,0.271,0.277,0.282,0.287,0.293,0.298,0.304,0.309,0.314,0.319,0.323,0.327,0.33,0.333,0.335,0.336,0.336,0.335,0.333,0.33,0.326,0.32,0.208,0.209,0.21,0.212,0.213,0.215,0.217,0.219,0.221,0.224,0.226,0.229,0.233,0.236,0.24,0.244,0.248,0.253,0.258,0.263,0.268,0.274,0.279,0.285,0.291,0.296,0.302,0.307,0.313,0.317,0.322,0.326,0.329,0.332,0.334,0.335,0.335,0.334,0.332,0.329,0.325,0.201,0.202,0.203,0.205,0.206,0.208,0.21,0.212,0.214,0.217,0.219,0.222,0.226,0.229,0.233,0.237,0.241,0.246,0.251,0.256,0.261,0.266,0.272,0.278,0.284,0.29,0.295,0.301,0.307,0.312,0.317,0.322,0.326,0.329,0.332,0.334,0.335,0.335,0.334,0.332,0.329,0.195,0.196,0.197,0.199,0.2,0.202,0.204,0.206,0.208,0.211,0.214,0.217,0.22,0.223,0.227,0.231,0.235,0.24,0.244,0.249,0.255,0.26,0.266,0.272,0.278,0.284,0.29,0.296,0.302,0.307,0.313,0.318,0.322,0.327,0.33,0.333,0.335,0.336,0.336,0.335,0.333,0.19,0.191,0.193,0.194,0.196,0.198,0.199,0.202,0.204,0.206,0.209,0.212,0.215,0.218,0.222,0.226,0.23,0.234,0.239,0.244,0.249,0.255,0.26,0.266,0.272,0.278,0.285,0.291,0.297,0.303,0.309,0.314,0.319,0.324,0.328,0.332,0.334,0.336,0.337,0.338,0.337],"loss":0.5507,"acc":0.7275},"200":{"grid":[0.012,0.012,0.013,0.014,0.016,0.018,0.021,0.025,0.031,0.039,0.052,0.071,0.098,0.136,0.184,0.237,0.288,0.327,0.346,0.34,0.309,0.257,0.195,0.136,0.089,0.056,0.036,0.024,0.017,0.012,0.01,0.008,0.007,0.007,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.012,0.013,0.014,0.015,0.017,0.019,0.023,0.027,0.034,0.044,0.058,0.08,0.112,0.156,0.211,0.271,0.329,0.374,0.398,0.396,0.368,0.316,0.249,0.179,0.119,0.076,0.048,0.031,0.021,0.016,0.012,0.01,0.009,0.008,0.007,0.007,0.007,0.006,0.006,0.006,0.007,0.013,0.014,0.015,0.017,0.019,0.021,0.025,0.03,0.038,0.049,0.066,0.092,0.129,0.18,0.242,0.31,0.375,0.425,0.453,0.457,0.433,0.383,0.312,0.233,0.16,0.104,0.066,0.042,0.028,0.02,0.015,0.012,0.01,0.009,0.009,0.008,0.008,0.008,0.008,0.008,0.008,0.014,0.015,0.016,0.018,0.02,0.023,0.028,0.034,0.043,0.056,0.076,0.106,0.15,0.208,0.279,0.355,0.425,0.479,0.512,0.519,0.501,0.455,0.385,0.3,0.214,0.142,0.091,0.058,0.038,0.027,0.02,0.016,0.013,0.011,0.01,0.01,0.009,0.009,0.009,0.009,0.009,0.015,0.017,0.018,0.02,0.023,0.026,0.031,0.038,0.049,0.065,0.089,0.124,0.175,0.242,0.322,0.404,0.478,0.536,0.571,0.583,0.57,0.531,0.465,0.378,0.283,0.195,0.127,0.081,0.053,0.036,0.026,0.02,0.017,0.014,0.013,0.012,0.011,0.011,0.011,0.011,0.011,0.017,0.018,0.02,0.022,0.025,0.03,0.035,0.044,0.057,0.076,0.105,0.147,0.206,0.283,0.37,0.459,0.536,0.594,0.631,0.646,0.638,0.606,0.549,0.466,0.365,0.263,0.177,0.114,0.074,0.05,0.035,0.027,0.022,0.018,0.016,0.015,0.014,0.014,0.014,0.014,0.014,0.019,0.021,0.023,0.025,0.029,0.034,0.041,0.051,0.067,0.09,0.125,0.175,0.244,0.33,0.425,0.517,0.594,0.652,0.688,0.705,0.702,0.678,0.63,0.556,0.458,0.347,0.243,0.161,0.105,0.07,0.049,0.036,0.029,0.024,0.021,0.019,0.018,0.017,0.017,0.017,0.017,0.022,0.024,0.026,0.029,0.034,0.04,0.048,0.061,0.08,0.108,0.15,0.21,0.289,0.385,0.485,0.578,0.653,0.707,0.742,0.759,0.76,0.743,0.706,0.644,0.555,0.445,0.328,0.225,0.149,0.099,0.068,0.05,0.038,0.031,0.027,0.024,0.023,0.022,0.021,0.021,0.021,0.025,0.028,0.031,0.035,0.04,0.047,0.058,0.073,0.097,0.131,0.181,0.252,0.342,0.445,0.549,0.639,0.709,0.759,0.79,0.807,0.809,0.798,0.771,0.723,0.649,0.547,0.427,0.308,0.21,0.141,0.096,0.069,0.052,0.042,0.035,0.031,0.029,0.027,0.026,0.026,0.026,0.03,0.033,0.036,0.041,0.048,0.057,0.07,0.089,0.118,0.16,0.22,0.302,0.402,0.51,0.612,0.697,0.761,0.804,0.832,0.847,0.851,0.844,0.825,0.789,0.731,0.645,0.532,0.405,0.288,0.197,0.134,0.095,0.07,0.055,0.046,0.04,0.036,0.034,0.033,0.032,0.032,0.036,0.039,0.043,0.049,0.058,0.069,0.085,0.109,0.145,0.195,0.267,0.359,0.467,0.576,0.674,0.75,0.806,0.843,0.867,0.88,0.884,0.88,0.867,0.842,0.798,0.73,0.633,0.51,0.382,0.269,0.186,0.13,0.095,0.074,0.06,0.051,0.046,0.042,0.04,0.039,0.038,0.043,0.047,0.053,0.06,0.07,0.085,0.105,0.134,0.177,0.238,0.32,0.422,0.534,0.641,0.73,0.797,0.844,0.875,0.895,0.906,0.91,0.908,0.9,0.882,0.85,0.799,0.721,0.613,0.484,0.356,0.252,0.177,0.128,0.097,0.078,0.065,0.058,0.052,0.049,0.047,0.046,0.052,0.057,0.064,0.073,0.086,0.104,0.129,0.165,0.216,0.288,0.38,0.488,0.6,0.7,0.779,0.836,0.875,0.901,0.917,0.926,0.93,0.929,0.924,0.911,0.889,0.852,0.792,0.703,0.585,0.452,0.33,0.235,0.17,0.127,0.1,0.082,0.071,0.064,0.059,0.057,0.055,0.063,0.07,0.078,0.09,0.105,0.127,0.157,0.201,0.261,0.342,0.442,0.553,0.661,0.752,0.82,0.868,0.9,0.921,0.934,0.941,0.945,0.945,0.941,0.933,0.917,0.89,0.846,0.776,0.675,0.549,0.418,0.304,0.22,0.163,0.126,0.102,0.087,0.077,0.071,0.067,0.064,0.077,0.085,0.095,0.109,0.128,0.154,0.19,0.241,0.311,0.4,0.505,0.615,0.715,0.795,0.854,0.893,0.919,0.936,0.947,0.953,0.956,0.956,0.954,0.948,0.937,0.918,0.885,0.833,0.751,0.639,0.507,0.381,0.279,0.206,0.157,0.125,0.105,0.092,0.083,0.077,0.073,0.092,0.102,0.114,0.131,0.153,0.184,0.227,0.285,0.362,0.458,0.565,0.67,0.761,0.831,0.88,0.913,0.934,0.948,0.956,0.961,0.964,0.965,0.963,0.959,0.951,0.937,0.913,0.874,0.81,0.715,0.593,0.461,0.344,0.255,0.193,0.151,0.124,0.107,0.095,0.088,0.082,0.11,0.121,0.136,0.155,0.181,0.217,0.265,0.331,0.414,0.513,0.619,0.718,0.799,0.859,0.9,0.928,0.945,0.956,0.963,0.968,0.97,0.971,0.969,0.966,0.961,0.951,0.933,0.904,0.855,0.777,0.669,0.539,0.413,0.308,0.232,0.18,0.145,0.123,0.108,0.098,0.091,0.129,0.141,0.158,0.18,0.21,0.25,0.304,0.375,0.463,0.563,0.665,0.757,0.829,0.881,0.916,0.939,0.953,0.963,0.969,0.972,0.974,0.975,0.974,0.972,0.968,0.96,0.947,0.925,0.887,0.825,0.732,0.611,0.481,0.363,0.273,0.209,0.167,0.138,0.12,0.107,0.099,0.148,0.162,0.18,0.205,0.238,0.282,0.341,0.417,0.507,0.607,0.704,0.788,0.852,0.897,0.927,0.947,0.959,0.967,0.972,0.975,0.977,0.978,0.977,0.976,0.972,0.967,0.956,0.939,0.91,0.861,0.783,0.673,0.544,0.418,0.315,0.239,0.188,0.153,0.13,0.115,0.105,0.166,0.181,0.201,0.228,0.264,0.312,0.374,0.453,0.545,0.643,0.735,0.812,0.87,0.909,0.936,0.952,0.963,0.97,0.975,0.978,0.979,0.98,0.98,0.978,0.976,0.971,0.963,0.949,0.926,0.886,0.821,0.724,0.6,0.47,0.355,0.268,0.207,0.166,0.139,0.121,0.108,0.181,0.197,0.219,0.248,0.286,0.336,0.402,0.482,0.575,0.67,0.758,0.829,0.882,0.918,0.941,0.956,0.966,0.972,0.976,0.979,0.98,0.981,0.981,0.98,0.978,0.974,0.967,0.956,0.937,0.904,0.849,0.763,0.647,0.515,0.391,0.293,0.223,0.175,0.144,0.123,0.108,0.192,0.209,0.232,0.262,0.301,0.354,0.421,0.503,0.596,0.689,0.773,0.84,0.889,0.922,0.944,0.958,0.967,0.973,0.977,0.979,0.981,0.981,0.981,0.98,0.978,0.975,0.969,0.96,0.943,0.915,0.867,0.791,0.682,0.55,0.419,0.311,0.233,0.179,0.144,0.12,0.104,0.198,0.215,0.238,0.268,0.309,0.362,0.431,0.514,0.606,0.698,0.78,0.845,0.892,0.924,0.945,0.958,0.967,0.972,0.976,0.979,0.98,0.981,0.981,0.98,0.978,0.975,0.97,0.961,0.946,0.921,0.878,0.808,0.704,0.572,0.436,0.32,0.235,0.176,0.138,0.112,0.096,0.196,0.213,0.235,0.266,0.306,0.36,0.429,0.512,0.605,0.697,0.779,0.843,0.89,0.921,0.942,0.956,0.964,0.97,0.974,0.977,0.978,0.979,0.979,0.978,0.976,0.973,0.968,0.959,0.945,0.921,0.88,0.813,0.711,0.58,0.439,0.317,0.226,0.165,0.125,0.099,0.083,0.186,0.202,0.223,0.252,0.292,0.345,0.413,0.496,0.589,0.683,0.766,0.832,0.881,0.914,0.936,0.95,0.96,0.966,0.97,0.973,0.974,0.975,0.975,0.974,0.972,0.969,0.963,0.954,0.939,0.915,0.873,0.806,0.703,0.569,0.424,0.299,0.207,0.146,0.107,0.082,0.066,0.167,0.181,0.2,0.227,0.264,0.314,0.38,0.462,0.556,0.652,0.739,0.81,0.862,0.899,0.923,0.94,0.95,0.958,0.962,0.965,0.967,0.968,0.968,0.967,0.964,0.96,0.954,0.944,0.927,0.9,0.855,0.783,0.676,0.537,0.391,0.266,0.177,0.12,0.085,0.063,0.049,0.14,0.152,0.168,0.192,0.224,0.27,0.331,0.409,0.501,0.6,0.693,0.771,0.83,0.872,0.901,0.921,0.934,0.943,0.949,0.952,0.954,0.955,0.955,0.954,0.95,0.945,0.937,0.925,0.905,0.873,0.821,0.741,0.626,0.483,0.339,0.222,0.141,0.092,0.062,0.045,0.034,0.108,0.117,0.13,0.149,0.176,0.215,0.268,0.338,0.426,0.524,0.621,0.708,0.777,0.828,0.864,0.889,0.906,0.917,0.924,0.929,0.932,0.933,0.932,0.93,0.926,0.919,0.908,0.891,0.866,0.826,0.765,0.674,0.552,0.409,0.275,0.172,0.105,0.066,0.043,0.03,0.022,0.076,0.083,0.092,0.106,0.126,0.156,0.198,0.257,0.334,0.425,0.523,0.616,0.695,0.757,0.802,0.834,0.857,0.872,0.882,0.889,0.892,0.893,0.892,0.889,0.882,0.873,0.858,0.836,0.803,0.754,0.682,0.583,0.459,0.327,0.211,0.127,0.075,0.045,0.028,0.019,0.014,0.049,0.053,0.06,0.069,0.083,0.104,0.134,0.179,0.239,0.316,0.405,0.497,0.582,0.652,0.707,0.748,0.777,0.798,0.812,0.82,0.825,0.827,0.825,0.82,0.811,0.798,0.779,0.751,0.71,0.654,0.576,0.476,0.361,0.248,0.155,0.091,0.052,0.03,0.019,0.012,0.008,0.029,0.032,0.036,0.042,0.051,0.064,0.085,0.115,0.158,0.216,0.288,0.368,0.449,0.521,0.581,0.629,0.664,0.69,0.707,0.719,0.725,0.727,0.725,0.719,0.709,0.693,0.67,0.638,0.594,0.536,0.46,0.37,0.273,0.184,0.113,0.065,0.037,0.021,0.013,0.008,0.005,0.017,0.018,0.021,0.024,0.03,0.038,0.051,0.071,0.099,0.14,0.192,0.254,0.321,0.386,0.444,0.492,0.529,0.557,0.578,0.591,0.599,0.602,0.601,0.595,0.585,0.569,0.546,0.515,0.474,0.421,0.356,0.282,0.206,0.138,0.085,0.049,0.027,0.015,0.009,0.006,0.004,0.01,0.011,0.012,0.014,0.018,0.023,0.031,0.044,0.062,0.089,0.125,0.17,0.221,0.273,0.322,0.364,0.399,0.427,0.447,0.461,0.47,0.475,0.475,0.471,0.462,0.449,0.43,0.403,0.369,0.326,0.275,0.217,0.159,0.107,0.067,0.039,0.022,0.012,0.007,0.004,0.003,0.006,0.006,0.007,0.009,0.011,0.014,0.02,0.028,0.04,0.059,0.084,0.116,0.153,0.192,0.231,0.266,0.296,0.32,0.339,0.352,0.361,0.367,0.368,0.366,0.361,0.351,0.336,0.316,0.29,0.257,0.217,0.174,0.129,0.089,0.056,0.033,0.019,0.011,0.006,0.004,0.002,0.004,0.004,0.005,0.006,0.007,0.01,0.013,0.019,0.028,0.041,0.059,0.083,0.11,0.14,0.17,0.198,0.223,0.243,0.259,0.272,0.281,0.286,0.289,0.289,0.286,0.279,0.269,0.254,0.235,0.21,0.179,0.145,0.11,0.078,0.05,0.03,0.018,0.01,0.006,0.003,0.002,0.002,0.003,0.003,0.004,0.005,0.007,0.01,0.014,0.021,0.031,0.045,0.063,0.084,0.108,0.132,0.154,0.175,0.192,0.206,0.217,0.225,0.231,0.234,0.235,0.234,0.23,0.223,0.212,0.198,0.179,0.155,0.128,0.099,0.072,0.048,0.03,0.017,0.01,0.006,0.003,0.002,0.002,0.002,0.002,0.003,0.004,0.005,0.008,0.011,0.017,0.025,0.036,0.051,0.068,0.088,0.108,0.126,0.143,0.158,0.17,0.18,0.188,0.194,0.197,0.199,0.199,0.197,0.192,0.184,0.173,0.158,0.14,0.118,0.093,0.069,0.048,0.03,0.018,0.01,0.006,0.003,0.002,0.001,0.002,0.002,0.002,0.003,0.005,0.006,0.01,0.014,0.021,0.031,0.044,0.059,0.075,0.092,0.109,0.124,0.136,0.147,0.156,0.163,0.169,0.173,0.175,0.176,0.175,0.172,0.166,0.158,0.146,0.13,0.112,0.091,0.069,0.049,0.032,0.02,0.011,0.006,0.004,0.002,0.001,0.001,0.002,0.002,0.003,0.004,0.006,0.009,0.013,0.019,0.028,0.04,0.053,0.068,0.083,0.097,0.111,0.122,0.132,0.14,0.147,0.152,0.156,0.159,0.16,0.16,0.158,0.154,0.147,0.138,0.125,0.109,0.091,0.071,0.052,0.035,0.022,0.013,0.007,0.004,0.002,0.001,0.001,0.002,0.002,0.003,0.004,0.005,0.008,0.012,0.018,0.027,0.037,0.05,0.063,0.077,0.09,0.102,0.113,0.122,0.13,0.136,0.141,0.145,0.148,0.149,0.15,0.149,0.146,0.141,0.133,0.122,0.108,0.092,0.074,0.055,0.038,0.025,0.015,0.009,0.005,0.003,0.001,0.001,0.001,0.002,0.003,0.004,0.005,0.008,0.012,0.018,0.026,0.036,0.048,0.06,0.073,0.086,0.097,0.107,0.115,0.123,0.129,0.133,0.137,0.14,0.142,0.143,0.142,0.14,0.136,0.13,0.121,0.109,0.094,0.077,0.059,0.042,0.028,0.017,0.01,0.006,0.003],"loss":0.1957,"acc":0.955},"500":{"grid":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.003,0.007,0.015,0.03,0.052,0.077,0.102,0.123,0.136,0.14,0.135,0.121,0.099,0.072,0.046,0.025,0.012,0.005,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.004,0.008,0.018,0.035,0.06,0.089,0.117,0.141,0.156,0.161,0.157,0.142,0.119,0.089,0.059,0.033,0.016,0.007,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.004,0.01,0.022,0.043,0.072,0.106,0.14,0.167,0.185,0.193,0.189,0.174,0.149,0.115,0.078,0.046,0.023,0.01,0.004,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.006,0.013,0.028,0.054,0.091,0.133,0.173,0.206,0.228,0.239,0.236,0.221,0.193,0.154,0.109,0.067,0.034,0.015,0.006,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.003,0.008,0.018,0.038,0.073,0.121,0.174,0.225,0.265,0.293,0.307,0.307,0.292,0.261,0.216,0.16,0.103,0.056,0.026,0.011,0.004,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.005,0.011,0.026,0.056,0.105,0.17,0.241,0.304,0.354,0.388,0.406,0.408,0.394,0.363,0.312,0.243,0.166,0.096,0.047,0.02,0.008,0.003,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.003,0.008,0.018,0.041,0.088,0.161,0.252,0.343,0.419,0.476,0.514,0.535,0.541,0.53,0.501,0.45,0.374,0.276,0.174,0.091,0.04,0.016,0.006,0.003,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.003,0.006,0.013,0.031,0.071,0.146,0.255,0.377,0.484,0.566,0.623,0.66,0.68,0.687,0.681,0.659,0.616,0.545,0.441,0.31,0.18,0.086,0.036,0.014,0.006,0.003,0.002,0.001,0.001,0.001,0.0,0.0,0.0,0.0,0.001,0.001,0.001,0.001,0.001,0.002,0.003,0.005,0.011,0.025,0.059,0.13,0.249,0.4,0.54,0.646,0.718,0.764,0.793,0.809,0.815,0.812,0.798,0.77,0.719,0.634,0.503,0.337,0.183,0.082,0.034,0.014,0.007,0.004,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.003,0.006,0.011,0.022,0.05,0.113,0.234,0.405,0.577,0.706,0.789,0.839,0.869,0.887,0.897,0.901,0.9,0.893,0.878,0.848,0.794,0.698,0.544,0.349,0.178,0.078,0.033,0.015,0.008,0.005,0.003,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.003,0.003,0.005,0.007,0.012,0.022,0.045,0.098,0.21,0.389,0.587,0.739,0.833,0.885,0.915,0.932,0.942,0.947,0.949,0.949,0.946,0.938,0.923,0.894,0.838,0.731,0.554,0.337,0.165,0.073,0.033,0.017,0.01,0.007,0.005,0.004,0.004,0.003,0.003,0.004,0.005,0.005,0.007,0.01,0.014,0.023,0.043,0.088,0.183,0.352,0.565,0.743,0.851,0.909,0.939,0.955,0.964,0.969,0.972,0.974,0.973,0.972,0.968,0.96,0.945,0.915,0.853,0.73,0.528,0.303,0.145,0.068,0.034,0.019,0.013,0.009,0.007,0.006,0.006,0.005,0.008,0.009,0.011,0.013,0.018,0.027,0.044,0.081,0.157,0.303,0.513,0.714,0.846,0.915,0.949,0.966,0.975,0.98,0.983,0.985,0.985,0.985,0.984,0.982,0.978,0.97,0.954,0.919,0.843,0.692,0.466,0.252,0.123,0.062,0.034,0.022,0.016,0.012,0.01,0.009,0.009,0.014,0.016,0.019,0.024,0.032,0.048,0.077,0.136,0.25,0.436,0.651,0.815,0.906,0.949,0.97,0.98,0.985,0.988,0.99,0.991,0.991,0.991,0.991,0.989,0.987,0.982,0.973,0.953,0.907,0.805,0.616,0.38,0.199,0.102,0.056,0.035,0.024,0.019,0.016,0.014,0.013,0.023,0.026,0.031,0.039,0.052,0.076,0.12,0.204,0.352,0.557,0.751,0.876,0.939,0.967,0.98,0.987,0.99,0.992,0.993,0.994,0.994,0.994,0.994,0.993,0.991,0.989,0.983,0.97,0.942,0.874,0.731,0.507,0.29,0.153,0.084,0.051,0.035,0.026,0.022,0.019,0.017,0.034,0.039,0.046,0.057,0.075,0.108,0.168,0.276,0.446,0.65,0.816,0.912,0.957,0.977,0.986,0.991,0.993,0.994,0.995,0.996,0.996,0.996,0.995,0.995,0.994,0.992,0.988,0.98,0.961,0.915,0.809,0.616,0.385,0.212,0.117,0.07,0.047,0.035,0.028,0.024,0.022,0.046,0.052,0.062,0.076,0.1,0.142,0.216,0.342,0.523,0.717,0.858,0.933,0.967,0.983,0.99,0.993,0.995,0.996,0.996,0.997,0.997,0.997,0.997,0.996,0.995,0.994,0.991,0.985,0.972,0.94,0.862,0.702,0.475,0.275,0.154,0.092,0.061,0.044,0.035,0.03,0.027,0.058,0.066,0.077,0.094,0.123,0.173,0.258,0.396,0.581,0.762,0.884,0.946,0.974,0.986,0.991,0.994,0.996,0.996,0.997,0.997,0.997,0.997,0.997,0.997,0.996,0.995,0.993,0.989,0.979,0.955,0.897,0.766,0.555,0.339,0.193,0.114,0.074,0.053,0.042,0.035,0.031,0.069,0.077,0.09,0.11,0.143,0.199,0.292,0.438,0.623,0.792,0.9,0.954,0.978,0.988,0.993,0.995,0.996,0.997,0.997,0.998,0.998,0.998,0.998,0.997,0.997,0.996,0.994,0.991,0.984,0.965,0.92,0.814,0.622,0.399,0.231,0.136,0.087,0.062,0.048,0.039,0.035,0.077,0.086,0.1,0.122,0.158,0.218,0.317,0.468,0.651,0.811,0.91,0.959,0.98,0.989,0.993,0.995,0.997,0.997,0.998,0.998,0.998,0.998,0.998,0.998,0.997,0.996,0.995,0.992,0.986,0.972,0.936,0.848,0.677,0.453,0.268,0.157,0.099,0.069,0.052,0.043,0.037,0.082,0.092,0.106,0.129,0.167,0.23,0.333,0.486,0.668,0.822,0.916,0.961,0.981,0.99,0.994,0.996,0.997,0.997,0.998,0.998,0.998,0.998,0.998,0.998,0.997,0.997,0.996,0.993,0.988,0.976,0.946,0.872,0.718,0.498,0.3,0.175,0.109,0.074,0.055,0.045,0.038,0.084,0.094,0.108,0.132,0.17,0.234,0.339,0.493,0.674,0.827,0.918,0.962,0.981,0.99,0.994,0.996,0.997,0.997,0.998,0.998,0.998,0.998,0.998,0.998,0.997,0.997,0.996,0.994,0.989,0.979,0.953,0.888,0.747,0.532,0.324,0.188,0.114,0.076,0.056,0.045,0.038,0.083,0.092,0.106,0.129,0.167,0.23,0.335,0.489,0.671,0.824,0.917,0.961,0.981,0.99,0.993,0.995,0.997,0.997,0.997,0.998,0.998,0.998,0.998,0.998,0.997,0.997,0.996,0.994,0.99,0.98,0.956,0.897,0.765,0.552,0.337,0.192,0.114,0.075,0.054,0.042,0.035,0.078,0.086,0.1,0.121,0.157,0.218,0.319,0.471,0.655,0.814,0.911,0.958,0.979,0.989,0.993,0.995,0.996,0.997,0.997,0.997,0.998,0.998,0.997,0.997,0.997,0.996,0.995,0.993,0.989,0.98,0.957,0.899,0.769,0.555,0.334,0.186,0.108,0.068,0.048,0.037,0.03,0.069,0.077,0.089,0.108,0.14,0.196,0.291,0.438,0.624,0.792,0.899,0.952,0.976,0.987,0.991,0.994,0.995,0.996,0.997,0.997,0.997,0.997,0.997,0.997,0.996,0.996,0.995,0.992,0.988,0.978,0.953,0.892,0.757,0.536,0.313,0.168,0.094,0.057,0.039,0.03,0.024,0.058,0.064,0.073,0.089,0.117,0.165,0.249,0.387,0.573,0.754,0.877,0.94,0.97,0.983,0.989,0.992,0.994,0.995,0.995,0.996,0.996,0.996,0.996,0.996,0.995,0.994,0.993,0.99,0.984,0.972,0.943,0.874,0.723,0.49,0.271,0.138,0.073,0.043,0.029,0.021,0.017,0.044,0.048,0.056,0.068,0.089,0.127,0.196,0.316,0.495,0.69,0.837,0.919,0.958,0.976,0.984,0.989,0.991,0.993,0.993,0.994,0.994,0.994,0.994,0.993,0.993,0.992,0.989,0.985,0.978,0.961,0.923,0.836,0.659,0.414,0.211,0.1,0.051,0.029,0.019,0.013,0.01,0.03,0.033,0.038,0.046,0.06,0.087,0.137,0.232,0.389,0.59,0.767,0.877,0.934,0.961,0.975,0.982,0.985,0.988,0.989,0.989,0.99,0.99,0.989,0.989,0.988,0.986,0.982,0.976,0.964,0.939,0.883,0.764,0.554,0.311,0.144,0.064,0.031,0.017,0.01,0.007,0.005,0.018,0.02,0.022,0.027,0.036,0.052,0.084,0.147,0.266,0.448,0.648,0.799,0.886,0.931,0.954,0.966,0.972,0.976,0.978,0.98,0.98,0.98,0.979,0.978,0.976,0.972,0.965,0.954,0.933,0.891,0.805,0.644,0.411,0.202,0.085,0.036,0.016,0.009,0.005,0.003,0.003,0.009,0.01,0.012,0.014,0.018,0.027,0.044,0.079,0.153,0.287,0.475,0.658,0.788,0.864,0.906,0.929,0.942,0.949,0.954,0.956,0.957,0.956,0.955,0.952,0.947,0.94,0.927,0.905,0.867,0.796,0.669,0.474,0.261,0.114,0.045,0.018,0.008,0.004,0.002,0.002,0.001,0.004,0.005,0.005,0.006,0.008,0.012,0.02,0.037,0.074,0.151,0.284,0.456,0.616,0.731,0.803,0.846,0.872,0.886,0.895,0.9,0.901,0.9,0.897,0.891,0.881,0.866,0.842,0.803,0.739,0.635,0.48,0.297,0.145,0.059,0.022,0.008,0.004,0.002,0.001,0.001,0.0,0.002,0.002,0.002,0.003,0.003,0.005,0.008,0.016,0.032,0.068,0.14,0.256,0.395,0.524,0.621,0.688,0.73,0.757,0.772,0.781,0.784,0.783,0.777,0.767,0.751,0.727,0.689,0.633,0.55,0.435,0.297,0.166,0.076,0.03,0.011,0.004,0.002,0.001,0.0,0.0,0.0,0.001,0.001,0.001,0.001,0.001,0.002,0.003,0.006,0.013,0.029,0.063,0.123,0.21,0.309,0.4,0.472,0.523,0.558,0.58,0.593,0.598,0.598,0.592,0.58,0.561,0.533,0.492,0.434,0.358,0.265,0.17,0.091,0.04,0.016,0.006,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.001,0.003,0.006,0.013,0.028,0.058,0.104,0.163,0.225,0.281,0.325,0.357,0.379,0.393,0.4,0.402,0.398,0.389,0.373,0.35,0.317,0.274,0.219,0.158,0.099,0.052,0.024,0.009,0.003,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.003,0.006,0.014,0.029,0.053,0.087,0.124,0.16,0.191,0.216,0.233,0.245,0.252,0.255,0.254,0.249,0.239,0.224,0.202,0.173,0.138,0.099,0.062,0.034,0.015,0.006,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.003,0.008,0.016,0.03,0.05,0.073,0.096,0.117,0.134,0.147,0.156,0.162,0.166,0.166,0.164,0.158,0.149,0.135,0.116,0.093,0.068,0.044,0.024,0.011,0.005,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.005,0.01,0.019,0.032,0.047,0.063,0.078,0.09,0.1,0.107,0.112,0.115,0.116,0.115,0.112,0.107,0.098,0.085,0.069,0.051,0.034,0.019,0.009,0.004,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.003,0.007,0.014,0.023,0.034,0.046,0.056,0.066,0.073,0.079,0.083,0.086,0.088,0.088,0.086,0.082,0.076,0.067,0.056,0.042,0.028,0.017,0.008,0.004,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.003,0.006,0.011,0.018,0.027,0.036,0.044,0.052,0.058,0.063,0.067,0.069,0.071,0.071,0.071,0.068,0.063,0.057,0.048,0.037,0.025,0.015,0.008,0.004,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.005,0.009,0.015,0.022,0.03,0.037,0.044,0.049,0.053,0.056,0.059,0.061,0.061,0.061,0.059,0.056,0.05,0.043,0.034,0.024,0.015,0.008,0.004,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.004,0.008,0.013,0.02,0.026,0.033,0.038,0.043,0.047,0.05,0.052,0.054,0.055,0.055,0.053,0.051,0.046,0.04,0.032,0.023,0.015,0.008,0.004,0.002,0.001,0.0,0.0,0.0,0.0,0.0],"loss":0.1091,"acc":0.98},"1000":{"grid":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.006,0.011,0.016,0.022,0.027,0.03,0.031,0.032,0.03,0.027,0.023,0.018,0.012,0.006,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.007,0.012,0.019,0.026,0.031,0.035,0.037,0.037,0.035,0.032,0.027,0.021,0.014,0.008,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.004,0.008,0.016,0.024,0.032,0.039,0.043,0.046,0.046,0.045,0.041,0.035,0.027,0.018,0.01,0.005,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.002,0.005,0.011,0.021,0.033,0.044,0.053,0.059,0.063,0.063,0.061,0.056,0.048,0.038,0.026,0.015,0.007,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.008,0.018,0.033,0.051,0.068,0.081,0.091,0.096,0.097,0.094,0.087,0.076,0.06,0.042,0.024,0.011,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.005,0.014,0.033,0.06,0.091,0.12,0.142,0.158,0.166,0.169,0.165,0.154,0.136,0.11,0.079,0.047,0.022,0.008,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.011,0.031,0.071,0.126,0.185,0.236,0.274,0.299,0.314,0.318,0.313,0.297,0.268,0.226,0.169,0.107,0.054,0.02,0.006,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.008,0.029,0.081,0.173,0.285,0.386,0.461,0.512,0.544,0.561,0.567,0.561,0.544,0.511,0.455,0.371,0.26,0.144,0.059,0.018,0.005,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.007,0.027,0.088,0.222,0.404,0.564,0.672,0.737,0.775,0.796,0.807,0.811,0.808,0.797,0.776,0.736,0.665,0.544,0.367,0.181,0.062,0.016,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.007,0.025,0.088,0.253,0.502,0.706,0.821,0.879,0.908,0.924,0.933,0.937,0.938,0.937,0.933,0.924,0.908,0.876,0.811,0.678,0.448,0.197,0.058,0.015,0.004,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.001,0.002,0.003,0.008,0.024,0.081,0.25,0.541,0.778,0.893,0.941,0.962,0.972,0.977,0.979,0.981,0.981,0.981,0.979,0.976,0.971,0.96,0.936,0.879,0.739,0.462,0.179,0.05,0.014,0.004,0.002,0.001,0.001,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.002,0.003,0.005,0.01,0.025,0.072,0.215,0.508,0.784,0.915,0.962,0.98,0.987,0.991,0.992,0.993,0.994,0.994,0.993,0.993,0.992,0.99,0.986,0.978,0.957,0.896,0.725,0.402,0.138,0.04,0.013,0.005,0.003,0.002,0.001,0.001,0.001,0.001,0.003,0.004,0.004,0.006,0.008,0.014,0.026,0.062,0.166,0.414,0.727,0.904,0.965,0.985,0.992,0.995,0.996,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.996,0.995,0.991,0.983,0.957,0.872,0.635,0.291,0.094,0.031,0.012,0.006,0.004,0.003,0.002,0.002,0.002,0.007,0.008,0.009,0.012,0.017,0.028,0.054,0.122,0.296,0.599,0.849,0.952,0.983,0.993,0.996,0.998,0.998,0.999,0.999,0.999,0.999,0.999,0.999,0.998,0.998,0.997,0.996,0.992,0.98,0.937,0.792,0.473,0.183,0.063,0.025,0.012,0.007,0.005,0.004,0.003,0.003,0.012,0.014,0.016,0.021,0.03,0.048,0.091,0.196,0.424,0.724,0.909,0.972,0.99,0.996,0.998,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.998,0.996,0.989,0.966,0.879,0.629,0.295,0.11,0.044,0.022,0.013,0.009,0.007,0.006,0.005,0.018,0.02,0.024,0.031,0.044,0.07,0.13,0.268,0.526,0.799,0.938,0.982,0.994,0.997,0.999,0.999,0.999,0.999,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.999,0.999,0.997,0.993,0.979,0.925,0.742,0.413,0.169,0.07,0.034,0.02,0.014,0.011,0.009,0.008,0.024,0.027,0.032,0.041,0.057,0.091,0.165,0.327,0.596,0.841,0.953,0.986,0.995,0.998,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.998,0.996,0.987,0.95,0.818,0.521,0.237,0.101,0.049,0.029,0.02,0.015,0.012,0.011,0.029,0.032,0.039,0.049,0.069,0.108,0.193,0.371,0.643,0.866,0.961,0.989,0.996,0.998,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.997,0.991,0.965,0.867,0.612,0.307,0.137,0.067,0.039,0.027,0.02,0.017,0.014,0.032,0.037,0.043,0.055,0.077,0.12,0.213,0.4,0.671,0.881,0.966,0.99,0.997,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.998,0.993,0.974,0.9,0.683,0.375,0.174,0.087,0.05,0.034,0.026,0.021,0.018,0.035,0.039,0.046,0.059,0.082,0.128,0.225,0.417,0.687,0.888,0.968,0.991,0.997,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.998,0.994,0.98,0.921,0.737,0.436,0.211,0.106,0.062,0.042,0.031,0.026,0.022,0.036,0.04,0.048,0.06,0.084,0.13,0.229,0.423,0.692,0.891,0.969,0.991,0.997,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.998,0.995,0.984,0.935,0.775,0.486,0.244,0.124,0.072,0.048,0.036,0.03,0.026,0.036,0.04,0.048,0.06,0.083,0.129,0.227,0.42,0.689,0.89,0.969,0.991,0.997,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.996,0.986,0.944,0.8,0.521,0.269,0.137,0.079,0.053,0.04,0.032,0.028,0.035,0.039,0.046,0.057,0.079,0.123,0.217,0.406,0.677,0.884,0.967,0.991,0.997,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.996,0.987,0.948,0.813,0.539,0.28,0.142,0.082,0.054,0.04,0.033,0.028,0.032,0.036,0.042,0.053,0.073,0.113,0.2,0.381,0.653,0.872,0.963,0.989,0.996,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.996,0.987,0.948,0.812,0.534,0.273,0.137,0.077,0.051,0.037,0.03,0.026,0.028,0.031,0.037,0.046,0.063,0.098,0.175,0.342,0.612,0.85,0.956,0.987,0.996,0.998,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.998,0.996,0.985,0.942,0.793,0.501,0.244,0.118,0.065,0.042,0.03,0.024,0.021,0.023,0.026,0.03,0.037,0.05,0.078,0.142,0.286,0.548,0.812,0.943,0.983,0.994,0.998,0.999,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.998,0.994,0.98,0.925,0.745,0.429,0.192,0.088,0.047,0.029,0.021,0.017,0.014,0.017,0.019,0.021,0.026,0.036,0.056,0.103,0.216,0.452,0.745,0.916,0.975,0.991,0.996,0.998,0.999,0.999,0.999,0.999,0.999,1.0,1.0,1.0,0.999,0.999,0.999,0.999,0.998,0.996,0.991,0.97,0.888,0.648,0.318,0.126,0.054,0.028,0.017,0.012,0.009,0.008,0.011,0.012,0.013,0.016,0.022,0.034,0.064,0.139,0.323,0.625,0.861,0.955,0.984,0.993,0.996,0.998,0.998,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.999,0.998,0.997,0.993,0.982,0.942,0.801,0.482,0.188,0.065,0.026,0.013,0.008,0.005,0.004,0.003,0.006,0.006,0.007,0.008,0.011,0.017,0.032,0.072,0.184,0.437,0.74,0.907,0.965,0.985,0.992,0.995,0.996,0.997,0.997,0.998,0.998,0.998,0.998,0.997,0.997,0.996,0.995,0.991,0.983,0.956,0.868,0.619,0.271,0.083,0.026,0.01,0.005,0.003,0.002,0.001,0.001,0.002,0.003,0.003,0.003,0.005,0.007,0.013,0.029,0.079,0.225,0.511,0.778,0.909,0.958,0.977,0.985,0.989,0.991,0.992,0.992,0.993,0.993,0.992,0.992,0.991,0.988,0.984,0.974,0.948,0.877,0.684,0.349,0.109,0.029,0.008,0.003,0.001,0.001,0.001,0.0,0.0,0.001,0.001,0.001,0.001,0.001,0.002,0.004,0.009,0.026,0.081,0.238,0.508,0.743,0.867,0.923,0.948,0.961,0.968,0.971,0.973,0.974,0.974,0.973,0.971,0.966,0.959,0.943,0.911,0.838,0.672,0.386,0.136,0.035,0.008,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.007,0.023,0.076,0.212,0.428,0.626,0.753,0.823,0.861,0.883,0.895,0.901,0.904,0.904,0.901,0.895,0.882,0.858,0.816,0.735,0.588,0.366,0.154,0.044,0.01,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.006,0.021,0.065,0.162,0.302,0.44,0.546,0.617,0.662,0.69,0.707,0.716,0.718,0.714,0.701,0.676,0.633,0.563,0.453,0.304,0.154,0.055,0.015,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.006,0.02,0.053,0.112,0.187,0.262,0.324,0.37,0.403,0.426,0.44,0.446,0.444,0.433,0.41,0.37,0.309,0.228,0.139,0.065,0.023,0.006,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.007,0.019,0.043,0.076,0.114,0.149,0.179,0.202,0.22,0.232,0.24,0.241,0.237,0.223,0.199,0.162,0.116,0.069,0.032,0.011,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.009,0.02,0.036,0.055,0.074,0.091,0.106,0.118,0.127,0.133,0.136,0.135,0.128,0.115,0.094,0.067,0.04,0.019,0.007,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.002,0.005,0.011,0.02,0.031,0.043,0.054,0.063,0.071,0.078,0.082,0.085,0.086,0.082,0.074,0.062,0.045,0.027,0.013,0.005,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.007,0.013,0.021,0.029,0.036,0.043,0.049,0.054,0.058,0.06,0.061,0.059,0.054,0.045,0.033,0.02,0.01,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.005,0.01,0.015,0.021,0.027,0.032,0.037,0.041,0.044,0.047,0.048,0.047,0.043,0.036,0.027,0.017,0.008,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.004,0.008,0.013,0.017,0.022,0.026,0.03,0.034,0.036,0.039,0.04,0.039,0.036,0.031,0.024,0.015,0.008,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.004,0.007,0.011,0.015,0.019,0.023,0.026,0.029,0.031,0.033,0.034,0.034,0.032,0.028,0.021,0.014,0.007,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"loss":0.0742,"acc":0.99},"3000":{"grid":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.002,0.004,0.005,0.007,0.007,0.008,0.007,0.006,0.005,0.003,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.005,0.006,0.008,0.009,0.009,0.008,0.007,0.005,0.004,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.002,0.004,0.006,0.009,0.01,0.011,0.011,0.01,0.009,0.007,0.004,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.006,0.01,0.013,0.015,0.016,0.016,0.015,0.013,0.01,0.006,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.002,0.006,0.012,0.018,0.024,0.028,0.029,0.028,0.026,0.022,0.016,0.01,0.005,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.006,0.016,0.031,0.047,0.059,0.066,0.068,0.066,0.06,0.05,0.037,0.024,0.012,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.007,0.026,0.065,0.116,0.162,0.193,0.208,0.209,0.2,0.18,0.152,0.115,0.074,0.038,0.014,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.009,0.048,0.157,0.314,0.45,0.536,0.58,0.596,0.592,0.572,0.535,0.478,0.395,0.284,0.161,0.064,0.016,0.003,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.002,0.014,0.091,0.343,0.643,0.808,0.877,0.906,0.918,0.921,0.917,0.909,0.894,0.868,0.82,0.731,0.562,0.309,0.097,0.017,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.002,0.019,0.144,0.544,0.857,0.952,0.978,0.986,0.989,0.99,0.991,0.99,0.988,0.986,0.982,0.973,0.955,0.908,0.771,0.441,0.111,0.014,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.004,0.024,0.167,0.635,0.925,0.984,0.995,0.998,0.998,0.999,0.999,0.999,0.999,0.999,0.998,0.998,0.996,0.994,0.986,0.959,0.842,0.453,0.087,0.01,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.005,0.023,0.141,0.592,0.928,0.989,0.998,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.999,0.997,0.992,0.966,0.811,0.325,0.046,0.005,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.001,0.001,0.001,0.002,0.006,0.019,0.092,0.43,0.875,0.985,0.998,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.998,0.991,0.945,0.653,0.156,0.02,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.002,0.003,0.006,0.015,0.051,0.23,0.704,0.959,0.996,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.997,0.982,0.855,0.362,0.059,0.009,0.002,0.001,0.0,0.0,0.0,0.0,0.0,0.002,0.002,0.003,0.004,0.006,0.011,0.029,0.102,0.397,0.847,0.983,0.998,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.993,0.941,0.602,0.14,0.024,0.005,0.002,0.001,0.0,0.0,0.0,0.0,0.003,0.004,0.004,0.006,0.009,0.017,0.046,0.16,0.537,0.911,0.991,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.997,0.975,0.786,0.282,0.054,0.012,0.004,0.002,0.001,0.001,0.0,0.0,0.004,0.005,0.006,0.008,0.012,0.024,0.062,0.215,0.636,0.941,0.994,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.989,0.892,0.469,0.114,0.027,0.009,0.004,0.002,0.001,0.001,0.001,0.005,0.006,0.007,0.009,0.014,0.029,0.077,0.263,0.702,0.957,0.996,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.994,0.945,0.648,0.213,0.056,0.018,0.008,0.004,0.003,0.002,0.001,0.005,0.006,0.007,0.01,0.016,0.033,0.09,0.302,0.746,0.965,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.997,0.969,0.777,0.344,0.104,0.036,0.016,0.009,0.006,0.004,0.003,0.006,0.006,0.008,0.011,0.017,0.036,0.099,0.333,0.776,0.971,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.998,0.981,0.854,0.474,0.17,0.063,0.029,0.016,0.01,0.007,0.006,0.006,0.006,0.008,0.011,0.018,0.037,0.106,0.357,0.796,0.974,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.987,0.895,0.575,0.24,0.096,0.046,0.027,0.017,0.013,0.01,0.005,0.006,0.007,0.01,0.018,0.038,0.11,0.372,0.809,0.976,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.989,0.915,0.635,0.295,0.126,0.063,0.037,0.025,0.019,0.015,0.005,0.006,0.007,0.01,0.017,0.036,0.109,0.376,0.813,0.976,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.99,0.92,0.656,0.318,0.142,0.073,0.044,0.031,0.023,0.019,0.004,0.005,0.006,0.008,0.014,0.033,0.102,0.363,0.806,0.974,0.997,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.988,0.911,0.634,0.301,0.134,0.07,0.043,0.031,0.024,0.019,0.003,0.004,0.004,0.006,0.011,0.027,0.086,0.327,0.78,0.969,0.996,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.998,0.983,0.88,0.556,0.24,0.103,0.053,0.033,0.024,0.018,0.015,0.002,0.002,0.003,0.004,0.008,0.019,0.063,0.261,0.72,0.956,0.994,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.997,0.97,0.801,0.408,0.149,0.06,0.031,0.019,0.013,0.011,0.009,0.001,0.001,0.002,0.002,0.004,0.01,0.036,0.169,0.596,0.923,0.989,0.998,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.992,0.928,0.613,0.213,0.064,0.025,0.012,0.008,0.005,0.004,0.003,0.0,0.0,0.001,0.001,0.002,0.004,0.016,0.08,0.385,0.829,0.97,0.994,0.998,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.996,0.97,0.776,0.299,0.068,0.018,0.007,0.003,0.002,0.001,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.001,0.005,0.026,0.157,0.577,0.894,0.975,0.993,0.997,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.997,0.982,0.859,0.392,0.073,0.013,0.003,0.001,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.006,0.038,0.214,0.61,0.87,0.956,0.983,0.992,0.996,0.998,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,0.999,0.998,0.995,0.98,0.882,0.461,0.083,0.011,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.006,0.041,0.187,0.476,0.732,0.87,0.935,0.966,0.982,0.989,0.993,0.996,0.997,0.997,0.997,0.997,0.996,0.994,0.987,0.964,0.859,0.484,0.097,0.011,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.007,0.032,0.107,0.252,0.437,0.615,0.754,0.85,0.909,0.943,0.961,0.972,0.977,0.978,0.977,0.971,0.956,0.914,0.785,0.457,0.115,0.015,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.006,0.019,0.048,0.1,0.179,0.29,0.427,0.568,0.689,0.777,0.832,0.863,0.877,0.874,0.85,0.789,0.65,0.395,0.133,0.023,0.003,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.004,0.011,0.022,0.04,0.071,0.121,0.197,0.296,0.405,0.502,0.573,0.611,0.614,0.574,0.477,0.318,0.143,0.038,0.006,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.003,0.006,0.012,0.021,0.036,0.061,0.102,0.159,0.225,0.288,0.33,0.341,0.312,0.24,0.142,0.057,0.014,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.003,0.005,0.008,0.014,0.024,0.041,0.067,0.102,0.141,0.172,0.185,0.171,0.129,0.073,0.028,0.007,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.004,0.007,0.011,0.02,0.033,0.053,0.077,0.099,0.111,0.104,0.079,0.045,0.017,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.002,0.004,0.007,0.011,0.019,0.031,0.047,0.064,0.074,0.071,0.055,0.031,0.012,0.003,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.002,0.003,0.004,0.007,0.012,0.021,0.032,0.044,0.053,0.053,0.042,0.024,0.01,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.001,0.002,0.003,0.005,0.009,0.014,0.023,0.033,0.04,0.042,0.034,0.02,0.008,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.001,0.001,0.002,0.002,0.004,0.006,0.011,0.017,0.025,0.032,0.034,0.028,0.017,0.007,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"loss":0.0433,"acc":0.9975}},"curve":[[0,0.7038],[25,0.6359],[50,0.5507],[75,0.4553],[100,0.356],[125,0.2853],[150,0.2428],[175,0.2151],[200,0.1957],[225,0.1813],[250,0.17],[275,0.1607],[300,0.1528],[325,0.1458],[350,0.1394],[375,0.1335],[400,0.1278],[425,0.1226],[450,0.1176],[475,0.1131],[500,0.1091],[525,0.1054],[550,0.1022],[575,0.0993],[600,0.0968],[625,0.0944],[650,0.0923],[675,0.0904],[700,0.0886],[725,0.087],[750,0.0854],[775,0.084],[800,0.0827],[825,0.0814],[850,0.0802],[875,0.0791],[900,0.078],[925,0.077],[950,0.076],[975,0.0751],[1000,0.0742],[1025,0.0734],[1050,0.0725],[1075,0.0718],[1100,0.071],[1125,0.0703],[1150,0.0696],[1175,0.0689],[1200,0.0682],[1225,0.0676],[1250,0.0669],[1275,0.0663],[1300,0.0657],[1325,0.0652],[1350,0.0646],[1375,0.0641],[1400,0.0635],[1425,0.063],[1450,0.0625],[1475,0.062],[1500,0.0615],[1525,0.061],[1550,0.0606],[1575,0.0601],[1600,0.0597],[1625,0.0592],[1650,0.0588],[1675,0.0584],[1700,0.058],[1725,0.0576],[1750,0.0572],[1775,0.0568],[1800,0.0564],[1825,0.056],[1850,0.0556],[1875,0.0553],[1900,0.0549],[1925,0.0545],[1950,0.0542],[1975,0.0538],[2000,0.0535],[2025,0.0532],[2050,0.0528],[2075,0.0525],[2100,0.0522],[2125,0.0519],[2150,0.0516],[2175,0.0513],[2200,0.051],[2225,0.0507],[2250,0.0504],[2275,0.0501],[2300,0.0498],[2325,0.0495],[2350,0.0493],[2375,0.049],[2400,0.0487],[2425,0.0485],[2450,0.0482],[2475,0.0479],[2500,0.0477],[2525,0.0474],[2550,0.0472],[2575,0.047],[2600,0.0467],[2625,0.0465],[2650,0.0462],[2675,0.046],[2700,0.0458],[2725,0.0456],[2750,0.0453],[2775,0.0451],[2800,0.0449],[2825,0.0447],[2850,0.0445],[2875,0.0443],[2900,0.0441],[2925,0.0439],[2950,0.0437],[2975,0.0435],[3000,0.0433]]};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+/* ---------- theme / code ---------- */
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.dataset.theme=cur==='dark'?'light':'dark'; redrawCanvas && redrawCanvas();
+});
+try{ if(window.hljs) document.querySelectorAll('pre code.language-python').forEach(b=>hljs.highlightElement(b)); }catch(e){}
+document.querySelectorAll('.code').forEach(c=>{const b=c.querySelector('button'),code=c.querySelector('code');
+  if(b) b.addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(code.innerText).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200);});});});
+
+/* ---------- helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function fmt(v,d=2){const p=10**d;let r=Math.round(v*p)/p;if(Object.is(r,-0))r=0;return String(r);}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent,x,y,s,attrs={}){const t=el('text',Object.assign({x,y},attrs),parent);t.textContent=s;return t;}
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+/* chart frame: returns scale fns */
+function frame(svg,W,H,xr,yr,opts={}){
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML='';
+  const m=Object.assign({l:44,r:12,t:22,b:32},opts.m||{});
+  const X=x=>m.l+(x-xr[0])/(xr[1]-xr[0])*(W-m.l-m.r);
+  const Y=y=>H-m.b-(y-yr[0])/(yr[1]-yr[0])*(H-m.t-m.b);
+  const ix=px=>xr[0]+(px-m.l)/(W-m.l-m.r)*(xr[1]-xr[0]);
+  const iy=py=>yr[0]+(H-m.b-py)/(H-m.t-m.b)*(yr[1]-yr[0]);
+  const g=el('g',{},svg);
+  (opts.xt||[]).forEach(v=>{el('line',{x1:X(v),x2:X(v),y1:m.t,y2:H-m.b,class:'gridline'},g);txt(g,X(v),H-m.b+15,String(v),{'text-anchor':'middle'});});
+  (opts.yt||[]).forEach(v=>{el('line',{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),class:'gridline'},g);txt(g,m.l-6,Y(v)+4,String(v),{'text-anchor':'end'});});
+  if(opts.xl) txt(g,(m.l+W-m.r)/2,H-4,opts.xl,{'text-anchor':'middle'});
+  if(opts.yl) txt(g,12,m.t-8,opts.yl,{'text-anchor':'start'});
+  if(opts.title) txt(g,W-m.r,14,opts.title,{'text-anchor':'end',class:'ttl'});
+  const cid='clip'+Math.random().toString(36).slice(2);
+  const cp=el('clipPath',{id:cid},svg); el('rect',{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b},cp);
+  const layer=el('g',{'clip-path':`url(#${cid})`},svg);
+  const top=el('g',{},svg);
+  return {X,Y,ix,iy,layer,top,m,W,H};
+}
+const AD=DATA.ad, SA=DATA.sales, N=AD.length, B0=5.5;
+const lossW=(w,b=B0)=>{let s=0;for(let i=0;i<N;i++){const e=w*AD[i]+b-SA[i];s+=e*e;}return s/N;};
+const dLossW=(w,b=B0)=>{let s=0;for(let i=0;i<N;i++){const e=w*AD[i]+b-SA[i];s+=2*e*AD[i];}return s/N;};
+function curvePath(F,f,a,b,n=120){let d='';for(let i=0;i<=n;i++){const w=a+(b-a)*i/n;const y=f(w);d+=(i?'L':'M')+F.X(w)+','+F.Y(Math.min(y,1e6))+' ';}return d;}
+
+/* ---------- W1: loss explorer ---------- */
+(function(){
+  const sl=$('#lw-w');
+  function draw(){
+    const w=+sl.value; $('#lw-wv').textContent=w;
+    const F=frame($('#lw-data'),320,260,[0,11],[0,45],{xt:[0,2,4,6,8,10],yt:[0,10,20,30,40],xl:'ad spend (₹ lakh)',yl:'sales (₹ lakh)'});
+    for(let i=0;i<N;i++){const p=w*AD[i]+B0; el('line',{x1:F.X(AD[i]),y1:F.Y(SA[i]),x2:F.X(AD[i]),y2:F.Y(clamp(p,0,45)),class:'c-res'},F.layer);}
+    el('line',{x1:F.X(0),y1:F.Y(B0),x2:F.X(11),y2:F.Y(clamp(w*11+B0,-5,60)),class:'c-fit'},F.layer);
+    for(let i=0;i<N;i++) el('circle',{cx:F.X(AD[i]),cy:F.Y(SA[i]),r:3.6,class:'c-pt'},F.layer);
+    const G=frame($('#lw-curve'),320,260,[0,6.5],[0,300],{xt:[0,1,2,3,4,5,6],yt:[0,100,200,300],xl:'w',yl:'loss L(w)'});
+    el('path',{d:curvePath(G,lossW,0,6.5),class:'c-line'},G.layer);
+    const L=lossW(w); el('circle',{cx:G.X(w),cy:G.Y(Math.min(L,300)),r:6,class:'c-cur'},G.top);
+    $('#lw-out').innerHTML=`<p>Line: sales = <b>${fmt(w)}</b> × ad spend + 5.5 &nbsp;→&nbsp; <span class="k">loss (MSE)</span> <span class="big" style="color:var(--verm)">${fmt(L)}</span></p><p class="k">${L<3?'Near the bottom of the bowl: the line runs through the middle of the points.':(w<3.24?'Line too flat: predictions too low for big-spend months.':'Line too steep: predictions too high for big-spend months.')}</p>`;
+  }
+  sl.addEventListener('input',draw); draw();
+})();
+
+/* ---------- W2: tangent ---------- */
+(function(){
+  const sl=$('#tn-w');
+  function draw(){
+    const w=+sl.value; $('#tn-wv').textContent=w;
+    const G=frame($('#tn-svg'),360,280,[0,6.5],[0,300],{xt:[0,1,2,3,4,5,6],yt:[0,100,200,300],xl:'w',yl:'loss L(w)'});
+    el('path',{d:curvePath(G,lossW,0,6.5),class:'c-line'},G.layer);
+    const L=lossW(w),s=dLossW(w),dx=0.9;
+    el('line',{x1:G.X(w-dx),y1:G.Y(L-s*dx),x2:G.X(w+dx),y2:G.Y(L+s*dx),class:'c-tan'},G.layer);
+    el('circle',{cx:G.X(w),cy:G.Y(L),r:6,class:'c-cur'},G.top);
+    const dir = Math.abs(s)<2?['zero','Almost flat: you are at (or very near) the bottom.']:(s<0?['pos','Negative slope: loss falls as w grows → increase w.']:['neg','Positive slope: loss rises as w grows → decrease w.']);
+    $('#tn-out').innerHTML=`<p><span class="k">w</span> ${fmt(w)} &nbsp; <span class="k">L(w)</span> ${fmt(L)}</p><p><span class="k">slope L′(w)</span> <span class="big" style="color:var(--verm)">${fmt(s,1)}</span></p><p class="k">For every tiny step of +0.01 in w, loss changes by about ${fmt(s*0.01,2)}.</p><div class="verdict ${dir[0]}">${dir[1]}</div>`;
+  }
+  sl.addEventListener('input',draw); draw();
+})();
+
+/* ---------- W3: GD animator ---------- */
+(function(){
+  let path=[];
+  function reset(){path=[+$('#gd-w0').value];draw();}
+  function step(k=1){for(let i=0;i<k;i++){const w=path[path.length-1];if(!isFinite(w)||Math.abs(w)>1e6)break;path.push(w-(+$('#gd-lr').value)*dLossW(w));}draw();}
+  function draw(){
+    $('#gd-lrv').textContent=$('#gd-lr').value; $('#gd-w0v').textContent=$('#gd-w0').value;
+    const G=frame($('#gd-svg'),360,280,[-1,7.5],[0,400],{xt:[0,2,4,6],yt:[0,100,200,300,400],xl:'w',yl:'loss L(w)'});
+    el('path',{d:curvePath(G,lossW,-1,7.5),class:'c-line'},G.layer);
+    const vis=path.filter(w=>w>-1&&w<7.5&&lossW(w)<400);
+    if(path.length>1){let d='';path.forEach((w,i)=>{const cw=clamp(w,-1,7.5),cl=Math.min(lossW(w),400);d+=(i?'L':'M')+G.X(cw)+','+G.Y(cl)+' ';});el('path',{d,class:'c-path'},G.layer);}
+    path.forEach((w,i)=>{if(w>-1&&w<7.5&&lossW(w)<400) el('circle',{cx:G.X(w),cy:G.Y(lossW(w)),r:i===path.length-1?6:3.5,class:i===path.length-1?'c-cur':'c-step'},G.layer);});
+    const w=path[path.length-1], s=dLossW(w), lr=+$('#gd-lr').value;
+    let st;
+    if(!isFinite(w)||Math.abs(w)>50||lossW(w)>1e4) st='<span class="status bad">diverging</span>';
+    else if(path.length>3&&Math.abs(path[path.length-1]-3.248)>Math.abs(path[path.length-3]-3.248)+1e-9) st='<span class="status bad">diverging (slowly)</span>';
+    else if(Math.abs(s)<0.05) st='<span class="status ok">converged</span>';
+    else if(path.length>2&&Math.sign(path[path.length-1]-3.248)!==Math.sign(path[path.length-2]-3.248)) st='<span class="status warn">zig-zagging</span>';
+    else st='<span class="status warn">descending</span>';
+    $('#gd-status').innerHTML=st;
+    const rows=path.slice(-6).map((v,i)=>{const k=path.length-Math.min(6,path.length)+i;return `<tr><td>${k}</td><td>${isFinite(v)?fmt(v,3):'∞'}</td><td>${isFinite(v)&&Math.abs(v)<1e6?fmt(lossW(v),2):'huge'}</td></tr>`;}).join('');
+    $('#gd-out').innerHTML=`<p><span class="k">limit for this data:</span> lr &lt; 2 ÷ 89.3 ≈ 0.0224</p><p><span class="k">next update:</span> w − ${lr} × (${isFinite(s)?fmt(s,1):'∞'})</p><div class="tw"><table><thead><tr><th>step</th><th>w</th><th>loss</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  $('#gd-step').onclick=()=>step(1); $('#gd-run').onclick=()=>step(20); $('#gd-reset').onclick=reset;
+  $('#gd-lr').addEventListener('input',reset); $('#gd-w0').addEventListener('input',reset);
+  reset();
+})();
+
+/* ---------- W4: contours ---------- */
+(function(){
+  let mode='raw', start=[0,0];
+  const mu=AD.reduce((a,b)=>a+b,0)/N, sd=Math.sqrt(AD.reduce((a,b)=>a+(b-mu)**2,0)/N);
+  const XS={raw:AD, scaled:AD.map(v=>(v-mu)/sd)};
+  const cfg={raw:{lr:0.02,xr:[-1,8],yr:[-10,30],xt:[0,2,4,6,8],yt:[-10,0,10,20,30],xl:'w (per ₹ lakh)'},
+             scaled:{lr:0.1,xr:[-4,16],yr:[-4,36],xt:[0,5,10,15],yt:[0,10,20,30],xl:'w (per 1 std of ad spend)'}};
+  function stats(x){let sx=0,sxx=0,sy=0,sxy=0;for(let i=0;i<N;i++){sx+=x[i];sxx+=x[i]*x[i];sy+=SA[i];sxy+=x[i]*SA[i];}return {mx:sx/N,mxx:sxx/N,my:sy/N,mxy:sxy/N};}
+  function grad(x,w,b){let gw=0,gb=0;for(let i=0;i<N;i++){const e=w*x[i]+b-SA[i];gw+=2*e*x[i];gb+=2*e;}return [gw/N,gb/N];}
+  function L(x,w,b){let s=0;for(let i=0;i<N;i++){const e=w*x[i]+b-SA[i];s+=e*e;}return s/N;}
+  function draw(){
+    const c=cfg[mode], x=XS[mode];
+    const F=frame($('#ct-svg'),380,340,c.xr,c.yr,{xt:c.xt,yt:c.yt,xl:c.xl,yl:'b (base sales)'});
+    const S=stats(x); // minimum
+    const det=S.mxx-S.mx*S.mx; const wS=(S.mxy-S.mx*S.my)/det, bS=S.my-wS*S.mx; const Lmin=L(x,wS,bS);
+    // Hessian/2 = [[mxx,mx],[mx,1]] ; eigen
+    const a=S.mxx,bq=S.mx,d=1; const tr=a+d, dt=a*d-bq*bq, l1=tr/2+Math.sqrt(tr*tr/4-dt), l2=tr/2-Math.sqrt(tr*tr/4-dt);
+    let v1=[bq,l1-a]; let n1=Math.hypot(...v1); if(n1<1e-12) v1=[1,0]; else v1=[v1[0]/n1,v1[1]/n1]; const v2=[-v1[1],v1[0]];
+    [1,4,15,40,100,250,600,1500].forEach(lv=>{ if(lv<=0) return; let dd='';
+      for(let k=0;k<=120;k++){const t=2*Math.PI*k/120; const r1=Math.sqrt(lv/l1)*Math.cos(t), r2=Math.sqrt(lv/l2)*Math.sin(t);
+        const pw=wS+r1*v1[0]+r2*v2[0], pb=bS+r1*v1[1]+r2*v2[1]; dd+=(k?'L':'M')+F.X(pw)+','+F.Y(pb)+' ';}
+      el('path',{d:dd,class:'c-ell'},F.layer);});
+    el('circle',{cx:F.X(wS),cy:F.Y(bS),r:5,class:'c-min'},F.top);
+    // run GD
+    let p=[...start], pts=[p], steps=0, ok=false;
+    for(steps=1;steps<=20000;steps++){const g=grad(x,p[0],p[1]); p=[p[0]-c.lr*g[0],p[1]-c.lr*g[1]]; pts.push(p); const g2=grad(x,p[0],p[1]); if(Math.hypot(g2[0],g2[1])<1e-3){ok=true;break;}}
+    let dd=''; const show=pts.slice(0,Math.min(pts.length,400));
+    show.forEach((q,i)=>{dd+=(i?'L':'M')+F.X(clamp(q[0],c.xr[0]-5,c.xr[1]+5))+','+F.Y(clamp(q[1],c.yr[0]-10,c.yr[1]+10))+' ';});
+    el('path',{d:dd,class:'c-path'},F.layer);
+    show.slice(0,40).forEach(q=>el('circle',{cx:F.X(q[0]),cy:F.Y(q[1]),r:2.4,class:'c-step'},F.layer));
+    el('circle',{cx:F.X(start[0]),cy:F.Y(start[1]),r:6,class:'c-cur'},F.top);
+    const ratio=l1/l2;
+    $('#ct-out').innerHTML=`<p><span class="k">mode</span> <b>${mode==='raw'?'raw ad spend':'scaled ad spend'}</b> · learning rate ${c.lr}</p>
+      <p><span class="k">valley stretch</span> (steep ÷ shallow curvature) <b>${fmt(ratio,1)}×</b></p>
+      <p><span class="k">start</span> [${fmt(start[0])}, ${fmt(start[1])}]</p>
+      <p><span class="k">steps to reach the bottom</span> <span class="big" style="color:var(--verm)">${ok?steps.toLocaleString('en-IN'):'> 20,000'}</span></p>
+      <p class="k">${mode==='raw'?'A long, thin trench: the path zig-zags across it and then crawls along the floor (only the first 400 steps are drawn).':'A round bowl: every gradient points nearly straight at the bottom.'}</p>`;
+    F.svg=$('#ct-svg'); $('#ct-svg').onclick=e=>{const pt=$('#ct-svg').createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform($('#ct-svg').getScreenCTM().inverse());start=[F.ix(q.x),F.iy(q.y)];draw();};
+  }
+  document.querySelectorAll('#ct-mode button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#ct-mode button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;start=[0,0];draw();});
+  draw();
+})();
+
+/* ---------- W5: computational graph ---------- */
+(function(){
+  let step=0; const sig=z=>1/(1+Math.exp(-z));
+  const nodes={w:[40,40,'w'],x:[40,130,'x'],mul:[150,85,'×'],b:[150,190,'b'],add:[260,135,'+'],sig:[370,135,'σ'],log:[480,135,'−log'],L:[590,135,'L']};
+  const edges=[['w','mul'],['x','mul'],['mul','add'],['b','add'],['add','sig'],['sig','log'],['log','L']];
+  function draw(){
+    const w=+$('#cg-w').value,b=+$('#cg-b').value,x=+$('#cg-x').value;
+    const wx=w*x,z=wx+b,p=sig(z),L=-Math.log(p);
+    const gL=1,gp=-1/p,gz=gp*p*(1-p),gwx=gz,gb=gz,gw=gz*x;
+    const vals={w,x,b,mul:wx,add:z,sig:p,log:L,L};
+    const fwdOrder=['mul','add','sig','log'];   // steps 1..4
+    const grads={L:gL,log:gL,sig:gp,add:gz,mul:gwx,b:gb,w:gw}; // backward
+    const bwdOrder=[['L','log'],['sig'],['add'],['mul','b'],['w']]; // steps 5..9
+    const shownV=new Set(['w','x','b']); fwdOrder.slice(0,Math.min(step,4)).forEach(k=>shownV.add(k)); if(step>=4) shownV.add('L');
+    const shownG=new Set(); bwdOrder.slice(0,Math.max(0,step-4)).forEach(a=>a.forEach(k=>shownG.add(k)));
+    const svg=$('#cg-svg'); svg.setAttribute('viewBox','0 0 640 230'); svg.innerHTML='';
+    edges.forEach(([a,c])=>{const A=nodes[a],C=nodes[c];const hot=shownG.has(a)&&shownG.has(c);el('path',{d:`M${A[0]+30},${A[1]} C${(A[0]+C[0])/2+15},${A[1]} ${(A[0]+C[0])/2+15},${C[1]} ${C[0]-30},${C[1]}`,class:'edge'+(hot?' hot':'')},svg);});
+    for(const k in nodes){const [cx,cy,lab]=nodes[k];const op=['mul','add'].includes(k),act=['sig','log'].includes(k);
+      const g=el('g',{class:'node'+(op?' op':'')+(act?' act':'')},svg);
+      el('rect',{x:cx-30,y:cy-24,width:60,height:48,rx:8},g);
+      txt(g,cx,cy-8,lab,{'font-weight':700});
+      if(shownV.has(k)) txt(g,cx,cy+7,fmt(vals[k],3),{class:'val'});
+      if(shownG.has(k)) txt(g,cx,cy+20,'∂ '+fmt(grads[k],3),{class:'grd'});
+      if(k==='x' && step>4) txt(g,cx,cy+20,'(data)',{class:'val','font-size':'9'});
+    }
+    const msgs=[
+      'Press Next. Inputs are known: w, x, b. Values appear in petrol; gradients (∂L/∂·) in vermilion.',
+      `Forward 1: w × x = ${fmt(w)} × ${fmt(x)} = ${fmt(wx,3)}`,
+      `Forward 2: z = w·x + b = ${fmt(wx,3)} + ${fmt(b)} = ${fmt(z,3)}`,
+      `Forward 3: p = σ(z) = 1 / (1 + e^(−${fmt(z,3)})) = ${fmt(p,4)}`,
+      `Forward 4: L = −log(p) = ${fmt(L,4)}. Forward pass done; every value is saved.`,
+      `Backward 1: ∂L/∂L = 1. Through −log: local slope −1/p = ${fmt(gp,3)}, so ∂L/∂p = ${fmt(gp,3)}`,
+      `Backward 2: through σ: local slope p(1−p) = ${fmt(p*(1-p),4)}.  ∂L/∂z = ${fmt(gp,3)} × ${fmt(p*(1-p),4)} = ${fmt(gz,4)}  (= p − y)`,
+      `Backward 3: through +: local slope 1 for both inputs, so ∂L/∂(wx) = ∂L/∂b = ${fmt(gz,4)}`,
+      `Backward 4: through ×: local slope for w is x = ${fmt(x)}.  ∂L/∂w = ${fmt(gz,4)} × ${fmt(x)} = ${fmt(gw,4)}`,
+      `Done. Gradient descent would now do w ← w − α(${fmt(gw,4)}), b ← b − α(${fmt(gb,4)}): both increase, pushing p towards 1.`
+    ];
+    // map steps: 5 shows L&log, 6 sig, 7 add, 8 mul&b, 9 w
+    const mi=[0,1,2,3,4,5,6,7,8,9][step];
+    $('#cg-calc').innerHTML=msgs[mi];
+  }
+  $('#cg-next').onclick=()=>{step=Math.min(9,step+1);draw();}; $('#cg-prev').onclick=()=>{step=Math.max(0,step-1);draw();}; $('#cg-reset').onclick=()=>{step=0;draw();};
+  ['w','b','x'].forEach(k=>$('#cg-'+k).addEventListener('input',draw));
+  draw();
+})();
+
+/* ---------- W6: decision boundary ---------- */
+let redrawCanvas=null;
+(function(){
+  const keys=Object.keys(DATA.snaps).map(Number).sort((a,b)=>a-b);
+  const sl=$('#db-e'); sl.max=keys.length-1;
+  const cv=$('#db-cv'), ctx=cv.getContext('2d');
+  function hex(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+  function draw(){
+    const ep=keys[+sl.value]; $('#db-ev').textContent=ep; const s=DATA.snaps[ep];
+    const P=hex(cssv('--petrol')),V=hex(cssv('--verm')),BG=hex(cssv('--bg'));
+    const n=41, cell=400/(n-1);
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      const p=s.grid[i*n+j]; const t=Math.abs(p-0.5)*2; const C=p>0.5?V:P;
+      const mix=C.map((c,k)=>Math.round(BG[k]+(c-BG[k])*(0.15+0.5*t)));
+      ctx.fillStyle=`rgb(${mix})`; ctx.fillRect(j*cell-cell/2,(n-1-i)*cell-cell/2,cell+1,cell+1);
+    }
+    // boundary-ish: draw cells near 0.5
+    DATA.cx.forEach((q,k)=>{const px=(q[0]+1)/2*400, py=400-(q[1]+1)/2*400;
+      ctx.beginPath();ctx.arc(px,py,3.2,0,7);ctx.fillStyle=DATA.cy[k]?cssv('--verm'):cssv('--petrol');ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=cssv('--surface');ctx.stroke();});
+    ctx.beginPath();ctx.arc(200,200,Math.sqrt(0.45)*200,0,7);ctx.setLineDash([5,5]);ctx.strokeStyle=cssv('--ink');ctx.lineWidth=1.2;ctx.stroke();ctx.setLineDash([]);
+    const F=frame($('#db-curve'),320,200,[0,3000],[0,0.7],{xt:[0,1000,2000,3000],yt:[0,0.2,0.4,0.6],xl:'epoch',yl:'training loss'});
+    let d='';DATA.curve.forEach((c,i)=>{d+=(i?'L':'M')+F.X(c[0])+','+F.Y(c[1])+' ';});el('path',{d,class:'c-line'},F.layer);
+    el('circle',{cx:F.X(ep),cy:F.Y(s.loss),r:6,class:'c-cur'},F.top);
+    $('#db-out').innerHTML=`<p><span class="k">epoch</span> <b>${ep}</b> &nbsp; <span class="k">loss</span> <b>${s.loss}</b> &nbsp; <span class="k">accuracy</span> <span class="big" style="color:var(--verm)">${fmt(s.acc*100,1)}%</span></p><p class="k">Dashed circle = the true boundary. Dots = training points (vermilion = class 1).</p>`;
+  }
+  sl.addEventListener('input',draw); redrawCanvas=draw; draw();
+})();
+
+/* ---------- W7: vanishing ---------- */
+(function(){
+  function draw(){
+    const f=+$('#vn-f').value,d=+$('#vn-d').value; $('#vn-fv').textContent=f; $('#vn-dv').textContent=d;
+    const lo=-20,hi=6;
+    const F=frame($('#vn-svg'),640,240,[0.5,30.5],[lo,hi],{xt:[1,5,10,15,20,25,30],yt:[-20,-15,-10,-5,0,5],xl:'layer (counting back from the output)',yl:'gradient size, log₁₀',m:{l:44}});
+    el('line',{x1:F.X(0.5),x2:F.X(30.5),y1:F.Y(0),y2:F.Y(0),stroke:'var(--ink)','stroke-width':1,opacity:.5},F.layer);
+    const bw=(F.X(2)-F.X(1))*0.7;
+    for(let k=1;k<=d;k++){const v=k*Math.log10(f); const vc=clamp(v,lo,hi); const col=v<-3?'var(--verm)':(v>3?'var(--verm)':'var(--petrol)');
+      el('rect',{x:F.X(k)-bw/2,y:Math.min(F.Y(0),F.Y(vc)),width:bw,height:Math.abs(F.Y(vc)-F.Y(0)),fill:col,opacity:.8},F.layer);}
+    const tot=Math.pow(f,d);
+    const cls=tot<1e-3?'neg':(tot>1e3?'neg':'pos');
+    const msg=tot<1e-3?`Vanishing: the first layer receives ${tot.toExponential(1)} of the output gradient. It barely learns.`:(tot>1e3?`Exploding: the first layer receives ${tot.toExponential(1)}× the output gradient. Updates blow up.`:`Healthy: the first layer receives ${fmt(tot,3)}× the output gradient.`);
+    $('#vn-out').innerHTML=`<p>${f}<sup>${d}</sup> = <b>${tot.toExponential(2)}</b></p><div class="verdict ${cls}">${msg}</div><p class="k">Try 0.25 (sigmoid's best case), 1.0 (ReLU with good init) and 1.3.</p>`;
+  }
+  $('#vn-f').addEventListener('input',draw); $('#vn-d').addEventListener('input',draw); draw();
+})();
+
+/* ---------- W8: optimiser race ---------- */
+(function(){
+  const grad=p=>[p[0],25*p[1]], Lv=p=>0.5*(p[0]**2+25*p[1]**2);
+  const opts=[
+    ['SGD',0.07,'var(--axis)',(p,g,s,lr)=>[[p[0]-lr*g[0],p[1]-lr*g[1]],s]],
+    ['Momentum',0.05,'var(--petrol)',(p,g,s,lr)=>{const v=s.v||[0,0];s.v=[0.9*v[0]+g[0],0.9*v[1]+g[1]];return [[p[0]-lr*s.v[0],p[1]-lr*s.v[1]],s];}],
+    ['RMSProp',0.5,'var(--green)',(p,g,s,lr)=>{const q=s.q||[0,0];s.q=[0.9*q[0]+0.1*g[0]**2,0.9*q[1]+0.1*g[1]**2];return [[p[0]-lr*g[0]/(Math.sqrt(s.q[0])+1e-8),p[1]-lr*g[1]/(Math.sqrt(s.q[1])+1e-8)],s];}],
+    ['Adam',0.3,'var(--verm)',(p,g,s,lr)=>{s.t=(s.t||0)+1;const m=s.m||[0,0],v=s.v||[0,0];s.m=[0.9*m[0]+0.1*g[0],0.9*m[1]+0.1*g[1]];s.v=[0.999*v[0]+0.001*g[0]**2,0.999*v[1]+0.001*g[1]**2];
+      const mh=s.m.map(x=>x/(1-0.9**s.t)),vh=s.v.map(x=>x/(1-0.999**s.t));return [[p[0]-lr*mh[0]/(Math.sqrt(vh[0])+1e-8),p[1]-lr*mh[1]/(Math.sqrt(vh[1])+1e-8)],s];}]
+  ];
+  function draw(){
+    const mult=+$('#op-m').value, ns=+$('#op-s').value; $('#op-mv').textContent=mult+'×'; $('#op-sv').textContent=ns;
+    const F=frame($('#op-svg'),640,300,[-4.5,1.5],[-1.6,1.9],{xt:[-4,-3,-2,-1,0,1],yt:[-1.5,-1,-0.5,0,0.5,1,1.5],xl:'w₁ (shallow direction)',yl:'w₂ (steep direction)'});
+    [0.05,0.3,1,2.5,5,9,15,25].forEach(lv=>{let d='';for(let k=0;k<=100;k++){const t=2*Math.PI*k/100;d+=(k?'L':'M')+F.X(Math.sqrt(2*lv)*Math.cos(t))+','+F.Y(Math.sqrt(2*lv/25)*Math.sin(t))+' ';}el('path',{d,class:'c-ell'},F.layer);});
+    el('circle',{cx:F.X(0),cy:F.Y(0),r:5,class:'c-min'},F.top);
+    const lg=[];
+    opts.forEach(([name,lr0,col,fn])=>{
+      const lr=lr0*mult; let p=[-4,1.5],s={},pts=[p],conv=null,div=false;
+      for(let t=1;t<=5000;t++){[p,s]=fn(p,grad(p),s,lr); if(t<=ns) pts.push(p); if(!isFinite(p[0])||Lv(p)>1e6){div=true;break;} if(Lv(p)<1e-4&&conv===null){conv=t;break;}}
+      let d='';pts.forEach((q,i)=>{d+=(i?'L':'M')+F.X(clamp(q[0],-6,3))+','+F.Y(clamp(q[1],-3,3))+' ';});
+      el('path',{d,fill:'none',stroke:col,'stroke-width':2,opacity:.9},F.layer);
+      lg.push(`<span><i style="background:${col}"></i>${name} (lr ${fmt(lr,3)}): ${div?'<b style="color:var(--verm)">diverged</b>':(conv?conv+' steps':'not done in 5000')}</span>`);
+    });
+    el('circle',{cx:F.X(-4),cy:F.Y(1.5),r:5,class:'c-cur'},F.top);
+    $('#op-lg').innerHTML=lg.join('');
+  }
+  $('#op-m').addEventListener('input',draw); $('#op-s').addEventListener('input',draw); draw();
+})();
+
+/* ---------- W9: schedules ---------- */
+(function(){
+  function draw(){
+    const wp=+$('#sc-w').value/100; $('#sc-wv').textContent=Math.round(wp*100)+'%';
+    const T=1000, lrM=1e-3, lrm=1e-5, W=Math.round(wp*T);
+    const F=frame($('#sc-svg'),640,240,[0,1000],[0,1.1e-3],{xt:[0,200,400,600,800,1000],yt:[0,0.0005,0.001],xl:'training step',yl:'learning rate'});
+    const wc=t=>t<W?lrM*(t+1)/W:lrm+0.5*(lrM-lrm)*(1+Math.cos(Math.PI*(t-W)/Math.max(1,T-W)));
+    const sd=t=>lrM*Math.pow(0.5,Math.floor(t/250));
+    [[t=>lrM*0.5,'var(--axis)'],[sd,'var(--petrol)'],[wc,'var(--verm)']].forEach(([f,c])=>{let d='';for(let t=0;t<T;t+=4){d+=(t?'L':'M')+F.X(t)+','+F.Y(f(t))+' ';}el('path',{d,fill:'none',stroke:c,'stroke-width':2.5},F.layer);});
+    if(W>0){el('rect',{x:F.X(0),y:F.Y(1.1e-3),width:F.X(W)-F.X(0),height:F.Y(0)-F.Y(1.1e-3),fill:'var(--verm)',opacity:.07},F.layer);txt(F.layer,F.X(W/2),F.Y(1.05e-3),'warmup',{'text-anchor':'middle'});}
+  }
+  $('#sc-w').addEventListener('input',draw); draw();
+})();
+
+/* ---------- quiz ---------- */
+(function(){
+  const Q=[
+    ['The slope of the loss at the current weight is −12. What should gradient descent do?',['Decrease the weight','Increase the weight','Stop','Double the learning rate'],1,'Negative slope means loss falls as w rises, so increase w. The update w − α(−12) does exactly that.'],
+    ['Loss turns into nan after a few steps. Most likely cause?',['Learning rate too small','Learning rate too large (or unscaled features)','Too much data','Model too simple'],1,'Steps overshoot further each time until the numbers overflow. Lower the learning rate and scale inputs.'],
+    ['What is ∂L/∂b?',['The slope of L along b with other weights frozen','The total loss','The average of b','The second derivative'],0,'A partial derivative changes one variable and holds the rest fixed.'],
+    ['Gradient descent on raw features zig-zags slowly. The cheapest fix is…',['More layers','Standardise the features','Use MSE','Remove the bias'],1,'Scaling turns a narrow trench into a round bowl, so the gradient points at the bottom (49 vs 1,285 steps above).'],
+    ['y = (2x + 1)³. What is dy/dx?',['3(2x+1)²','6(2x+1)²','2(2x+1)³','6x'],1,'Outside 3u², inside slope 2: 3(2x+1)² × 2.'],
+    ['For sigmoid + cross-entropy, ∂L/∂z equals…',['p(1−p)','−1/p','p − y','y − p²'],2,'The two local slopes multiply out to p − y.'],
+    ['Why do deep sigmoid networks suffer from vanishing gradients?',['Sigmoid is not differentiable','Its slope is at most 0.25, multiplied once per layer','It outputs negative numbers','It uses too much memory'],1,'Many factors ≤ 0.25 multiplied together shrink towards zero.'],
+    ['Adam became the default deep-learning optimiser mainly because…',['It is always fastest','It needs no learning rate','It trains well across a wide range of settings','It avoids computing gradients'],2,'Its per-weight adaptive steps make it robust. On specific problems, other optimisers can be faster.']
+  ];
+  const body=$('#quiz-body'); let score=0;
+  Q.forEach((q,qi)=>{const d=document.createElement('div');d.className='q';
+    d.innerHTML=`<p>${qi+1}. ${q[0]}</p><div class="opts">${q[1].map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><div class="fb">${q[3]}</div>`;
+    const btns=d.querySelectorAll('button');let done=false;
+    btns.forEach(b=>b.addEventListener('click',()=>{if(done)return;done=true;const i=+b.dataset.i;btns[q[2]].classList.add('right');if(i!==q[2])b.classList.add('wrong');else score++;d.querySelector('.fb').style.display='block';$('#quiz-score').textContent=`${score} / ${Q.length}`;}));
+    body.appendChild(d);});
+})();
+</script>
+</body>
+</html>

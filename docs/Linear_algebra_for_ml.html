@@ -1,0 +1,1478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Algebra for ML</title>
+<meta name="description" content="Part 1 of the Mathematics for Machine Learning series: vectors, matrices, dot products and matrix multiplication explained from zero, with interactive visuals, verified NumPy code and business use-cases.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBFAF7; --surface:#FFFFFF; --ink:#1C2426; --muted:#5B6668; --line:#E3E1DA;
+  --petrol:#0F5E6E; --petrol-soft:#E3EFF1; --verm:#D2452A; --verm-soft:#FBEAE5;
+  --green:#2B7A4B; --green-soft:#E4F1E9; --code-bg:#F3F1EC; --grid:#E9E7E0; --axis:#B9B6AC;
+  --shadow:0 1px 2px rgba(20,30,30,.06),0 4px 16px rgba(20,30,30,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101517; --surface:#171F22; --ink:#E5EAEA; --muted:#9AA7A9; --line:#2A3539;
+    --petrol:#5BB7C8; --petrol-soft:#15333A; --verm:#F2785F; --verm-soft:#3A221C;
+    --green:#62C28E; --green-soft:#17321F; --code-bg:#0C1113; --grid:#20292C; --axis:#45535A;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101517; --surface:#171F22; --ink:#E5EAEA; --muted:#9AA7A9; --line:#2A3539;
+  --petrol:#5BB7C8; --petrol-soft:#15333A; --verm:#F2785F; --verm-soft:#3A221C;
+  --green:#62C28E; --green-soft:#17321F; --code-bg:#0C1113; --grid:#20292C; --axis:#45535A;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;font-size:18.5px;line-height:1.68;-webkit-font-smoothing:antialiased}
+main{max-width:800px;margin:0 auto;padding:0 16px 80px}
+h1,h2,h3,h4,.ui,button,input,select,table,.pill,.kicker,.toc,.readout{font-family:"IBM Plex Sans",system-ui,sans-serif}
+h1{font-size:clamp(2rem,5.4vw,3rem);line-height:1.1;letter-spacing:-.02em;margin:.3em 0 .35em}
+h2{font-size:1.7rem;line-height:1.2;margin:2.6em 0 .5em;letter-spacing:-.01em;padding-top:.6em;border-top:1px solid var(--line)}
+h2 .num{color:var(--petrol);font-weight:500;margin-right:.35em}
+h3{font-size:1.2rem;margin:1.9em 0 .4em}
+h4{font-size:1rem;margin:1.2em 0 .3em}
+p{margin:.75em 0}
+a{color:var(--petrol)}
+strong{font-weight:600}
+code{font-family:"JetBrains Mono",monospace;font-size:.84em;background:var(--code-bg);padding:.08em .35em;border-radius:4px}
+.kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;color:var(--petrol);font-weight:600;margin-top:48px}
+.dek{font-size:1.22rem;color:var(--muted);margin:0 0 1em}
+.meta{font-family:"IBM Plex Sans",sans-serif;font-size:.86rem;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.theme-btn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:.8rem;cursor:pointer}
+.toc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:28px 0;box-shadow:var(--shadow);font-size:.92rem}
+.toc ol{margin:.4em 0 0;padding-left:1.5em;columns:2;column-gap:28px}
+.toc li{margin:.15em 0;break-inside:avoid}
+@media (max-width:600px){.toc ol{columns:1}}
+.toc a{text-decoration:none;color:var(--ink)}
+.toc a:hover{color:var(--petrol)}
+/* labelled boxes */
+.box{border-radius:10px;padding:14px 18px;margin:1.2em 0;border:1px solid var(--line);background:var(--surface)}
+.box > :first-child{margin-top:0}.box > :last-child{margin-bottom:0}
+.box .tag{display:inline-block;font-family:"IBM Plex Sans",sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.intuition{background:var(--petrol-soft);border-color:transparent}
+.intuition .tag{color:var(--petrol)}
+.mathbox{border-left:4px solid var(--petrol)}
+.mathbox .tag{color:var(--petrol)}
+.byhand{border-style:dashed}
+.byhand .tag{color:var(--muted)}
+.ml{border-left:4px solid var(--green)} .ml .tag{color:var(--green)}
+.biz{border-left:4px solid #B98A1E} .biz .tag{color:#B98A1E}
+:root[data-theme="dark"] .biz{border-left-color:#E0B54F} :root[data-theme="dark"] .biz .tag{color:#E0B54F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .biz{border-left-color:#E0B54F}:root:not([data-theme="light"]) .biz .tag{color:#E0B54F}}
+.mistake{background:var(--verm-soft);border-color:transparent}
+.mistake .tag{color:var(--verm)}
+.eq{font-family:"JetBrains Mono",monospace;font-size:.95rem;background:var(--code-bg);border-radius:8px;padding:10px 14px;margin:.7em 0;overflow-x:auto;white-space:pre}
+details.check{border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:1.2em 0;background:var(--surface)}
+details.check summary{cursor:pointer;font-family:"IBM Plex Sans",sans-serif;font-weight:600;color:var(--green)}
+details.check[open] summary{margin-bottom:6px}
+/* code */
+.code,.out{border-radius:10px;overflow:hidden;margin:1em 0 0;border:1px solid var(--line)}
+.out{margin:0 0 1.2em;border-top:none;border-radius:0 0 10px 10px}
+.code{border-radius:10px 10px 0 0}
+.code-h{font-family:"IBM Plex Sans",sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.code-h button{font-size:.7rem;background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer}
+pre{margin:0;padding:12px 14px;overflow-x:auto;background:var(--code-bg);font-family:"JetBrains Mono",monospace;font-size:.8rem;line-height:1.55}
+pre code{background:none;padding:0;font-size:inherit}
+.out pre{background:var(--surface);color:var(--muted)}
+.hljs-comment{color:var(--muted);font-style:italic}
+.hljs-string{color:var(--green)}
+.hljs-number,.hljs-literal{color:var(--verm)}
+.hljs-keyword,.hljs-built_in{color:var(--petrol);font-weight:600}
+.hljs-title,.hljs-title.function_{color:var(--petrol)}
+/* tables */
+.tw{overflow-x:auto;margin:1em 0}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+td code{font-size:.82em}
+/* widgets */
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:1.6em 0;box-shadow:var(--shadow);font-family:"IBM Plex Sans",sans-serif;font-size:.9rem}
+.widget .wt{font-weight:700;font-size:.95rem;margin:0 0 2px}
+.widget .wh{color:var(--muted);font-size:.82rem;margin:0 0 10px}
+.wgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:640px){.wgrid{grid-template-columns:1fr}}
+svg.plane{width:100%;height:auto;display:block;touch-action:none;background:var(--bg);border-radius:10px;border:1px solid var(--line)}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--axis);stroke-width:1.4}
+.vec line{stroke-width:3;stroke-linecap:round}
+.vec text{font-family:"IBM Plex Sans",sans-serif;font-size:14px;font-weight:700}
+.v-a line{stroke:var(--petrol)} .v-a polygon,.v-a text{fill:var(--petrol)}
+.v-b line{stroke:var(--green)} .v-b polygon,.v-b text{fill:var(--green)}
+.v-r line{stroke:var(--verm)} .v-r polygon,.v-r text{fill:var(--verm)}
+.ghost line{stroke:var(--axis);stroke-width:2} .ghost polygon{fill:var(--axis)}
+.dashed line{stroke-dasharray:6 5;stroke-width:2}
+.handle{cursor:grab;stroke:var(--surface);stroke-width:2.5}
+.handle.h-a{fill:var(--petrol)} .handle.h-b{fill:var(--green)} .handle.h-r{fill:var(--verm)}
+.handle:active{cursor:grabbing}
+.tline{stroke:var(--petrol);stroke-width:1;opacity:.45}
+.readout{font-size:.86rem;line-height:1.6}
+.readout .big{font-size:1.3rem;font-weight:700}
+.readout .k{color:var(--muted)}
+.readout code{font-size:.82rem}
+.verdict{margin-top:8px;padding:8px 10px;border-radius:8px;font-weight:600}
+.verdict.pos{background:var(--green-soft);color:var(--green)}
+.verdict.zero{background:var(--petrol-soft);color:var(--petrol)}
+.verdict.neg{background:var(--verm-soft);color:var(--verm)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
+.ctrls label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+input[type=range]{accent-color:var(--petrol);width:140px}
+input[type=number]{width:62px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:.9rem}
+.btn{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.82rem}
+.btn:hover{border-color:var(--petrol);color:var(--petrol)}
+.btn.primary{background:var(--petrol);color:var(--surface);border-color:var(--petrol)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:none;color:var(--muted);padding:5px 12px;cursor:pointer;font-size:.82rem}
+.seg button.on{background:var(--petrol);color:var(--surface)}
+.mat{display:inline-grid;gap:2px;padding:4px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;vertical-align:middle}
+.mat span{min-width:34px;text-align:center;padding:3px 4px;border-radius:5px;font-family:"JetBrains Mono",monospace;font-size:.85rem;transition:background .2s}
+.mat span.hl-r{background:var(--petrol-soft);color:var(--petrol);font-weight:600}
+.mat span.hl-c{background:var(--green-soft);color:var(--green);font-weight:600}
+.mat span.hl-o{background:var(--verm);color:var(--surface);font-weight:700}
+.mat span.dim{opacity:.25}
+.mrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.mrow .op{font-size:1.2rem;color:var(--muted)}
+.calc{font-family:"JetBrains Mono",monospace;font-size:.85rem;text-align:center;min-height:2.6em;color:var(--ink)}
+.dt{width:100%;font-family:"JetBrains Mono",monospace;font-size:.8rem}
+.dt th,.dt td{text-align:right;padding:6px 8px;cursor:pointer;user-select:none}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt tr.sel td{background:var(--petrol-soft);color:var(--petrol);font-weight:600}
+.dt td.selc,.dt th.selc{background:var(--green-soft);color:var(--green);font-weight:600}
+.domino{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace;font-size:1rem;margin:6px 0}
+.domino b{padding:3px 8px;border-radius:6px;border:1.5px solid var(--line)}
+.domino b.in-ok{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.domino b.in-bad{border-color:var(--verm);background:var(--verm-soft);color:var(--verm)}
+.quiz .q{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--bg)}
+.quiz .q p{margin:0 0 8px;font-weight:600}
+.quiz .opts{display:flex;flex-direction:column;gap:6px}
+.quiz .opts button{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink);cursor:pointer;font-size:.86rem}
+.quiz .opts button.right{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.quiz .opts button.wrong{border-color:var(--verm);background:var(--verm-soft);color:var(--verm)}
+.quiz .fb{font-size:.84rem;color:var(--muted);margin-top:6px;display:none}
+.score{font-weight:700;color:var(--petrol)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:.6em 0 1em}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.p1{background:var(--petrol-soft);color:var(--petrol);border-color:transparent}
+.pill.p2{background:var(--green-soft);color:var(--green);border-color:transparent}
+.pill.p3{background:var(--verm-soft);color:var(--verm);border-color:transparent}
+.shapes{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-family:"JetBrains Mono",monospace;font-size:.85rem;margin:1em 0}
+.shapes .s{border:1.5px solid var(--petrol);border-radius:8px;padding:8px 12px;text-align:center;background:var(--surface)}
+.shapes .s small{display:block;color:var(--muted);font-family:"IBM Plex Sans",sans-serif;font-size:.72rem}
+.shapes .s.g{border-color:var(--green)} .shapes .s.r{border-color:var(--verm)}
+footer{color:var(--muted);font-size:.9rem;font-family:"IBM Plex Sans",sans-serif;border-top:1px solid var(--line);margin-top:3em;padding-top:1em}
+</style>
+</head>
+<body>
+<main>
+
+<div class="kicker">Mathematics for Machine Learning · Part 1</div>
+<h1>Linear Algebra for Machine Learning</h1>
+<p class="dek">Vectors, matrices, dot products and matrix multiplication from zero, with pictures you can drag, code that runs, and the business problems each idea solves.</p>
+<div class="meta"><span>~50 min read</span><span>Python 3 + NumPy</span><span>No prior maths assumed</span><button class="theme-btn" id="themeBtn">Toggle theme</button></div>
+
+<p>Describe a friend to someone who has never met them. You might say: 31 years old, works in finance, loves action films, drinks four coffees a day. Without noticing, you just wrote down a list of numbers and categories in a fixed order. That list is a <strong>vector</strong>. Write the same list for every customer of a bank and stack them up, and you have a <strong>matrix</strong>.</p>
+
+<p>Machine learning needs to do two things with such lists: <em>compare</em> them (is this transaction like the fraudulent ones?) and <em>transform</em> them (turn raw features into a credit score). Linear algebra is the toolkit for both. It is less about clever proofs and more about bookkeeping: storing numbers in the right shape and combining them efficiently.</p>
+
+<p>By the end of this article you will be able to:</p>
+<ul>
+<li>read the notation in ML papers and documentation without freezing,</li>
+<li>predict the <strong>shape</strong> of any NumPy result before you run it, which is where most real bugs come from,</li>
+<li>explain what a dot product, a matrix multiplication and a determinant <em>mean</em>, not just how to compute them,</li>
+<li>see these operations inside linear regression, recommenders, neural networks and attention.</li>
+</ul>
+
+<h4 class="ui">How each concept is taught</h4>
+<div class="legend">
+<span class="pill p1">Intuition</span><span class="pill">Try it</span><span class="pill p1">Math, decoded</span><span class="pill">By hand</span><span class="pill">Code</span><span class="pill p2">In ML</span><span class="pill">In business</span><span class="pill p2">Check yourself</span>
+</div>
+<p>You can skip the "By hand" boxes on a second read, but do them once. Doing one small calculation with a pencil sticks better than reading ten.</p>
+
+<nav class="toc">
+<strong>Contents</strong>
+<ol start="0">
+<li><a href="#s0">Notation decoder and three golden rules</a></li>
+<li><a href="#s1">Scalars, vectors, matrices and shapes</a></li>
+<li><a href="#s2">Vectors as arrows: adding and scaling</a></li>
+<li><a href="#s3">Length and distance (norms)</a></li>
+<li><a href="#s4">The dot product</a></li>
+<li><a href="#s5">Matrix basics</a></li>
+<li><a href="#s6">Matrix × vector</a></li>
+<li><a href="#s7">Matrices as transformations</a></li>
+<li><a href="#s8">Matrix × matrix</a></li>
+<li><a href="#s9">Determinant, inverse and solving</a></li>
+<li><a href="#s10">Putting it together in real models</a></li>
+<li><a href="#s11">Business map, mistakes, quiz, cheat sheet</a></li>
+</ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="s0"><span class="num">0</span>Notation decoder and three golden rules</h2>
+
+<p>Maths notation is a compressed language. Most beginners get stuck on the symbols, not the ideas. Keep this table open in another tab; every symbol in this article is here.</p>
+
+<div class="tw"><table>
+<thead><tr><th>You see</th><th>Say it as</th><th>What it is</th><th>NumPy</th></tr></thead>
+<tbody>
+<tr><td><code>x</code>, <code>α</code></td><td>"x", "alpha"</td><td>A <strong>scalar</strong>: one number. Lowercase, plain.</td><td><code>x = 3.5</code></td></tr>
+<tr><td><code><b>x</b></code>, <code>x⃗</code></td><td>"vector x"</td><td>A <strong>vector</strong>: an ordered list. Bold or with an arrow.</td><td><code>np.array([1, 2])</code></td></tr>
+<tr><td><code>X</code>, <code>W</code></td><td>"matrix X"</td><td>A <strong>matrix</strong>: a table. Uppercase.</td><td><code>np.array([[1,2],[3,4]])</code></td></tr>
+<tr><td><code>xᵢ</code></td><td>"x sub i"</td><td>The i-th entry of vector x.</td><td><code>x[i]</code> (counts from 0)</td></tr>
+<tr><td><code>Xᵢⱼ</code></td><td>"X i j"</td><td>Entry in row i, column j.</td><td><code>X[i, j]</code></td></tr>
+<tr><td><code>ℝⁿ</code></td><td>"R n"</td><td>"All lists of n real numbers". <code>x ∈ ℝ³</code> means x has 3 numbers.</td><td><code>x.shape == (3,)</code></td></tr>
+<tr><td><code>m × n</code></td><td>"m by n"</td><td>Shape: m rows, n columns. Rows always come first.</td><td><code>X.shape == (m, n)</code></td></tr>
+<tr><td><code>‖x‖</code></td><td>"norm of x"</td><td>The length of x.</td><td><code>np.linalg.norm(x)</code></td></tr>
+<tr><td><code>a · b</code>, <code>aᵀb</code></td><td>"a dot b"</td><td>Dot product: multiply matching entries, add up.</td><td><code>a @ b</code></td></tr>
+<tr><td><code>Xᵀ</code></td><td>"X transpose"</td><td>X with rows and columns swapped.</td><td><code>X.T</code></td></tr>
+<tr><td><code>X⁻¹</code></td><td>"X inverse"</td><td>The matrix that undoes X.</td><td><code>np.linalg.inv(X)</code></td></tr>
+<tr><td><code>det(X)</code>, <code>|X|</code></td><td>"determinant of X"</td><td>How much X scales area (one number).</td><td><code>np.linalg.det(X)</code></td></tr>
+<tr><td><code>ŷ</code></td><td>"y hat"</td><td>A <em>prediction</em> of y. The hat means "estimated".</td><td><code>y_hat</code></td></tr>
+<tr><td><code>w</code>, <code>b</code></td><td>"weights", "bias"</td><td>The numbers a model learns.</td><td><code>model.coef_</code>, <code>model.intercept_</code></td></tr>
+<tr><td><code>Σ</code></td><td>"sum of"</td><td>Add up everything that follows.</td><td><code>np.sum(...)</code></td></tr>
+</tbody></table></div>
+
+<div class="box mathbox"><span class="tag">The three golden rules for this article</span>
+<p><strong>1. Rows are examples, columns are features.</strong> A dataset <code>X</code> has shape <code>(n_samples, n_features)</code>. NumPy, pandas, scikit-learn and PyTorch all use this convention, and so does every example here. You will always see <code>X @ W</code>, never the other way round.</p>
+<p><strong>2. <code>@</code> and <code>*</code> are different.</strong> In NumPy, <code>@</code> is the dot product / matrix multiplication. <code>*</code> multiplies entry by entry. Mixing them up is the most common silent bug in ML code.</p>
+<p><strong>3. Say the shapes out loud.</strong> Before you run a line, predict the output shape. "(500, 20) times (20, 8) gives (500, 8)." If you can't predict it, that line is where the bug will be.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="num">1</span>Scalars, vectors, matrices and shapes</h2>
+
+<div class="box intuition"><span class="tag">Intuition · a hospital visit</span>
+<p>The nurse writes your temperature: <strong>37.2</strong>. One number. That is a <strong>scalar</strong>.</p>
+<p>The lab sends your blood panel: haemoglobin, white cells, platelets, glucose, creatinine. Five numbers <em>in a fixed order</em>. That is a <strong>vector</strong>. The order matters: swap glucose and platelets and the report becomes nonsense.</p>
+<p>The hospital keeps every patient's panel for the month in one table, one patient per row and one test per column. That is a <strong>matrix</strong>.</p>
+</div>
+
+<p>Every machine learning dataset is a matrix of that kind. One row describes one example (a customer, a house, a transaction). One column holds one feature (age, area, amount) for every example.</p>
+
+<h3>What does "dimension" mean?</h3>
+<p>The word scares people because it sounds like science fiction. In ML it means something plain: <strong>the number of entries in a vector</strong>. A customer described by age, income, credit score and products held is a point in 4-dimensional space. A 28×28 grayscale image flattened into one long list is a point in 784-dimensional space, one dimension per pixel.</p>
+<p>Nobody can picture 784 dimensions, and you don't need to. Here is the useful trick: <strong>everything in this article works the same way in 2 dimensions as in 2,000.</strong> We draw pictures in 2D to build intuition, then trust the algebra to carry it up.</p>
+<p>When data has more than two axes (a batch of colour images is images × height × width × channels), people call it a <strong>tensor</strong>. A tensor is just the next step up the same ladder: scalar (0 axes), vector (1 axis), matrix (2 axes), tensor (3 or more).</p>
+
+<div class="widget" id="w-data">
+<p class="wt">Try it: rows, columns and shapes</p>
+<p class="wh">Click a customer's name to pull out a row. Click a column header to pull out a feature. Watch the shape.</p>
+<div class="tw"><table class="dt" id="dt"></table></div>
+<div class="readout" id="dt-out"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">import numpy as np
+
+# 5 customers (rows) x 4 features (columns): age, income (₹), credit score, products held
+X = np.array([
+    [34,  75_000, 720, 3],
+    [28,  52_000, 680, 1],
+    [45,  92_000, 780, 5],
+    [23,  38_000, 620, 0],
+    [52, 115_000, 810, 7],
+])
+
+print(&quot;Shape of X          :&quot;, X.shape)      # (rows, columns)
+print(&quot;Customer 3 (a row)  :&quot;, X[2])         # Python counts from 0
+print(&quot;Income (a column)   :&quot;, X[:, 1])
+print(&quot;Their shapes        :&quot;, X[2].shape, X[:, 1].shape)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Shape of X          : (5, 4)
+Customer 3 (a row)  : [   45 92000   780     5]
+Income (a column)   : [ 75000  52000  92000  38000 115000]
+Their shapes        : (4,) (5,)</pre></div>
+
+<p>Notice the two shapes at the bottom. A row has 4 numbers, one per feature, so its shape is <code>(4,)</code>. A column has 5 numbers, one per customer, so its shape is <code>(5,)</code>. The trailing comma is Python's way of writing a one-item tuple: "a 1-D array of length 4".</p>
+
+<div class="box mistake"><span class="tag">Common mistake · (n,) is not (n, 1)</span>
+<p>A 1-D array of 3 numbers has shape <code>(3,)</code>. A column of 3 numbers has shape <code>(3, 1)</code>. They hold the same numbers but behave differently. Add a <code>(3,)</code> to a <code>(3, 1)</code> and NumPy quietly builds a <code>(3, 3)</code> grid instead of raising an error. If a result suddenly has more entries than you expected, check this first.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">v = np.array([1, 2, 3])
+col = v.reshape(-1, 1)          # same numbers, stacked as a column
+print(v.shape, &quot;vs&quot;, col.shape)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>(3,) vs (3, 1)</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>The <code>X</code> you pass to <code>model.fit(X, y)</code> in scikit-learn is exactly this kind of matrix: shape <code>(n_samples, n_features)</code>. The target <code>y</code> is a vector with one entry per row of <code>X</code>.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Every table in your data warehouse, every CSV export, every "customer 360" view is a matrix. Once you see it that way, the question "can we model this?" turns into "can we get it into rows of examples and columns of features?"</p>
+</div>
+
+<details class="check"><summary>Check yourself (3 questions)</summary>
+<p><strong>1.</strong> You have 10,000 images, each 28×28 pixels, flattened. What is the shape of the dataset matrix? <em>Answer: (10000, 784). Rows are images; 28 × 28 = 784 pixel columns.</em></p>
+<p><strong>2.</strong> In the customer matrix above, what is <code>X[4, 2]</code>? <em>Answer: 810, the credit score (column 2) of the fifth customer (row 4).</em></p>
+<p><strong>3.</strong> Is "city" (Mumbai, Pune, Delhi) a number you can put straight into a vector? <em>Answer: Not directly. It has to be encoded first, for example one-hot encoding turns it into three 0/1 columns.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="num">2</span>Vectors as arrows: adding and scaling</h2>
+
+<p>A vector has two faces, and switching between them is half of linear algebra.</p>
+<ul>
+<li><strong>A list of numbers.</strong> <code>[2, 1, 0, 3]</code> could be a shopping basket: 2 milk, 1 bread, 0 eggs, 3 bananas.</li>
+<li><strong>An arrow.</strong> <code>[2, 1]</code> is an arrow that goes 2 steps right and 1 step up. It has a <em>direction</em> and a <em>length</em>. Where you draw it doesn't matter: slide it anywhere and it is still the same vector.</li>
+</ul>
+<p>The list view is how computers store vectors. The arrow view is how humans understand them. We will use both.</p>
+
+<h3>Adding vectors</h3>
+<div class="box intuition"><span class="tag">Intuition · two legs of a walk</span>
+<p>Walk 2 blocks east and 1 north. Then walk 1 east and 3 north. Where are you? 3 east and 4 north. Adding vectors means doing one journey and then the other. On paper: put the tail of the second arrow at the tip of the first. The arrow from the start to the final tip is the sum.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand</span>
+<div class="eq">a = [2, 1]      b = [1, 3]
+
+a + b = [2+1, 1+3] = [3, 4]      ← add matching positions
+a − b = [2−1, 1−3] = [1, −2]
+2a    = [2×2, 2×1] = [4, 2]      ← multiply every entry
+</div>
+<p>The only rule: both vectors must be the same length. You can't add a 3-item basket to a 4-item basket; the positions wouldn't mean the same thing.</p>
+</div>
+
+<h3>Subtracting vectors: the "gap" between two things</h3>
+<p><code>a − b</code> is the arrow that goes <strong>from the tip of b to the tip of a</strong>. It answers "how do I get from b to a?" In ML this gap has a name: the <strong>error</strong>. If <code>a</code> is what the model predicted and <code>b</code> is what actually happened, <code>a − b</code> tells you how far off you were, and in which direction, for every example at once.</p>
+
+<h3>Scaling a vector</h3>
+<div class="box intuition"><span class="tag">Intuition · a volume knob</span>
+<p>Multiplying a vector by a number (a scalar) is like turning a volume knob. The song stays the same, it just gets louder or quieter. Multiply by 2 and the arrow doubles in length. Multiply by 0.5 and it halves. Multiply by −1 and it flips to point the opposite way.</p>
+</div>
+
+<div class="widget" id="w-vec">
+<p class="wt">Try it: the vector playground</p>
+<p class="wh">Drag the <span style="color:var(--petrol);font-weight:700">a</span> and <span style="color:var(--green);font-weight:700">b</span> handles. Move the slider to scale <strong>a</strong>. Switch between a + b and a − b.</p>
+<div class="wgrid">
+<svg class="plane" id="vp-svg"></svg>
+<div>
+<div class="ctrls">
+<div class="seg" id="vp-mode"><button class="on" data-m="add">a + b</button><button data-m="sub">a − b</button></div>
+</div>
+<div class="ctrls"><label>scale a by <input type="range" id="vp-alpha" min="-2" max="2" step="0.5" value="1"> <b id="vp-alpha-v">1</b></label></div>
+<div class="readout" id="vp-out"></div>
+</div>
+</div>
+</div>
+
+<p>Things to notice while you play: with a − b, the dashed arrow from b's tip to a's tip is exactly the same arrow as a − b drawn from the origin. Set the slider to −1 and a flips. Set it to 0 and a shrinks to nothing.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">monday  = np.array([2, 1, 0, 3])   # milk, bread, eggs, bananas
+tuesday = np.array([1, 0, 2, 1])
+
+print(&quot;Both days   :&quot;, monday + tuesday)
+print(&quot;Difference  :&quot;, monday - tuesday)
+print(&quot;Double order:&quot;, 2 * monday)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Both days   : [3 1 2 4]
+Difference  : [ 1  1 -2  2]
+Double order: [4 2 0 6]</pre></div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">actual    = np.array([310, 205, 480])   # true sales for 3 stores
+predicted = np.array([300, 220, 470])   # what the model forecast
+print(&quot;Error vector:&quot;, predicted - actual)
+
+segment = np.array([[0.20, 0.80, 0.60],
+                    [0.30, 0.70, 0.50],
+                    [0.25, 0.75, 0.55]])
+print(&quot;Centroid    :&quot;, segment.mean(axis=0))   # add the vectors, divide by 3</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Error vector: [-10  15 -10]
+Centroid    : [0.25 0.75 0.55]</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<ul>
+<li><strong>Error vectors.</strong> <code>predicted − actual</code> is the starting point of every loss function you will meet in Article 2.</li>
+<li><strong>Centroids.</strong> K-means clustering finds the "average customer" of each segment by adding the vectors in the group and dividing by the count, exactly like the code above.</li>
+<li><strong>Learning.</strong> Gradient descent updates a model with <code>w_new = w − α · g</code>: subtract a scaled-down vector from the weights. That one line is vector subtraction plus scalar multiplication. Article 2 explains where <code>g</code> comes from.</li>
+<li><strong>Word arithmetic.</strong> In word-embedding models such as word2vec, researchers found that <code>king − man + woman</code> lands close to <code>queen</code>. Subtraction captured a "direction" of meaning.</li>
+</ul>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>A retailer stores each store's daily sales as a vector over products. Adding the vectors gives weekly totals. Subtracting forecast from actual gives a per-product error vector, which tells the planning team which items the forecast got wrong, not just by how much overall.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> What is <code>[3, −1] + [−3, 1]</code>? <em>Answer: [0, 0]. They are opposite arrows and cancel out.</em></p>
+<p><strong>2.</strong> A model predicted <code>[50, 80]</code>, the truth was <code>[45, 90]</code>. What is the error vector, and which prediction was too low? <em>Answer: [5, −10]. The second prediction was 10 too low.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="num">3</span>Length and distance (norms)</h2>
+
+<p>Once data points are arrows, two natural questions follow: how <em>long</em> is this arrow, and how <em>far apart</em> are these two points? A <strong>norm</strong> is a way of measuring length. There are two you must know.</p>
+
+<div class="box intuition"><span class="tag">Intuition · the crow and the taxi</span>
+<p>You are at a corner and the café is 3 blocks east and 4 blocks north. A crow flies straight there: <strong>5 blocks</strong> (Pythagoras). A taxi has to follow the streets: 3 + 4 = <strong>7 blocks</strong>. Same start, same end, two honest answers. The crow's distance is the <strong>L2 norm</strong>. The taxi's distance is the <strong>L1 norm</strong> (also called Manhattan distance).</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">‖v‖₂ = √(v₁² + v₂² + … + vₙ²)     "square each entry, add, take the root"
+‖v‖₁ = |v₁| + |v₂| + … + |vₙ|        "drop the signs and add"
+
+distance(a, b) = ‖a − b‖              "the length of the gap"</div>
+<p>When people write <code>‖v‖</code> without a subscript, they mean L2.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand</span>
+<div class="eq">v = [3, 4]
+‖v‖₂ = √(3² + 4²) = √(9 + 16) = √25 = 5
+‖v‖₁ = |3| + |4| = 7</div>
+</div>
+
+<div class="widget" id="w-dist">
+<p class="wt">Try it: crow vs taxi</p>
+<p class="wh">Drag the two points. The straight vermilion line is L2; the green staircase is L1.</p>
+<div class="wgrid">
+<svg class="plane" id="ds-svg"></svg>
+<div class="readout" id="ds-out"></div>
+</div>
+</div>
+
+<p>Two things you can discover by dragging: L1 is never shorter than L2, and they are equal only when the points share a row or a column (the taxi doesn't need to turn).</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">v = np.array([3.0, 4.0])
+print(&quot;L1 length (city blocks)   :&quot;, np.linalg.norm(v, ord=1))
+print(&quot;L2 length (straight line) :&quot;, np.linalg.norm(v))
+
+A = np.array([0.2, 0.8, 0.6])
+B = np.array([0.3, 0.7, 0.5])
+C = np.array([0.9, 0.1, 0.2])
+print(&quot;distance A to B:&quot;, round(np.linalg.norm(A - B), 3))
+print(&quot;distance A to C:&quot;, round(np.linalg.norm(A - C), 3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>L1 length (city blocks)   : 7.0
+L2 length (straight line) : 5.0
+distance A to B: 0.173
+distance A to C: 1.068</pre></div>
+
+<p>A is much closer to B than to C. That single comparison is the whole idea behind <strong>k-nearest neighbours</strong>: to classify a new point, look at the labels of the closest stored points.</p>
+
+<h3>The scale trap</h3>
+<div class="box intuition"><span class="tag">Story · who is Riya most like?</span>
+<p>A bank wants to find customers similar to Riya (25 years old, earns ₹50,000 a month). Arjun is 65 and earns ₹51,000. Meera is 26 and earns ₹53,000. Any human would say Meera is more like Riya. Raw distance says the opposite, because a ₹3,000 gap is "3,000 units" while a 40-year gap is only "40 units". Income shouts; age whispers.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">#                 age  monthly income (₹)
+riya  = np.array([25, 50_000])
+arjun = np.array([65, 51_000])   # 40 years older, similar income
+meera = np.array([26, 53_000])   # nearly the same age, ₹3,000 more
+
+print(&quot;raw   riya→arjun:&quot;, round(np.linalg.norm(riya - arjun), 1))
+print(&quot;raw   riya→meera:&quot;, round(np.linalg.norm(riya - meera), 1))
+
+spread = np.array([12, 20_000])  # typical spread (std) of each feature across ALL customers
+print(&quot;scaled riya→arjun:&quot;, round(np.linalg.norm((riya - arjun) / spread), 2))
+print(&quot;scaled riya→meera:&quot;, round(np.linalg.norm((riya - meera) / spread), 2))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>raw   riya→arjun: 1000.8
+raw   riya→meera: 3000.0
+scaled riya→arjun: 3.33
+scaled riya→meera: 0.17</pre></div>
+
+<p>After dividing each feature by its typical spread, a 40-year gap counts for a lot and a ₹3,000 gap counts for little, and Meera correctly comes out closest. This is what <strong>standardisation</strong> (for example scikit-learn's <code>StandardScaler</code>) does: it computes each column's spread from the training data and divides by it. Any method built on distances (k-NN, k-means, SVMs with RBF kernels) needs it.</p>
+
+<h3>Norms as a "complexity meter" for models</h3>
+<p>Norms also measure the size of a model's weight vector. Big weights usually mean a model that over-reacts to small changes in input. Regularisation adds the norm of the weights to the training objective so the model is pushed to keep them small: L1 for Lasso, squared L2 for Ridge.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">w = np.array([2.5, -1.8, 0.3, 4.1])      # a model&#x27;s weights
+print(&quot;L1 penalty (Lasso):&quot;, round(np.sum(np.abs(w)), 2))
+print(&quot;L2 penalty (Ridge):&quot;, round(np.sum(w ** 2), 2))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>L1 penalty (Lasso): 8.7
+L2 penalty (Ridge): 26.39</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>k-nearest neighbours, k-means clustering, anomaly detection ("how far is this point from everything normal?"), and Ridge / Lasso regularisation all rest on norms.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p><strong>Lookalike audiences:</strong> marketing finds the customers nearest to your best customers and targets them. <strong>Fraud alerts:</strong> a card transaction whose feature vector is far from that customer's usual transactions gets flagged for review. Both break badly if features aren't scaled first.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> What is the L2 length of <code>[6, 8]</code>? And L1? <em>Answer: 10 and 14.</em></p>
+<p><strong>2.</strong> Your features are "number of logins" (0–30) and "account balance" (₹0–₹50 lakh). You run k-means without scaling. What goes wrong? <em>Answer: clusters will be formed almost entirely by balance; logins are ignored because their numbers are tiny by comparison.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="num">4</span>The dot product</h2>
+
+<p>If you learn one operation deeply, make it this one. A linear regression prediction is a dot product. Matrix multiplication is a grid of dot products. Attention in a transformer is dot products. Let's build it up from something you already do every week.</p>
+
+<h3>Step 1: it's a shopping bill</h3>
+<div class="box intuition"><span class="tag">Intuition · the receipt</span>
+<p>You buy 2 milk (₹40 each), 1 bread (₹60), 0 eggs (₹25) and 3 bananas (₹10). Your bill is 2×40 + 1×60 + 0×25 + 3×10 = ₹170. You took two lists, <strong>multiplied matching entries and added them up</strong>. That is the dot product.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">quantity = np.array([2, 1, 0, 3])        # milk, bread, eggs, bananas
+price    = np.array([40, 60, 25, 10])    # ₹ per item
+
+print(&quot;Line totals (*):&quot;, quantity * price)   # element-wise: still 4 numbers
+print(&quot;Bill (@)       :&quot;, quantity @ price)   # dot product: one number</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Line totals (*): [80 60  0 30]
+Bill (@)       : 170</pre></div>
+
+<p>Look closely at the two lines. <code>*</code> gave four line totals, still a vector. <code>@</code> gave one number, the bill. This is golden rule 2 in action.</p>
+
+<h3>Step 2: it measures agreement</h3>
+<div class="box intuition"><span class="tag">Intuition · will you enjoy this film?</span>
+<p>Rate how much you care about action, dialogue, visuals and humour: <code>[8, 3, 7, 2]</code>. A critic rates how much a film delivers each: an action film is <code>[9, 2, 8, 1]</code>, a rom-com is <code>[1, 8, 3, 9]</code>. Dot your preferences with each film. Where you care a lot <em>and</em> the film delivers a lot, the product is big. Where either is small, it adds little. The total is a "how well do we match" score.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">you    = np.array([8, 3, 7, 2])   # how much you care: action, dialogue, visuals, humour
+action = np.array([9, 2, 8, 1])   # how much each film delivers
+romcom = np.array([1, 8, 3, 9])
+
+print(&quot;you · action film:&quot;, you @ action)
+print(&quot;you · rom-com    :&quot;, you @ romcom)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>you · action film: 136
+you · rom-com    : 71</pre></div>
+
+<h3>Step 3: the geometry (why it measures agreement)</h3>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">a · b = a₁b₁ + a₂b₂ + … + aₙbₙ        ← the algebra (what you compute)
+a · b = ‖a‖ × ‖b‖ × cos(θ)            ← the geometry (what it means)</div>
+<p>θ (theta) is the angle between the two arrows. cos(θ) is a number between −1 and 1 that depends only on that angle:</p>
+<div class="tw"><table>
+<thead><tr><th>Angle</th><th>cos θ</th><th>Dot product</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>0° (same direction)</td><td>1</td><td>large positive</td><td>strong agreement</td></tr>
+<tr><td>under 90°</td><td>between 0 and 1</td><td>positive</td><td>broadly agree</td></tr>
+<tr><td>90° (perpendicular)</td><td>0</td><td>zero</td><td>unrelated</td></tr>
+<tr><td>over 90°</td><td>negative</td><td>negative</td><td>disagree</td></tr>
+</tbody></table></div>
+<p>Both formulas always give the same number. The first is how a computer calculates it; the second is how you should think about it.</p>
+</div>
+
+<div class="box intuition"><span class="tag">Intuition · the shadow</span>
+<p>Hold a pen (vector <strong>a</strong>) above a ruler (vector <strong>b</strong>) with a lamp directly overhead. The pen's shadow on the ruler shows "how much of a points along b". That shadow is called the <strong>projection</strong>. The dot product is the shadow's length multiplied by the ruler's length. Pen along the ruler: long shadow. Pen across the ruler: no shadow at all.</p>
+</div>
+
+<div class="widget" id="w-dot">
+<p class="wt">Try it: angle, shadow and dot product</p>
+<p class="wh">Drag the arrow tips. The thick vermilion segment is the shadow (projection) of <span style="color:var(--petrol);font-weight:700">a</span> on <span style="color:var(--green);font-weight:700">b</span>. Try making them perpendicular.</p>
+<div class="wgrid">
+<svg class="plane" id="dp-svg"></svg>
+<div class="readout" id="dp-out"></div>
+</div>
+</div>
+
+<h3>Step 4: cosine similarity (agreement without the volume)</h3>
+<p>The dot product mixes two things: how aligned the arrows are, and how long they are. Sometimes length is noise. A superfan who rates everything 10 times higher than you has exactly your taste, but their dot products are 10 times bigger.</p>
+<p>The fix is to divide out the lengths, which leaves only the angle:</p>
+<div class="eq">cosine_similarity(a, b) = (a · b) / (‖a‖ × ‖b‖) = cos(θ)</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def cosine_similarity(a, b):
+    return (a @ b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+superfan = 10 * you          # identical taste, just rates everything 10x higher
+
+print(&quot;dot :&quot;, you @ action, &quot;vs&quot;, superfan @ action)
+print(&quot;cos :&quot;, round(cosine_similarity(you, action), 3), &quot;vs&quot;,
+      round(cosine_similarity(superfan, action), 3))
+print(&quot;cos with rom-com:&quot;, round(cosine_similarity(you, romcom), 3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>dot : 136 vs 1360
+cos : 0.989 vs 0.989
+cos with rom-com: 0.508</pre></div>
+
+<p>The raw dot product says the superfan matches the action film ten times better than you. Cosine similarity says you both match it equally well (0.989), which is the truth. Cosine is the standard measure for comparing text embeddings, where long documents would otherwise always "win".</p>
+
+<h3>Step 5: a prediction is a dot product</h3>
+<p>Here is linear regression with the mystery removed. A model has learned one weight per feature: how much one unit of that feature is worth. To predict, it dots the weights with the features and adds a base amount (the bias).</p>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">ŷ = w · x + b</div>
+<p>"The predicted value (ŷ) is the weighted sum of the features (w · x) plus a starting value (b)." That's it. Logistic regression does the same thing and then squashes the result into a probability.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python"># Predict a flat&#x27;s price (₹ thousands) from [bedrooms, area in sq ft, parking spots]
+w = np.array([120.0, 3.5, 40.0])   # learned weights: worth of one unit of each feature
+b = 200.0                          # bias: the base price
+x = np.array([4, 850, 2])          # one flat
+
+y_hat = w @ x + b
+print(&quot;Predicted price (₹ thousands):&quot;, y_hat)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Predicted price (₹ thousands): 3735.0</pre></div>
+
+<p>Read it as a bill again: 4 bedrooms × 120 + 850 sq ft × 3.5 + 2 parking × 40 + 200 base = 3,735, so about ₹37.35 lakh. Training a model means finding good values for <code>w</code> and <code>b</code>; Article 2 shows how.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<ul>
+<li><strong>Linear and logistic regression:</strong> every prediction is one dot product.</li>
+<li><strong>Neurons:</strong> each neuron in a neural network computes a dot product of its inputs and weights, then applies a bend (an activation function).</li>
+<li><strong>Embeddings and search:</strong> semantic search ranks documents by cosine similarity between the query's vector and each document's vector.</li>
+<li><strong>Attention:</strong> transformers decide which words to focus on using dot products (a toy version is in Section 10).</li>
+</ul>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>A classic credit scorecard is literally a weighted sum of applicant features: a dot product. Résumé-to-job matching tools embed both texts and use cosine similarity. "Customers who liked this also liked…" panels compare item vectors the same way.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Compute <code>[1, 2] · [2, −1]</code>. What does the answer say about the arrows? <em>Answer: 2 − 2 = 0. They are perpendicular.</em></p>
+<p><strong>2.</strong> Two news articles have cosine similarity 0.95 but one is ten times longer. Are they about the same topic? <em>Answer: Very likely yes. Cosine ignores length and looks only at direction.</em></p>
+<p><strong>3.</strong> For 1-D arrays <code>a</code> and <code>b</code>, what's the difference between <code>a * b</code> and <code>a @ b</code>? <em>Answer: <code>*</code> returns a vector of products; <code>@</code> returns their sum, a single number.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="num">5</span>Matrix basics</h2>
+
+<div class="box intuition"><span class="tag">Intuition · a spreadsheet that can act</span>
+<p>A matrix is a spreadsheet: numbers in rows and columns. The new idea is that a matrix is also a <em>stack of row vectors</em> (customers) and, read sideways, a <em>set of column vectors</em> (features). Everything from the last four sections applies to its rows and columns.</p>
+</div>
+
+<h3>Adding and scaling matrices</h3>
+<p>These work exactly like vectors: entry by entry, and both matrices must have the same shape.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python"># Revenue (₹ thousands): rows = stores, columns = products
+q1 = np.array([[120, 80],
+               [ 95, 60]])
+q2 = np.array([[130, 70],
+               [100, 65]])
+
+print(&quot;Half-year total:\n&quot;, q1 + q2)
+print(&quot;Q1 with 18% GST:\n&quot;, 1.18 * q1)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Half-year total:
+ [[250 150]
+ [195 125]]
+Q1 with 18% GST:
+ [[141.6  94.4]
+ [112.1  70.8]]</pre></div>
+
+<h3>Transpose: turning the table on its side</h3>
+<div class="box intuition"><span class="tag">Intuition · rotate the printout</span>
+<p>Print a table, then read it so that what used to be rows are now columns. Row 1 becomes column 1, row 2 becomes column 2. A shape of <code>(2, 3)</code> becomes <code>(3, 2)</code>. Nothing is calculated; numbers just move.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand</span>
+<div class="eq">M = [[1, 2, 3],          Mᵀ = [[1, 4],
+     [4, 5, 6]]                 [2, 5],
+                                [3, 6]]
+entry (i, j) of Mᵀ = entry (j, i) of M</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">M = np.array([[1, 2, 3],
+              [4, 5, 6]])
+print(M.shape, &quot;→&quot;, M.T.shape)
+print(M.T)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>(2, 3) → (3, 2)
+[[1 4]
+ [2 5]
+ [3 6]]</pre></div>
+
+<p>Why bother? Because the shape rule for multiplication (Section 8) is strict, and the transpose is how you line shapes up. You will see <code>Xᵀ</code> in the regression formula, and <code>movies.T</code> in the recommender later.</p>
+
+<h3>Element-wise product and the identity matrix</h3>
+<p>The element-wise product (also called the <strong>Hadamard product</strong>, written <code>⊙</code>) multiplies matching entries. A common use is a <strong>mask</strong>: multiply by 1 to keep, by 0 to hide. Neural networks use exactly this for <strong>dropout</strong>, randomly switching off some neurons during training so the network can't lean on any single one.</p>
+<p>The <strong>identity matrix</strong> <code>I</code> has 1s on the diagonal and 0s elsewhere. Multiplying by it changes nothing, the way multiplying a number by 1 changes nothing. It matters as the reference point for "undo" in Section 9: <code>A @ A⁻¹ = I</code>.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">activations = np.array([1.5, -0.3, 2.1, 0.8, 1.2])
+keep_mask   = np.array([1,    1,   0,   1,   0 ])   # 0 = switched off this round
+print(&quot;Masked :&quot;, activations * keep_mask)
+
+I = np.eye(3)
+A = np.array([[2., 1, 0], [0, 3, 1], [1, 0, 4]])
+print(&quot;I @ A equals A?&quot;, np.allclose(I @ A, A))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Masked : [ 1.5 -0.3  0.   0.8  0. ]
+I @ A equals A? True</pre></div>
+
+<div class="box mistake"><span class="tag">Common mistake · * vs @ on matrices</span>
+<p>For two <code>(2, 2)</code> matrices, both <code>A * B</code> and <code>A @ B</code> run without error and both return a <code>(2, 2)</code> result, with completely different numbers. NumPy can't warn you. Ask yourself: "do I want matching entries multiplied (<code>*</code>), or rows combined with columns (<code>@</code>)?"</p>
+</div>
+
+<div class="box biz"><span class="tag">In business</span>
+<p>A monthly report of revenue by store × product is a matrix. Adding two months, applying tax across the board, or masking out discontinued products are the operations above, applied to thousands of cells at once.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> X has shape (1000, 12). What is the shape of Xᵀ? <em>Answer: (12, 1000).</em></p>
+<p><strong>2.</strong> Can you add a (3, 2) matrix to a (2, 3) matrix? <em>Answer: No, shapes must match. (You could add the first to the transpose of the second.)</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="num">6</span>Matrix × vector: the operation ML runs most</h2>
+
+<p>Many tutorials jump straight to multiplying two matrices. That skips the most important case: a matrix times a vector. Understand this one in two ways and matrix-matrix multiplication becomes easy.</p>
+
+<h3>Reading 1: the row view (many dot products)</h3>
+<p>Take each <strong>row</strong> of the matrix and dot it with the vector. You get one number per row.</p>
+
+<div class="box byhand"><span class="tag">By hand · row view</span>
+<div class="eq">    A          x          A @ x
+[[1, 2],    [10,      [1×10 + 2×1,     [12,
+ [3, 4],  ×   1]  =    3×10 + 4×1,  =   34,
+ [5, 6]]               5×10 + 6×1]      56]
+ (3×2)      (2,)                       (3,)</div>
+<p>3 rows in, 3 numbers out. The vector's length (2) had to match the number of columns (2).</p>
+</div>
+
+<h3>Reading 2: the column view (a recipe)</h3>
+<div class="box intuition"><span class="tag">Intuition · a recipe</span>
+<p>Think of each <strong>column</strong> of A as an ingredient's profile, say, the protein, carbs and fat in one scoop. The vector x says how many scoops of each ingredient you use. The result is the profile of the whole meal: 10 scoops of ingredient 1 plus 1 scoop of ingredient 2.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand · column view</span>
+<div class="eq">A @ x = 10 × [1, 3, 5]  +  1 × [2, 4, 6]
+      =     [10, 30, 50]  +  [2, 4, 6]
+      =     [12, 34, 56]          ← same answer</div>
+<p>Matrix × vector is a <strong>weighted mix of the matrix's columns</strong>, with the vector supplying the weights.</p>
+</div>
+
+<div class="widget" id="w-col">
+<p class="wt">Try it: the column view</p>
+<p class="wh">Edit the matrix and move the sliders. The result (vermilion) is x₁ × column 1 (petrol) followed by x₂ × column 2 (green).</p>
+<div class="wgrid">
+<svg class="plane" id="cv-svg"></svg>
+<div>
+<div class="ctrls ui">A = <span class="mat" style="grid-template-columns:repeat(2,auto)"><input type="number" id="cv-a" value="2" step="0.5"><input type="number" id="cv-b" value="-1" step="0.5"><input type="number" id="cv-c" value="1" step="0.5"><input type="number" id="cv-d" value="1" step="0.5"></span></div>
+<div class="ctrls"><label>x₁ <input type="range" id="cv-x1" min="-2" max="2" step="0.5" value="1.5"> <b id="cv-x1v">1.5</b></label></div>
+<div class="ctrls"><label>x₂ <input type="range" id="cv-x2" min="-2" max="2" step="0.5" value="1"> <b id="cv-x2v">1</b></label></div>
+<div class="readout" id="cv-out"></div>
+</div>
+</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">A = np.array([[1, 2],
+              [3, 4],
+              [5, 6]])          # shape (3, 2)
+x = np.array([10, 1])         # shape (2,)
+
+print(&quot;Row view    :&quot;, A @ x)
+print(&quot;Column view :&quot;, 10 * A[:, 0] + 1 * A[:, 1])</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Row view    : [12 34 56]
+Column view : [12 34 56]</pre></div>
+
+<h3>Why ML cares: predict for everyone at once</h3>
+<p>In Section 4 we predicted one flat's price with <code>w @ x + b</code>. Put four flats in the rows of a matrix and the row view tells you what happens: each row is dotted with <code>w</code>, giving four predictions in one line.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">flats = np.array([
+    [4,  850, 2],
+    [1,  300, 0],
+    [6, 1200, 5],
+    [2,  500, 1],
+], dtype=float)                     # (4 flats, 3 features)
+w = np.array([120.0, 3.5, 40.0])    # (3,)
+b = 200.0
+
+prices = flats @ w + b              # (4, 3) @ (3,) → (4,), then b is added to every entry
+print(prices, prices.shape)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>[3735. 1370. 5320. 2230.] (4,)</pre></div>
+
+<p>One detail: <code>b</code> is a single number, yet it was added to all four predictions. NumPy's <strong>broadcasting</strong> stretched it to match the shape. You will see the same thing with a bias vector added to every row of a layer's output.</p>
+
+<div class="shapes"><div class="s">flats<small>(4, 3)</small></div><span>@</span><div class="s g">w<small>(3,)</small></div><span>+</span><div class="s g">b<small>scalar</small></div><span>→</span><div class="s r">prices<small>(4,)</small></div></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p><code>model.predict(X)</code> for any linear model is <code>X @ w + b</code>. Shape check: <code>(n_samples, n_features) @ (n_features,)</code> gives <code>(n_samples,)</code>, one prediction per row.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>A lender re-scores its entire customer base every night to update credit limits. That job is one matrix-vector product: millions of customer rows times one weight vector. Libraries hand it to optimised linear-algebra routines, which is why it takes seconds rather than hours.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> X is (500, 20) and w is (20,). What is the shape of X @ w? <em>Answer: (500,), one number per row.</em></p>
+<p><strong>2.</strong> Using the column view, what is <code>[[1, 0], [0, 1]] @ [7, 9]</code>? <em>Answer: 7×[1, 0] + 9×[0, 1] = [7, 9]. This is the identity matrix.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="num">7</span>Matrices as transformations of space</h2>
+
+<p>Now the column view pays off. A 2×2 matrix multiplies any 2D point and returns another 2D point. Apply it to every point on the plane and the whole plane moves: it stretches, rotates, slants or flips. A matrix is a <strong>machine that reshapes space</strong>.</p>
+
+<div class="box intuition"><span class="tag">Intuition · two arrows decide everything</span>
+<p>Start with two reference arrows: <strong>î</strong> = [1, 0] (one step right) and <strong>ĵ</strong> = [0, 1] (one step up). Any point is "some amount of î plus some amount of ĵ". The matrix's <strong>first column says where î lands</strong> and its <strong>second column says where ĵ lands</strong>. Every other point follows along, because it was built from î and ĵ.</p>
+<p>"Linear" means the grid stays a grid: lines stay straight, parallel lines stay parallel and equally spaced, and the origin doesn't move.</p>
+</div>
+
+<div class="widget" id="w-tf">
+<p class="wt">Try it: the matrix transformer</p>
+<p class="wh">Pick a preset or type your own numbers. The faint grid is the original plane; the coloured grid is after the matrix. Watch the unit square and the letter F.</p>
+<div class="ctrls" id="tf-presets"></div>
+<div class="wgrid">
+<svg class="plane" id="tf-svg"></svg>
+<div>
+<div class="ctrls ui">M = <span class="mat" style="grid-template-columns:repeat(2,auto)"><input type="number" id="tf-a" value="1" step="0.1"><input type="number" id="tf-b" value="0.8" step="0.1"><input type="number" id="tf-c" value="0" step="0.1"><input type="number" id="tf-d" value="1" step="0.1"></span></div>
+<div class="readout" id="tf-out"></div>
+</div>
+</div>
+</div>
+
+<p>Things to try in the widget:</p>
+<ul>
+<li><strong>Stretch:</strong> the square becomes a 2 × 1 rectangle. Its area doubles.</li>
+<li><strong>Rotate:</strong> everything turns, and the area stays the same.</li>
+<li><strong>Flip:</strong> the F is mirrored. The area is the same size, but the readout reports it as negative.</li>
+<li><strong>Collapse:</strong> the whole plane is squashed onto one line. The square has no area left.</li>
+</ul>
+
+<p>The number in the readout is the <strong>determinant</strong>: the factor by which the matrix scales area. If it is 2, every shape doubles in area. If it is negative, space was flipped. If it is 0, space collapsed to a line or a point, and information was destroyed. We use this in Section 9.</p>
+
+<div class="box byhand"><span class="tag">By hand · determinant of a 2×2</span>
+<div class="eq">M = [[a, b],
+     [c, d]]        det(M) = a×d − b×c
+
+Shear [[1, 0.8], [0, 1]]:  1×1 − 0.8×0 = 1   (slants, no change in area)
+Stretch [[2, 0], [0, 1]]:  2×1 − 0×0   = 2   (area doubles)</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">shear = np.array([[1.0, 0.8],
+                  [0.0, 1.0]])
+square = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], dtype=float)  # rows = corner points
+
+print(square @ shear.T)           # transforms every point at once
+print(&quot;Area scaling (det):&quot;, round(np.linalg.det(shear), 3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>[[0.  0. ]
+ [1.  0. ]
+ [1.8 1. ]
+ [0.8 1. ]]
+Area scaling (det): 1.0</pre></div>
+
+<p>A note on the code: our points sit in <em>rows</em> (golden rule 1). The textbook form <code>M @ p</code> works on a single column-shaped point, so to transform a whole stack of row-points at once we write <code>points @ M.T</code>. It gives exactly the same answers as doing <code>M @ p</code> for each point.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<ul>
+<li><strong>Feature scaling</strong> is a stretch along each axis.</li>
+<li><strong>PCA</strong> finds a rotation of your data's axes so the first new axis captures the most variation. Your dashboards' "2D projection of customers" is often this.</li>
+<li><strong>A neural network layer</strong> is a matrix transformation followed by a bend (the activation). Stacking layers repeatedly reshapes space until the classes you care about can be separated by a simple cut.</li>
+</ul>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Where does î land under <code>[[3, 1], [2, 5]]</code>? <em>Answer: [3, 2], the first column.</em></p>
+<p><strong>2.</strong> A matrix has determinant −3. Describe what it does to area. <em>Answer: triples it and flips orientation (mirror image).</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="num">8</span>Matrix × matrix</h2>
+
+<p>With matrix × vector understood, matrix × matrix is just <strong>several matrix-vector products side by side</strong>. Treat each column of B as a separate vector, multiply it by A, and stack the results as the columns of the answer.</p>
+
+<p>Equivalently, every entry of the result is one dot product: <strong>entry (i, j) = row i of A · column j of B</strong>.</p>
+
+<div class="box intuition"><span class="tag">Intuition · workers and tasks</span>
+<p>Each row of A is a worker's skill profile (welding, painting, wiring). Each column of B is a task's requirements in the same three skills. Entry (i, j) of A @ B is the dot product of worker i and task j: how well this worker fits this task. The whole product is the fit score of every worker against every task, in one operation.</p>
+</div>
+
+<div class="widget" id="w-mm">
+<p class="wt">Try it: step through A @ B</p>
+<p class="wh">Each step fills one cell: the highlighted row of A dotted with the highlighted column of B.</p>
+<div class="mrow" id="mm-row"></div>
+<div class="calc" id="mm-calc"></div>
+<div class="ctrls" style="justify-content:center"><button class="btn" id="mm-prev">← Prev</button><button class="btn primary" id="mm-next">Next →</button><button class="btn" id="mm-reset">Reset</button></div>
+</div>
+
+<h3>The shape rule: dominoes</h3>
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">(m × k)  @  (k × n)  →  (m × n)
+     └──────┘
+   inner numbers must match; the outer numbers are the answer's shape</div>
+<p>Like dominoes, the touching ends must match. Why? Each output entry is a dot product of a row of A (length k) with a column of B (length k). Dot products need equal lengths. That's the whole reason.</p>
+</div>
+
+<div class="widget" id="w-shape">
+<p class="wt">Try it: shape checker</p>
+<p class="wh">Type two shapes. Will <code>A @ B</code> work, and what comes out?</p>
+<div class="ctrls">A: (<input type="number" id="sh-m" value="500" min="1">, <input type="number" id="sh-k1" value="20" min="1">) &nbsp; B: (<input type="number" id="sh-k2" value="20" min="1">, <input type="number" id="sh-n" value="8" min="1">)</div>
+<div id="sh-out" class="readout"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+print(&quot;A @ B:\n&quot;, A @ B)
+print(&quot;B @ A:\n&quot;, B @ A)
+
+P = np.array([[1, 2, 0], [0, 1, 3]])      # (2, 3)
+Q = np.array([[2, 1], [1, 0], [4, 2]])    # (3, 2)
+print(&quot;P @ Q:&quot;, (P @ Q).shape, &quot;| Q @ P:&quot;, (Q @ P).shape)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>A @ B:
+ [[19 22]
+ [43 50]]
+B @ A:
+ [[23 34]
+ [31 46]]
+P @ Q: (2, 2) | Q @ P: (3, 3)</pre></div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">try:
+    np.ones((5, 4)) @ np.ones((5, 3))
+except ValueError as e:
+    print(&quot;Shape error!&quot;, e)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Shape error! matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)-&gt;(n?,m?) (size 5 is different from 4)</pre></div>
+
+<p>Learn to read that error: "mismatch in its core dimension… size 5 is different from 4" means the inner numbers didn't match (4 columns in the first, 5 rows in the second).</p>
+
+<h3>Order matters: A @ B is not B @ A</h3>
+<div class="box intuition"><span class="tag">Intuition · socks and shoes</span>
+<p>When applied to a vector, <code>(A @ B) @ x</code> means "apply B first, then A". Socks then shoes is not the same as shoes then socks. Rotating then stretching gives a different picture from stretching then rotating. The code above shows <code>A @ B</code> and <code>B @ A</code> giving different numbers, and <code>P @ Q</code> and <code>Q @ P</code> not even having the same shape.</p>
+</div>
+
+<h3>A real use: a recommender in one line</h3>
+<p>Give each user a taste vector and each movie a profile vector over the same genres. The score of a user for a movie is their dot product. Every user against every movie? One matrix multiplication. Note the transpose: <code>movies</code> is stored rows-as-movies (golden rule 1), so we flip it to put genres in its rows and line the shapes up.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">#                   action romance sci-fi
+users = np.array([[5, 1, 4],          # Aditi
+                  [1, 5, 2],          # Kabir
+                  [4, 4, 1]])         # Sana
+movies = np.array([[0.9, 0.1, 0.3],   # Mission Thunder
+                   [0.1, 0.9, 0.1],   # Monsoon Letters
+                   [0.6, 0.2, 0.9],   # Orbit Run
+                   [0.3, 0.7, 0.2]])  # Paris Again
+
+scores = users @ movies.T             # (3, 3) @ (3, 4) → (3, 4)
+print(scores.round(1))
+print(&quot;Top pick per user:&quot;, scores.argmax(axis=1))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>[[5.8 1.8 6.8 3. ]
+ [2.  4.8 3.4 4.2]
+ [4.3 4.1 4.1 4.2]]
+Top pick per user: [2 1 0]</pre></div>
+
+<div class="shapes"><div class="s">users<small>(3 users, 3 genres)</small></div><span>@</span><div class="s g">movies.T<small>(3 genres, 4 movies)</small></div><span>→</span><div class="s r">scores<small>(3 users, 4 movies)</small></div></div>
+
+<p>Aditi (action + sci-fi) gets <em>Orbit Run</em>, Kabir (romance) gets <em>Monsoon Letters</em>, Sana gets <em>Mission Thunder</em> by a hair. In real systems the taste and profile vectors aren't hand-written; they are <em>learned</em> from viewing history (matrix factorisation), but the scoring step is exactly this.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>A neural network layer applied to a batch is <code>X @ W + b</code>: <code>(batch, inputs) @ (inputs, neurons)</code> gives <code>(batch, neurons)</code>. GPUs exist in ML largely because they are extremely fast at this one operation.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Streaming platforms, e-commerce sites and food-delivery apps compute user × item score matrices to fill "recommended for you" rows. The same pattern scores every sales lead against every product, or every candidate against every open role.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> (64, 128) @ (128, 10) gives what shape? <em>Answer: (64, 10).</em></p>
+<p><strong>2.</strong> (64, 128) @ (64, 10)? <em>Answer: error. Inner numbers 128 and 64 don't match. Perhaps you meant X.T @ Y, which is (128, 64) @ (64, 10) → (128, 10).</em></p>
+<p><strong>3.</strong> In the 2×3 @ 3×2 example, how many multiplications go into each output cell? <em>Answer: 3, the shared inner dimension.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="num">9</span>Determinant, inverse and solving equations</h2>
+
+<h3>The determinant, revisited</h3>
+<p>You met the determinant in the transformer widget as the "area scaling factor". Here are the cases side by side:</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">for name, M in [(&quot;stretch&quot;,  [[2, 0], [0, 1]]),
+                (&quot;mix&quot;,      [[2, 1], [1, 3]]),
+                (&quot;rotate&quot;,   [[0, -1], [1, 0]]),
+                (&quot;flip&quot;,     [[0, 1], [1, 0]]),
+                (&quot;collapse&quot;, [[1, 2], [2, 4]])]:
+    print(f&quot;{name:9s} det = {np.linalg.det(np.array(M)):+.1f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>stretch   det = +2.0
+mix       det = +5.0
+rotate    det = +1.0
+flip      det = -1.0
+collapse  det = +0.0</pre></div>
+
+<p>The one that matters most in ML is the last: <strong>det = 0 means the matrix collapses space</strong>. Two different input points can land on the same output point, so you can no longer tell them apart. Information is lost.</p>
+
+<h3>The inverse: the undo button</h3>
+<div class="box intuition"><span class="tag">Intuition · Ctrl+Z</span>
+<p>If A stretches space by 2 along x, its inverse A⁻¹ shrinks by 2 along x. Do one then the other and you are back where you started: <code>A⁻¹ @ A = I</code>. But if A squashed the plane onto a line, there is no undo. You can't un-squash, because you don't know where on the original plane each point came from. That is why <strong>an inverse exists only when det ≠ 0</strong>.</p>
+</div>
+
+<h3>Solving equations: what did the pens cost?</h3>
+<div class="box intuition"><span class="tag">Story · two bills, two unknowns</span>
+<p>Your office has two stationery bills. Bill 1: 3 pens and 2 notebooks for ₹190. Bill 2: 1 pen and 4 notebooks for ₹230. What does one pen cost? That is two equations with two unknowns, and a matrix writes it compactly as <code>A @ p = totals</code>.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand</span>
+<div class="eq">3p + 2n = 190
+1p + 4n = 230
+
+Double the first: 6p + 4n = 380
+Subtract second : 5p      = 150   →  p = 30
+Back-substitute : 30 + 4n = 230   →  n = 50</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python"># Bill 1: 3 pens + 2 notebooks = ₹190
+# Bill 2: 1 pen  + 4 notebooks = ₹230
+A = np.array([[3.0, 2.0],
+              [1.0, 4.0]])
+totals = np.array([190.0, 230.0])
+
+print(&quot;Unit prices:&quot;, np.linalg.solve(A, totals))
+print(&quot;A⁻¹:\n&quot;, np.linalg.inv(A))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Unit prices: [30. 50.]
+A⁻¹:
+ [[ 0.4 -0.2]
+ [-0.1  0.3]]</pre></div>
+
+<div class="box mistake"><span class="tag">Practical advice · solve, don't invert</span>
+<p>Mathematically, <code>p = A⁻¹ @ totals</code>. In code, prefer <code>np.linalg.solve(A, totals)</code>. It is faster and more numerically accurate, because it never builds the inverse explicitly. Compute <code>inv</code> only when you need the inverse matrix itself.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">same_info = np.array([[1.0, 2.0],
+                      [2.0, 4.0]])     # row 2 is just 2 x row 1
+try:
+    np.linalg.inv(same_info)
+except np.linalg.LinAlgError as e:
+    print(&quot;Cannot invert:&quot;, e)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Cannot invert: Singular matrix</pre></div>
+
+<h3>Why this matters: multicollinearity</h3>
+<div class="box intuition"><span class="tag">Intuition · two rulers measuring the same thing</span>
+<p>Suppose a dataset has "height in cm" and "height in inches". Those columns carry identical information. Ask a linear model how much each one matters and it can't decide: 1 part cm + 0 parts inches works, and so does 0 parts cm + 2.54 parts inches, and infinitely many mixes in between. In matrix terms, the matrix <code>XᵀX</code> that regression needs to undo is (nearly) collapsed.</p>
+</div>
+
+<p>Real data is rarely <em>exactly</em> collapsed, so the determinant is rarely exactly 0. A better gauge is the <strong>condition number</strong>: roughly, how much a tiny wobble in the data can swing the answer. Values in the hundreds are fine. Values like 10¹⁶ mean "practically collapsed; the answer is noise".</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">rng = np.random.default_rng(0)
+height_cm = rng.normal(170, 10, 100)
+height_in = height_cm / 2.54            # the same information in another unit
+weight_kg = rng.normal(70, 12, 100)
+
+redundant = np.column_stack([height_cm, height_in])
+healthy   = np.column_stack([height_cm, weight_kg])
+print(f&quot;condition number, redundant: {np.linalg.cond(redundant.T @ redundant):.1e}&quot;)
+print(f&quot;condition number, healthy  : {np.linalg.cond(healthy.T @ healthy):.1e}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>condition number, redundant: 2.4e+16
+condition number, healthy  : 2.8e+02</pre></div>
+
+<h3>Preview: the regression formula, decoded</h3>
+<p>Ordinary least squares has a famous one-line solution, the <strong>normal equation</strong>:</p>
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">w = (XᵀX)⁻¹ Xᵀ y</div>
+<p>Read it right to left. <code>Xᵀy</code>: how strongly each feature lines up with the target (a dot product per feature). <code>XᵀX</code>: how the features overlap with each other. Multiplying by <code>(XᵀX)⁻¹</code> undoes that overlap so each feature gets credit only for what it uniquely explains. This is why collinear features break it: the overlap can't be undone.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">rng = np.random.default_rng(42)
+n = 200
+X_raw = rng.normal(size=(n, 2))
+X = np.column_stack([np.ones(n), X_raw])      # a column of 1s carries the bias
+true_w = np.array([5.0, 2.0, -3.0])
+y = X @ true_w + rng.normal(0, 0.5, n)        # data generated with a little noise
+
+w_hat = np.linalg.solve(X.T @ X, X.T @ y)     # the &quot;normal equation&quot;
+print(&quot;true weights :&quot;, true_w)
+print(&quot;found weights:&quot;, w_hat.round(3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>true weights : [ 5.  2. -3.]
+found weights: [ 4.965  1.991 -3.027]</pre></div>
+
+<p>The recovered weights are within a few hundredths of the true ones; the rest is noise. For very large datasets, building and solving <code>XᵀX</code> gets expensive, so models are usually trained with gradient descent instead. That is the subject of Article 2.</p>
+
+<div class="box biz"><span class="tag">In business</span>
+<p><strong>Driver analysis:</strong> when a team presents "price is the biggest driver of churn" from a regression, check for collinearity first. If price and plan tier move together, the coefficients can swap or flip sign between runs. A quick condition-number or VIF check before the meeting saves an embarrassing correction later. <strong>Mix problems:</strong> recovering unit costs from combined invoices, or blend proportions from lab readings, is solving a linear system.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> det([[2, 4], [1, 2]])? Can it be inverted? <em>Answer: 2×2 − 4×1 = 0. No, its rows carry the same information.</em></p>
+<p><strong>2.</strong> Your regression's coefficients change wildly when you drop 1% of rows. What should you suspect? <em>Answer: multicollinearity. Check the condition number or VIFs.</em></p>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="num">10</span>Putting it together in real models</h2>
+
+<h3>One neural network layer</h3>
+<p>A dense layer is everything from Sections 4 to 8 in two lines: a matrix multiplication, a broadcast bias, and a bend.</p>
+
+<div class="shapes"><div class="s">X<small>(4 samples, 3 features)</small></div><span>@</span><div class="s g">W<small>(3 inputs, 2 neurons)</small></div><span>+</span><div class="s g">b<small>(2,)</small></div><span>→</span><div class="s r">Z<small>(4, 2)</small></div><span>→ ReLU →</span><div class="s r">H<small>(4, 2)</small></div></div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">X = np.array([[ 0.5,  1.0, -0.2],
+              [ 0.1, -0.4,  0.9],
+              [ 1.2,  0.3,  0.0],
+              [-0.6,  0.8,  0.4]])     # (4 samples, 3 features)
+W = np.array([[ 0.2, -0.5],
+              [ 0.7,  0.1],
+              [-0.3,  0.6]])          # (3 inputs, 2 neurons)
+b = np.array([0.1, -0.2])             # one bias per neuron
+
+Z = X @ W + b                         # (4, 3) @ (3, 2) → (4, 2)
+H = np.maximum(0, Z)                  # ReLU: negative values become 0
+print(&quot;Z:\n&quot;, Z.round(2))
+print(&quot;H:\n&quot;, H.round(2))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>Z:
+ [[ 0.96 -0.47]
+ [-0.43  0.25]
+ [ 0.55 -0.77]
+ [ 0.42  0.42]]
+H:
+ [[0.96 0.  ]
+ [0.   0.25]
+ [0.55 0.  ]
+ [0.42 0.42]]</pre></div>
+
+<p>Each <em>column</em> of W is one neuron's weight vector, and each entry of Z is one sample dotted with one neuron. ReLU then zeroes the negatives; that bend is what lets stacked layers learn curved patterns rather than just straight-line ones. Deep learning is this block repeated, with the weights learned by the calculus of Article 2.</p>
+
+<h3>A toy look at attention</h3>
+<div class="box intuition"><span class="tag">Intuition · a word asks its neighbours</span>
+<p>"Bank" means one thing in "river bank" and another in "bank loan". A transformer resolves this by letting each word look at the words around it and borrow meaning from the ones it matches best. "Matches best" is measured with dot products.</p>
+</div>
+
+<p>Below, each word gets a hand-made 3-number vector scoring how much it relates to <em>water</em>, <em>money</em> and <em>place</em>. "Bank" starts ambiguous: <code>[0.6, 0.6, 0.5]</code>. We dot it with every word in its sentence, turn the scores into shares that add to 1 (softmax), and take the weighted mix of the sentence's vectors.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">#                    water money place
+emb = {&quot;river&quot;: np.array([1.0, 0.0, 0.3]),
+       &quot;bank&quot;:  np.array([0.6, 0.6, 0.5]),
+       &quot;loan&quot;:  np.array([0.0, 1.0, 0.1]),
+       &quot;boat&quot;:  np.array([0.9, 0.1, 0.2])}
+
+def softmax(s):
+    e = np.exp(s - s.max())
+    return e / e.sum()
+
+def bank_in_context(sentence):
+    S = np.stack([emb[w] for w in sentence])   # (words, 3)
+    weights = softmax(S @ emb[&quot;bank&quot;])         # how much &quot;bank&quot; listens to each word
+    return weights.round(2), (weights @ S).round(2)
+
+print(&quot;river bank boat →&quot;, bank_in_context([&quot;river&quot;, &quot;bank&quot;, &quot;boat&quot;]))
+print(&quot;loan bank       →&quot;, bank_in_context([&quot;loan&quot;, &quot;bank&quot;]))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>river bank boat → (array([0.31, 0.39, 0.3 ]), array([0.81, 0.26, 0.35]))
+loan bank       → (array([0.42, 0.58]), array([0.35, 0.77, 0.33]))</pre></div>
+
+<p>Same starting vector, different sentences, different results. Next to "river" and "boat", bank's new vector leans to <em>water</em> (0.81). Next to "loan" it leans to <em>money</em> (0.77). The context changed the meaning through nothing but dot products, a softmax and a weighted sum.</p>
+
+<div class="box mistake"><span class="tag">Honesty note</span>
+<p>This is a deliberate simplification. Real transformers learn their embeddings (hundreds of dimensions, not 3), and they first multiply them by three learned matrices to get separate <strong>query</strong>, <strong>key</strong> and <strong>value</strong> vectors, then scale the scores by √d before the softmax. The core move, "dot product to score, softmax to weigh, weighted sum to mix", is exactly what you just ran.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s11"><span class="num">11</span>Business map, common mistakes, quiz and cheat sheet</h2>
+
+<h3>Where each idea earns money</h3>
+<div class="tw"><table>
+<thead><tr><th>Concept</th><th>Business use-case</th><th>Model / technique</th></tr></thead>
+<tbody>
+<tr><td>Vector</td><td>Customer, product or document profile</td><td>Feature engineering, embeddings</td></tr>
+<tr><td>Addition / mean</td><td>Segment "average customer", weekly totals</td><td>K-means centroids</td></tr>
+<tr><td>Norm / distance</td><td>Lookalike audiences, fraud flags, duplicate detection</td><td>k-NN, k-means, anomaly detection</td></tr>
+<tr><td>Dot product</td><td>Credit scorecards, price estimates, ad click scores</td><td>Linear and logistic regression</td></tr>
+<tr><td>Cosine similarity</td><td>Semantic search, résumé–job matching, FAQ bots</td><td>Embedding search, RAG retrieval</td></tr>
+<tr><td>Matrix × vector</td><td>Nightly re-scoring of the whole customer base</td><td>Batch inference</td></tr>
+<tr><td>Matrix × matrix</td><td>"Recommended for you", lead × product fit</td><td>Recommenders, neural network layers</td></tr>
+<tr><td>Transformation</td><td>2D maps of customers for dashboards, compression</td><td>PCA, scaling</td></tr>
+<tr><td>Inverse / solve</td><td>Unit costs from invoices, closed-form forecasts</td><td>Linear systems, OLS</td></tr>
+<tr><td>Condition number</td><td>Trustworthy "driver analysis" for stakeholders</td><td>Multicollinearity checks</td></tr>
+</tbody></table></div>
+
+<h3>The six mistakes that cost the most time</h3>
+<div class="box mistake"><span class="tag">Mistakes and fixes</span>
+<ol>
+<li><strong>Mixing row and column conventions.</strong> Fix: rows are samples, always. Write <code>X @ W</code>.</li>
+<li><strong><code>*</code> when you meant <code>@</code>.</strong> Fix: say aloud whether you want entry-wise or row-by-column.</li>
+<li><strong><code>(n,)</code> vs <code>(n, 1)</code> broadcasting surprises.</strong> Fix: print <code>.shape</code> after every new line until it's a habit.</li>
+<li><strong>Distances on unscaled features.</strong> Fix: standardise before k-NN, k-means, SVMs and PCA.</li>
+<li><strong><code>inv()</code> to solve a system.</strong> Fix: use <code>np.linalg.solve</code> (or <code>lstsq</code> for regression).</li>
+<li><strong>Interpreting coefficients of collinear features.</strong> Fix: check condition number / VIF first; drop or combine redundant columns.</li>
+</ol>
+</div>
+
+<h3>Quiz</h3>
+<div class="widget quiz" id="quiz"><p class="wt">Seven questions. Click an answer to see why.</p><div id="quiz-body"></div><p class="readout">Score: <span class="score" id="quiz-score">0 / 7</span></p></div>
+
+<h3>Cheat sheet</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea</th><th>One-line meaning</th><th>NumPy</th><th>Shape rule</th></tr></thead>
+<tbody>
+<tr><td>Vector</td><td>Ordered list / arrow</td><td><code>np.array([..])</code></td><td><code>(n,)</code></td></tr>
+<tr><td>Matrix</td><td>Rows = examples, columns = features</td><td><code>np.array([[..]])</code></td><td><code>(m, n)</code></td></tr>
+<tr><td>Add / scale</td><td>Entry by entry</td><td><code>a + b</code>, <code>c * a</code></td><td>same shapes</td></tr>
+<tr><td>L2 norm</td><td>Straight-line length</td><td><code>np.linalg.norm(v)</code></td><td>→ scalar</td></tr>
+<tr><td>L1 norm</td><td>City-block length</td><td><code>np.linalg.norm(v, 1)</code></td><td>→ scalar</td></tr>
+<tr><td>Distance</td><td>Length of the gap</td><td><code>np.linalg.norm(a - b)</code></td><td>→ scalar</td></tr>
+<tr><td>Dot product</td><td>Multiply matching, add; agreement</td><td><code>a @ b</code></td><td><code>(n,)·(n,)</code> → scalar</td></tr>
+<tr><td>Cosine</td><td>Agreement without length</td><td><code>a@b/(‖a‖‖b‖)</code></td><td>→ −1 … 1</td></tr>
+<tr><td>Element-wise</td><td>Matching entries multiplied</td><td><code>A * B</code></td><td>same shapes</td></tr>
+<tr><td>Transpose</td><td>Swap rows and columns</td><td><code>A.T</code></td><td><code>(m,n)</code> → <code>(n,m)</code></td></tr>
+<tr><td>Matrix × vector</td><td>Dot every row / mix the columns</td><td><code>X @ w</code></td><td><code>(m,k)@(k,)</code> → <code>(m,)</code></td></tr>
+<tr><td>Matrix × matrix</td><td>Every row meets every column</td><td><code>A @ B</code></td><td><code>(m,k)@(k,n)</code> → <code>(m,n)</code></td></tr>
+<tr><td>Determinant</td><td>Area scaling; 0 = collapsed</td><td><code>np.linalg.det(A)</code></td><td>square only</td></tr>
+<tr><td>Inverse</td><td>Undo; exists only if det ≠ 0</td><td><code>np.linalg.inv(A)</code></td><td>square only</td></tr>
+<tr><td>Solve</td><td>Find x in A x = y</td><td><code>np.linalg.solve(A, y)</code></td><td><code>(n,n)</code>, <code>(n,)</code></td></tr>
+</tbody></table></div>
+
+<h3>What comes next</h3>
+<p>You now have the vocabulary: data as vectors and matrices, predictions as dot products, layers as matrix multiplications. What's missing is how a model finds good weights in the first place. In <strong>Part 2: Calculus for Machine Learning</strong>, we take the error vector from Section 2, turn it into a loss, and use derivatives and gradient descent to push the weights downhill until the predictions are good.</p>
+
+<footer>Mathematics for Machine Learning · Part 1 of 2. All Python outputs in this article were produced by running the code shown (NumPy). Interactive figures run in your browser.</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+/* ---------- theme ---------- */
+(function(){
+  const btn=document.getElementById('themeBtn');
+  btn.addEventListener('click',()=>{
+    const cur=document.documentElement.dataset.theme ||
+      (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    document.documentElement.dataset.theme = cur==='dark'?'light':'dark';
+  });
+})();
+/* ---------- code: highlight + copy ---------- */
+try{ if(window.hljs){ document.querySelectorAll('pre code.language-python').forEach(b=>hljs.highlightElement(b)); } }catch(e){}
+document.querySelectorAll('.code').forEach(c=>{
+  const b=c.querySelector('button'); const code=c.querySelector('code');
+  if(b) b.addEventListener('click',()=>{ navigator.clipboard && navigator.clipboard.writeText(code.innerText).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200);}); });
+});
+
+/* ---------- helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function fmt(v,d=2){ const p=10**d; let r=Math.round(v*p)/p; if(Object.is(r,-0)) r=0; return String(r); }
+function el(tag,attrs,parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function makePlane(svg,R){
+  const W=400; svg.setAttribute('viewBox',`0 0 ${W} ${W}`);
+  const s=W/(2*R);
+  const P={R,W,s,X:x=>W/2+x*s,Y:y=>W/2-y*s,wx:px=>(px-W/2)/s,wy:py=>(W/2-py)/s};
+  const g=el('g',{},svg);
+  for(let i=-R;i<=R;i++){
+    el('line',{x1:P.X(i),y1:0,x2:P.X(i),y2:W,class:i===0?'axis':'gridline'},g);
+    el('line',{x1:0,y1:P.Y(i),x2:W,y2:P.Y(i),class:i===0?'axis':'gridline'},g);
+  }
+  P.layer=el('g',{},svg); P.top=el('g',{},svg);
+  return P;
+}
+function arrow(P,g,x0,y0,x1,y1,cls,label){
+  const X0=P.X(x0),Y0=P.Y(y0),X1=P.X(x1),Y1=P.Y(y1);
+  const dx=X1-X0,dy=Y1-Y0,L=Math.hypot(dx,dy);
+  const grp=el('g',{class:cls},g);
+  if(L<2) return grp;
+  const ux=dx/L,uy=dy/L,h=Math.min(13,L*0.45),px=-uy,py=ux;
+  el('line',{x1:X0,y1:Y0,x2:X1-ux*h*0.7,y2:Y1-uy*h*0.7},grp);
+  el('polygon',{points:`${X1},${Y1} ${X1-ux*h+px*h*0.42},${Y1-uy*h+py*h*0.42} ${X1-ux*h-px*h*0.42},${Y1-uy*h-py*h*0.42}`},grp);
+  if(label){ const t=el('text',{x:X1+ux*8+6,y:Y1+uy*8-4},grp); t.textContent=label; }
+  return grp;
+}
+function svgPoint(svg,e){ const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+function handle(svg,P,get,set,cls){
+  const c=el('circle',{r:10,class:'handle '+cls},P.top);
+  let drag=false;
+  c.addEventListener('pointerdown',e=>{drag=true;c.setPointerCapture(e.pointerId);e.preventDefault();});
+  c.addEventListener('pointermove',e=>{ if(!drag) return; const p=svgPoint(svg,e);
+    const x=clamp(Math.round(P.wx(p.x)*2)/2,-P.R,P.R), y=clamp(Math.round(P.wy(p.y)*2)/2,-P.R,P.R);
+    const cur=get(); if(cur[0]!==x||cur[1]!==y) set(x,y); });
+  const stop=()=>{drag=false;};
+  c.addEventListener('pointerup',stop); c.addEventListener('pointercancel',stop);
+  return ()=>{ const p=get(); c.setAttribute('cx',P.X(p[0])); c.setAttribute('cy',P.Y(p[1])); };
+}
+const vs=v=>`[${fmt(v[0])}, ${fmt(v[1])}]`;
+
+/* ---------- W1: dataset explorer ---------- */
+(function(){
+  const names=['Customer 0','Customer 1','Customer 2','Customer 3','Customer 4'];
+  const cols=['age','income','credit','products'];
+  const X=[[34,75000,720,3],[28,52000,680,1],[45,92000,780,5],[23,38000,620,0],[52,115000,810,7]];
+  const t=$('#dt'); let selR=2, selC=null;
+  function render(){
+    let h='<thead><tr><th>row</th>'+cols.map((c,j)=>`<th data-c="${j}" class="${selC===j?'selc':''}">${c}<br><span style="font-weight:400">col ${j}</span></th>`).join('')+'</tr></thead><tbody>';
+    X.forEach((r,i)=>{ h+=`<tr data-r="${i}" class="${selR===i?'sel':''}"><td>${names[i]}</td>`+r.map((v,j)=>`<td class="${selC===j?'selc':''}">${v.toLocaleString('en-IN')}</td>`).join('')+'</tr>'; });
+    t.innerHTML=h+'</tbody>';
+    t.querySelectorAll('tr[data-r]').forEach(tr=>tr.addEventListener('click',()=>{selR=+tr.dataset.r;selC=null;render();}));
+    t.querySelectorAll('th[data-c]').forEach(th=>th.addEventListener('click',()=>{selC=+th.dataset.c;selR=null;render();}));
+    let o=`<p><span class="k">Whole matrix</span> <code>X.shape = (5, 4)</code> → 5 rows (customers) × 4 columns (features)</p>`;
+    if(selR!==null) o+=`<p><span class="k">Row</span> <code>X[${selR}] = [${X[selR].join(', ')}]</code> · shape <code>(4,)</code><br>One customer described by 4 features: a point in 4-D space.</p>`;
+    if(selC!==null) o+=`<p><span class="k">Column</span> <code>X[:, ${selC}] = [${X.map(r=>r[selC]).join(', ')}]</code> · shape <code>(5,)</code><br>One feature ("${cols[selC]}") measured for all 5 customers.</p>`;
+    $('#dt-out').innerHTML=o;
+  }
+  render();
+})();
+
+/* ---------- W2: vector playground ---------- */
+(function(){
+  const svg=$('#vp-svg'); const P=makePlane(svg,5);
+  const st={a:[2,1],b:[1,3],al:1,mode:'add'};
+  const ha=handle(svg,P,()=>st.a,(x,y)=>{st.a=[x,y];draw();},'h-a');
+  const hb=handle(svg,P,()=>st.b,(x,y)=>{st.b=[x,y];draw();},'h-b');
+  $('#vp-alpha').addEventListener('input',e=>{st.al=+e.target.value;$('#vp-alpha-v').textContent=st.al;draw();});
+  document.querySelectorAll('#vp-mode button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#vp-mode button').forEach(x=>x.classList.remove('on'));b.classList.add('on');st.mode=b.dataset.m;draw();}));
+  function draw(){
+    P.layer.innerHTML='';
+    const al=st.al,A=[st.a[0]*al,st.a[1]*al],B=st.b;
+    if(al!==1) arrow(P,P.layer,0,0,st.a[0],st.a[1],'vec ghost dashed');
+    let R;
+    if(st.mode==='add'){
+      R=[A[0]+B[0],A[1]+B[1]];
+      arrow(P,P.layer,A[0],A[1],R[0],R[1],'vec v-b dashed');
+      arrow(P,P.layer,0,0,R[0],R[1],'vec v-r',al===1?'a+b':`${al}a+b`);
+    } else {
+      R=[A[0]-B[0],A[1]-B[1]];
+      arrow(P,P.layer,B[0],B[1],A[0],A[1],'vec v-r dashed');
+      arrow(P,P.layer,0,0,R[0],R[1],'vec v-r',al===1?'a−b':`${al}a−b`);
+    }
+    arrow(P,P.layer,0,0,A[0],A[1],'vec v-a',al===1?'a':`${al}a`);
+    arrow(P,P.layer,0,0,B[0],B[1],'vec v-b','b');
+    ha(); hb();
+    const op=st.mode==='add'?'+':'−';
+    $('#vp-out').innerHTML=`<p><span class="k">a</span> <code>${vs(st.a)}</code> &nbsp; <span class="k">b</span> <code>${vs(B)}</code></p>
+      <p><span class="k">${al}·a</span> = <code>${vs(A)}</code></p>
+      <p><span class="k">${al===1?'a':al+'a'} ${op} b</span> = <code>[${fmt(A[0])} ${op} ${fmt(B[0])}, ${fmt(A[1])} ${op} ${fmt(B[1])}]</code></p>
+      <p class="big" style="color:var(--verm)">${vs(R)}</p>
+      <p class="k">${st.mode==='add'?'Tip-to-tail: follow a, then follow b (dashed).':'The dashed arrow goes from b’s tip to a’s tip: the gap between them.'}</p>`;
+  }
+  draw();
+})();
+
+/* ---------- W3: distance ---------- */
+(function(){
+  const svg=$('#ds-svg'); const P=makePlane(svg,5);
+  const st={p:[-3,-1],q:[2,3]};
+  const hp=handle(svg,P,()=>st.p,(x,y)=>{st.p=[x,y];draw();},'h-a');
+  const hq=handle(svg,P,()=>st.q,(x,y)=>{st.q=[x,y];draw();},'h-b');
+  function draw(){
+    P.layer.innerHTML='';
+    const [p,q]=[st.p,st.q];
+    const g1=el('g',{class:'vec v-b dashed'},P.layer);
+    el('polyline',{points:`${P.X(p[0])},${P.Y(p[1])} ${P.X(q[0])},${P.Y(p[1])} ${P.X(q[0])},${P.Y(q[1])}`,fill:'none',stroke:'var(--green)','stroke-width':3,'stroke-dasharray':'7 5'},g1);
+    el('line',{x1:P.X(p[0]),y1:P.Y(p[1]),x2:P.X(q[0]),y2:P.Y(q[1]),stroke:'var(--verm)','stroke-width':3.5,'stroke-linecap':'round'},P.layer);
+    const tp=el('text',{x:P.X(p[0])-14,y:P.Y(p[1])+24,'font-weight':700,fill:'var(--petrol)','font-family':'IBM Plex Sans'},P.layer); tp.textContent='P';
+    const tq=el('text',{x:P.X(q[0])+12,y:P.Y(q[1])-10,'font-weight':700,fill:'var(--green)','font-family':'IBM Plex Sans'},P.layer); tq.textContent='Q';
+    hp(); hq();
+    const dx=q[0]-p[0],dy=q[1]-p[1],l1=Math.abs(dx)+Math.abs(dy),l2=Math.hypot(dx,dy);
+    $('#ds-out').innerHTML=`<p><span class="k">P</span> <code>${vs(p)}</code> &nbsp; <span class="k">Q</span> <code>${vs(q)}</code></p>
+      <p><span class="k">gap Q − P</span> = <code>${vs([dx,dy])}</code></p>
+      <p><span style="color:var(--verm);font-weight:700">L2 (crow)</span> = √(${fmt(dx)}² + ${fmt(dy)}²) = <span class="big" style="color:var(--verm)">${fmt(l2)}</span></p>
+      <p><span style="color:var(--green);font-weight:700">L1 (taxi)</span> = |${fmt(dx)}| + |${fmt(dy)}| = <span class="big" style="color:var(--green)">${fmt(l1)}</span></p>
+      <p class="k">${l1===0?'Same point: both distances are 0.':(Math.abs(l1-l2)<1e-9?'Same row or column: no turn needed, so L1 = L2.':'The taxi travels '+fmt(l1-l2)+' more than the crow.')}</p>`;
+  }
+  draw();
+})();
+
+/* ---------- W4: dot product ---------- */
+(function(){
+  const svg=$('#dp-svg'); const P=makePlane(svg,5);
+  const st={a:[3,1],b:[1,3]};
+  const ha=handle(svg,P,()=>st.a,(x,y)=>{st.a=[x,y];draw();},'h-a');
+  const hb=handle(svg,P,()=>st.b,(x,y)=>{st.b=[x,y];draw();},'h-b');
+  function draw(){
+    P.layer.innerHTML='';
+    const a=st.a,b=st.b,dot=a[0]*b[0]+a[1]*b[1],na=Math.hypot(...a),nb=Math.hypot(...b);
+    if(na>0&&nb>0){
+      const k=dot/(nb*nb), pr=[b[0]*k,b[1]*k];
+      // extended line of b
+      const ex=[b[0]/nb*7,b[1]/nb*7];
+      el('line',{x1:P.X(-ex[0]),y1:P.Y(-ex[1]),x2:P.X(ex[0]),y2:P.Y(ex[1]),stroke:'var(--green)','stroke-width':1,opacity:.35},P.layer);
+      el('line',{x1:P.X(a[0]),y1:P.Y(a[1]),x2:P.X(pr[0]),y2:P.Y(pr[1]),stroke:'var(--muted)','stroke-width':1.5,'stroke-dasharray':'4 4'},P.layer);
+      el('line',{x1:P.X(0),y1:P.Y(0),x2:P.X(pr[0]),y2:P.Y(pr[1]),stroke:'var(--verm)','stroke-width':7,'stroke-linecap':'round',opacity:.85},P.layer);
+      // angle arc
+      const ta=Math.atan2(a[1],a[0]),tb=Math.atan2(b[1],b[0]);
+      let d=tb-ta; while(d>Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI;
+      const r=30,x0=P.X(0)+r*Math.cos(ta),y0=P.Y(0)-r*Math.sin(ta),x1=P.X(0)+r*Math.cos(tb),y1=P.Y(0)-r*Math.sin(tb);
+      el('path',{d:`M ${x0} ${y0} A ${r} ${r} 0 0 ${d>0?0:1} ${x1} ${y1}`,fill:'none',stroke:'var(--ink)','stroke-width':1.5},P.layer);
+    }
+    arrow(P,P.layer,0,0,b[0],b[1],'vec v-b','b');
+    arrow(P,P.layer,0,0,a[0],a[1],'vec v-a','a');
+    ha(); hb();
+    let html=`<p><span class="k">a</span> <code>${vs(a)}</code> &nbsp; <span class="k">b</span> <code>${vs(b)}</code></p>
+      <p><span class="k">a · b</span> = ${fmt(a[0])}×${fmt(b[0])} + ${fmt(a[1])}×${fmt(b[1])} = <span class="big">${fmt(dot)}</span></p>`;
+    if(na>0&&nb>0){
+      const c=clamp(dot/(na*nb),-1,1), th=Math.acos(c)*180/Math.PI;
+      html+=`<p><span class="k">‖a‖</span> ${fmt(na)} &nbsp; <span class="k">‖b‖</span> ${fmt(nb)}</p>
+      <p><span class="k">angle θ</span> ${fmt(th,1)}° &nbsp; <span class="k">cos θ</span> ${fmt(c,3)}</p>
+      <p><span class="k">check:</span> ${fmt(na)} × ${fmt(nb)} × ${fmt(c,3)} = ${fmt(na*nb*c)}</p>
+      <p><span class="k">shadow of a on b</span> = a·b / ‖b‖ = <span style="color:var(--verm);font-weight:700">${fmt(dot/nb)}</span></p>`;
+      const cls=Math.abs(dot)<1e-9?'zero':(dot>0?'pos':'neg');
+      const msg={pos:'Positive: they point the same general way (agree).',zero:'Zero: perpendicular. No shadow, no relationship.',neg:'Negative: they point in opposing directions (disagree).'}[cls];
+      html+=`<div class="verdict ${cls}">${msg}</div>`;
+    } else html+=`<p class="k">One arrow has zero length, so there is no angle.</p>`;
+    $('#dp-out').innerHTML=html;
+  }
+  draw();
+})();
+
+/* ---------- W5: column view ---------- */
+(function(){
+  const svg=$('#cv-svg'); const P=makePlane(svg,5);
+  const ids=['a','b','c','d','x1','x2'];
+  ids.forEach(i=>$('#cv-'+i).addEventListener('input',draw));
+  function draw(){
+    const a=+$('#cv-a').value,b=+$('#cv-b').value,c=+$('#cv-c').value,d=+$('#cv-d').value;
+    const x1=+$('#cv-x1').value,x2=+$('#cv-x2').value;
+    $('#cv-x1v').textContent=x1; $('#cv-x2v').textContent=x2;
+    const c1=[a,c],c2=[b,d],s1=[x1*a,x1*c],R=[x1*a+x2*b,x1*c+x2*d];
+    P.layer.innerHTML='';
+    arrow(P,P.layer,0,0,c1[0],c1[1],'vec ghost');
+    arrow(P,P.layer,0,0,c2[0],c2[1],'vec ghost');
+    arrow(P,P.layer,0,0,s1[0],s1[1],'vec v-a',`${x1}·col₁`);
+    arrow(P,P.layer,s1[0],s1[1],R[0],R[1],'vec v-b',`${x2}·col₂`);
+    const gr=arrow(P,P.layer,0,0,R[0],R[1],'vec v-r');
+    const LR=Math.hypot(R[0],R[1]);
+    if(LR>0.3){
+      const side=(R[0]*s1[1]-R[1]*s1[0])>0?1:-1;           // place label away from column-1 arrow
+      const nx=-R[1]/LR*side, ny=R[0]/LR*side;
+      const tx=P.X(R[0]*0.5)+nx*18*-1, ty=P.Y(R[1]*0.5)-ny*18*-1;
+      const t=el('text',{x:tx,y:ty,'text-anchor':'middle'},gr); t.textContent='A x';
+    }
+    $('#cv-out').innerHTML=`<p><span class="k">column 1</span> <code>${vs(c1)}</code> &nbsp; <span class="k">column 2</span> <code>${vs(c2)}</code></p>
+      <p><span class="k">A x</span> = ${x1} × <code>${vs(c1)}</code> + ${x2} × <code>${vs(c2)}</code></p>
+      <p>= <code>${vs(s1)}</code> + <code>${vs([x2*b,x2*d])}</code> = <span class="big" style="color:var(--verm)">${vs(R)}</span></p>
+      <p class="k">Row view check: [${fmt(a)}×${x1} + ${fmt(b)}×${x2}, ${fmt(c)}×${x1} + ${fmt(d)}×${x2}] = ${vs(R)}</p>`;
+  }
+  draw();
+})();
+
+/* ---------- W6: transformer ---------- */
+(function(){
+  const svg=$('#tf-svg'); const P=makePlane(svg,4);
+  const presets=[['Identity',[1,0,0,1]],['Stretch',[2,0,0,1]],['Rotate 90°',[0,-1,1,0]],['Shear',[1,0.8,0,1]],['Flip',[-1,0,0,1]],['Shrink',[0.5,0,0,0.5]],['Collapse',[1,2,0.5,1]]];
+  const box=$('#tf-presets');
+  presets.forEach(([n,m])=>{ const b=document.createElement('button'); b.className='btn'; b.textContent=n; b.onclick=()=>{['a','b','c','d'].forEach((k,i)=>$('#tf-'+k).value=m[i]);draw();}; box.appendChild(b); });
+  ['a','b','c','d'].forEach(k=>$('#tf-'+k).addEventListener('input',draw));
+  const F=[[0.5,0.5],[0.5,2.5],[1.9,2.5],[1.9,2.1],[0.95,2.1],[0.95,1.65],[1.6,1.65],[1.6,1.25],[0.95,1.25],[0.95,0.5]];
+  function draw(){
+    const a=+$('#tf-a').value||0,b=+$('#tf-b').value||0,c=+$('#tf-c').value||0,d=+$('#tf-d').value||0;
+    const T=([x,y])=>[a*x+b*y,c*x+d*y];
+    P.layer.innerHTML='';
+    // faint original F
+    el('polygon',{points:F.map(p=>`${P.X(p[0])},${P.Y(p[1])}`).join(' '),fill:'none',stroke:'var(--axis)','stroke-width':1.5,'stroke-dasharray':'3 3'},P.layer);
+    for(let i=-10;i<=10;i++){
+      const p1=T([i,-10]),p2=T([i,10]),p3=T([-10,i]),p4=T([10,i]);
+      el('line',{x1:P.X(p1[0]),y1:P.Y(p1[1]),x2:P.X(p2[0]),y2:P.Y(p2[1]),class:'tline'},P.layer);
+      el('line',{x1:P.X(p3[0]),y1:P.Y(p3[1]),x2:P.X(p4[0]),y2:P.Y(p4[1]),class:'tline'},P.layer);
+    }
+    const det=a*d-b*c;
+    const sq=[[0,0],[1,0],[1,1],[0,1]].map(T);
+    el('polygon',{points:sq.map(p=>`${P.X(p[0])},${P.Y(p[1])}`).join(' '),fill:det<0?'var(--verm)':'var(--petrol)',opacity:.22,stroke:det<0?'var(--verm)':'var(--petrol)','stroke-width':1.5},P.layer);
+    el('polygon',{points:F.map(T).map(p=>`${P.X(p[0])},${P.Y(p[1])}`).join(' '),fill:'var(--ink)',opacity:.75},P.layer);
+    arrow(P,P.layer,0,0,a,c,'vec v-b','î');
+    arrow(P,P.layer,0,0,b,d,'vec v-r','ĵ');
+    let cls,msg;
+    if(Math.abs(det)<1e-9){cls='neg';msg='det = 0: the plane collapsed onto a line (or point). Information is lost and this cannot be undone.';}
+    else if(det<0){cls='neg';msg=`Area scaled by ${fmt(Math.abs(det))}× and orientation flipped (the F is mirrored).`;}
+    else if(Math.abs(det-1)<1e-9){cls='zero';msg='Area unchanged (det = 1). Shapes may turn or slant but keep their size.';}
+    else {cls='pos';msg=`Every area is scaled by ${fmt(det)}×.`;}
+    $('#tf-out').innerHTML=`<p><span style="color:var(--green);font-weight:700">î = [1,0]</span> lands on column 1: <code>${vs([a,c])}</code></p>
+      <p><span style="color:var(--verm);font-weight:700">ĵ = [0,1]</span> lands on column 2: <code>${vs([b,d])}</code></p>
+      <p><span class="k">det</span> = ${fmt(a)}×${fmt(d)} − ${fmt(b)}×${fmt(c)} = <span class="big">${fmt(det)}</span></p>
+      <div class="verdict ${cls}">${msg}</div>`;
+  }
+  draw();
+})();
+
+/* ---------- W7: matmul stepper ---------- */
+(function(){
+  const A=[[1,2,0],[0,1,3]], B=[[2,1],[1,0],[4,2]];
+  const C=[[0,0],[0,0]]; for(let i=0;i<2;i++)for(let j=0;j<2;j++)for(let k=0;k<3;k++)C[i][j]+=A[i][k]*B[k][j];
+  let step=0; const cells=[[0,0],[0,1],[1,0],[1,1]];
+  function mat(M,cls){ const cols=M[0].length; return `<span class="mat" style="grid-template-columns:repeat(${cols},auto)">${M.map((r,i)=>r.map((v,j)=>`<span class="${cls(i,j)}">${v}</span>`).join('')).join('')}</span>`; }
+  function draw(){
+    const cur=step>0?cells[step-1]:null;
+    const aH=(i,j)=>cur&&i===cur[0]?'hl-r':'', bH=(i,j)=>cur&&j===cur[1]?'hl-c':'';
+    const cDisp=C.map((r,i)=>r.map((v,j)=>{const idx=cells.findIndex(c=>c[0]===i&&c[1]===j);return idx<step?v:'?';}));
+    const cH=(i,j)=>{const idx=cells.findIndex(c=>c[0]===i&&c[1]===j); if(cur&&i===cur[0]&&j===cur[1]) return 'hl-o'; return idx<step?'':'dim';};
+    $('#mm-row').innerHTML=`<div style="text-align:center"><div class="k" style="font-size:.75rem;color:var(--muted)">A (2×3)</div>${mat(A,aH)}</div><span class="op">@</span><div style="text-align:center"><div style="font-size:.75rem;color:var(--muted)">B (3×2)</div>${mat(B,bH)}</div><span class="op">=</span><div style="text-align:center"><div style="font-size:.75rem;color:var(--muted)">C (2×2)</div>${mat(cDisp,cH)}</div>`;
+    if(cur){ const [i,j]=cur; const terms=A[i].map((v,k)=>`${v}×${B[k][j]}`).join(' + ');
+      $('#mm-calc').innerHTML=`C[${i},${j}] = row ${i} of A · column ${j} of B<br>= ${terms} = <b style="color:var(--verm)">${C[i][j]}</b>`; }
+    else $('#mm-calc').innerHTML='Press <b>Next</b> to compute the first cell.';
+    if(step===4) $('#mm-calc').innerHTML+=`<br><span style="color:var(--green)">Done: 4 cells, each a dot product of length 3.</span>`;
+  }
+  $('#mm-next').onclick=()=>{step=Math.min(4,step+1);draw();};
+  $('#mm-prev').onclick=()=>{step=Math.max(0,step-1);draw();};
+  $('#mm-reset').onclick=()=>{step=0;draw();};
+  draw();
+})();
+
+/* ---------- W8: shape checker ---------- */
+(function(){
+  const ids=['m','k1','k2','n']; ids.forEach(i=>$('#sh-'+i).addEventListener('input',draw));
+  function draw(){
+    const [m,k1,k2,n]=ids.map(i=>Math.max(1,parseInt($('#sh-'+i).value)||1));
+    const ok=k1===k2;
+    let h=`<div class="domino">(${m} × <b class="${ok?'in-ok':'in-bad'}">${k1}</b>) @ (<b class="${ok?'in-ok':'in-bad'}">${k2}</b> × ${n})</div>`;
+    if(ok) h+=`<div class="verdict pos">Works → result shape (${m}, ${n}). That's ${(m*n).toLocaleString('en-IN')} dot products, each of length ${k1}.</div>`;
+    else h+=`<div class="verdict neg">Error: inner numbers ${k1} and ${k2} don't match. A row of A has ${k1} numbers but a column of B has ${k2}, so they can't be dotted.${m===k2?' Hint: A.T @ B would be ('+k1+', '+m+') @ ('+k2+', '+n+') → ('+k1+', '+n+').':''}${n===k1?' Hint: B @ A would be ('+k2+', '+n+') @ ('+m+', '+k1+')… check it.':''}</div>`;
+    $('#sh-out').innerHTML=h;
+  }
+  draw();
+})();
+
+/* ---------- quiz ---------- */
+(function(){
+  const Q=[
+    ['You have 10,000 images of 28×28 pixels, flattened. What is the dataset’s shape?',['(10000, 784)','(784, 10000)','(28, 28)','(10000, 28)'],0,'Rows are examples (10,000 images); columns are features (28 × 28 = 784 pixels).'],
+    ['What is [1, 2] · [2, −1]?',['4','0','[2, −2]','−1'],1,'1×2 + 2×(−1) = 0. The arrows are perpendicular.'],
+    ['Two customers’ vectors have cosine similarity 0.99 but very different lengths. This means:',['They are unrelated','Same pattern of preferences, different intensity','One must be an error','Their dot product is 0'],1,'Cosine looks only at direction. Length (intensity) is divided out.'],
+    ['X has shape (500, 20) and W has shape (20, 8). What is the shape of X @ W?',['(20, 20)','(500, 20)','(500, 8)','Error'],2,'(m×k)@(k×n) → (m×n). Inner 20s match; outer numbers give (500, 8).'],
+    ['A square matrix has determinant 0. Which is true?',['It doubles all areas','It flips space','It collapses space and has no inverse','It is the identity'],2,'det = 0 means space is squashed into fewer dimensions, so the transformation can’t be undone.'],
+    ['For 1-D arrays a and b of the same length, a * b returns…',['one number','a vector of matching products','a matrix','an error'],1,'* is element-wise. Use a @ b for the dot product (one number).'],
+    ['Features: age (20–70) and annual income (₹2–50 lakh). Without scaling, which dominates Euclidean distance?',['Age','Income','Both equally','Neither'],1,'Income’s differences are in lakhs while age differs by tens, so income swamps age until you standardise.']
+  ];
+  const body=$('#quiz-body'); let score=0;
+  Q.forEach((q,qi)=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML=`<p>${qi+1}. ${q[0]}</p><div class="opts">${q[1].map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><div class="fb">${q[3]}</div>`;
+    const btns=d.querySelectorAll('button'); let done=false;
+    btns.forEach(b=>b.addEventListener('click',()=>{
+      if(done) return; done=true; const i=+b.dataset.i;
+      btns[q[2]].classList.add('right'); if(i!==q[2]) b.classList.add('wrong'); else score++;
+      d.querySelector('.fb').style.display='block';
+      $('#quiz-score').textContent=`${score} / ${Q.length}`;
+    }));
+    body.appendChild(d);
+  });
+})();
+</script>
+</body>
+</html>
