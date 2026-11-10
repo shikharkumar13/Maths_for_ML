@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probability for ML | Mathematics for Machine Learning</title>
+<meta name="description" content="Part 3 of the Mathematics for Machine Learning series: probability, distributions, Bayes' theorem, maximum likelihood, priors, sampling and information theory, explained simply with interactive figures and verified NumPy code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+  /* widget aliases (figures were built on these names) */
+  --bg:var(--paper); --muted:var(--ink-2);
+  --petrol:var(--lagoon); --petrol-soft:var(--lagoon-50);
+  --green:var(--indigo); --green-soft:var(--indigo-50);
+  --verm:var(--coral); --verm-soft:var(--coral-50);
+  --grid:#E4EBE9; --axis:#A3AFAC;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+em{font-style:italic}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.herocard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.herocard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.reads{list-style:none;margin-top:6px}
+.reads li{display:grid;grid-template-columns:190px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code{background:var(--coral-50);color:var(--coral-700)}
+.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){
+  .reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .reads li:nth-child(1){animation-delay:.3s}.reads li:nth-child(2){animation-delay:.6s}
+  .reads li:nth-child(3){animation-delay:.9s}.reads li:nth-child(4){animation-delay:1.2s}.reads li:nth-child(5){animation-delay:1.5s}
+}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:minmax(0,760px);justify-content:center}
+.rail{position:sticky;top:84px;align-self:start;font-family:var(--display);max-height:calc(100vh - 100px);overflow-y:auto}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:5px 0 5px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14px;line-height:1.35;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:16px;flex-shrink:0}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+article ul,article ol{padding-left:22px;margin-bottom:18px}
+article li{margin-bottom:6px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3;margin:32px 0 10px}
+h4{font-family:var(--display);font-weight:700;font-size:17px;margin:22px 0 8px}
+
+/* ── Callout boxes ── */
+.box{border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7;background:var(--surface);border:1px solid var(--line)}
+.box > :last-child{margin-bottom:0}
+.box p{margin-bottom:12px}
+.box ul,.box ol{margin-bottom:8px}
+.box .tag{display:block;font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:0;margin-bottom:6px}
+.intuition{background:var(--lagoon-50);border-color:transparent}
+.intuition .tag{color:var(--lagoon-700)}
+.mathbox{background:var(--indigo-50);border-color:transparent;border-radius:18px;padding:22px 24px}
+.mathbox .tag{color:var(--indigo);font-size:16px}
+.byhand{background:var(--surface);border:1px dashed #C4D0CD}
+.byhand .tag{color:var(--ink-2)}
+.ml{border-left:3px solid var(--lagoon);border-radius:0 14px 14px 0}
+.ml .tag{color:var(--lagoon-700)}
+.biz{background:var(--saffron-50);border-color:var(--saffron-100)}
+.biz .tag{color:var(--saffron-800)}
+.mistake{background:var(--coral-50);border-color:#F4C6CA}
+.mistake .tag{color:var(--coral-700)}
+.eq{font-family:var(--mono);font-size:14.5px;line-height:1.7;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre}
+.mathbox .eq,.byhand .eq{background:rgba(255,255,255,.75)}
+
+/* ── Check yourself (reveal) ── */
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+details.check{margin:26px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 20px}
+details.check summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:8px 15px;border-radius:10px}
+details.check summary::after{content:'+';font-size:18px;line-height:1}
+details.check[open] summary::after{content:'−'}
+details.check[open] summary{margin-bottom:14px}
+details.check p{font-size:16.5px;margin-bottom:10px}
+details.check em{color:var(--ink-2)}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px 14px 0 0;margin:22px 0 0;overflow:hidden}
+.code.solo{border-radius:14px;margin-bottom:22px}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.code-h button{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.code-h button:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.out{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;margin:0 0 22px;overflow:hidden}
+.out .code-h{color:var(--ink-3);border-bottom:1px solid var(--line);background:#F2F6F5}
+.out pre{margin:0;padding:14px 18px;overflow-x:auto;font-family:var(--mono);font-size:14px;line-height:1.65;color:var(--ink)}
+.hljs-keyword,.hljs-literal{color:#5EE0CB}
+.hljs-built_in,.hljs-title,.hljs-title.function_,.hljs-params{color:#B7B3FF}
+.hljs-string{color:#FFC94D}
+.hljs-number{color:#FF9AA0}
+.hljs-comment{color:#8A96B8;font-style:italic}
+.hljs-meta{color:#5EE0CB}
+
+/* ── Tables ── */
+.tw{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto;margin:22px 0}
+.tw table{width:100%;border-collapse:collapse;font-family:var(--text);font-size:15.5px}
+.tw th{text-align:left;font-family:var(--display);font-weight:600;font-size:13.5px;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap}
+.tw td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top;line-height:1.55}
+.tw td code{font-size:.85em;white-space:nowrap}
+.box .tw,.mathbox .tw{margin:14px 0}
+
+/* ── Roadmap track ── */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin:0 0 6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative;padding:0;margin:0}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative;margin:0}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--lagoon);border:2px solid var(--lagoon);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:#fff;position:relative;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.pill{font-family:var(--display);font-size:14px;font-weight:600;padding:5px 12px;border-radius:99px;background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.pill.p1{background:var(--lagoon-50);border-color:var(--lagoon-100);color:var(--lagoon-700)}
+.pill.p2{background:var(--indigo-50);border-color:var(--indigo-100);color:var(--indigo)}
+.pill.p3{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.pill.p4{background:var(--coral-50);border-color:#F4C6CA;color:var(--coral-700)}
+
+/* ── Interactive figures ── */
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;margin:30px 0;font-family:var(--display);font-size:15px;line-height:1.55}
+.widget .wt{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 4px;color:var(--ink)}
+.widget .wt::before{content:'Try it';display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--lagoon);color:#fff;padding:2px 8px;border-radius:6px;margin-right:10px;vertical-align:3px}
+.quiz .wt::before{content:'Quiz';background:var(--indigo)}
+.widget .wh{color:var(--ink-2);font-size:14.5px;margin:0 0 14px;font-family:var(--display)}
+.widget p{margin-bottom:8px}
+.wgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+svg.plane{width:100%;height:auto;display:block;touch-action:none;background:var(--paper);border-radius:12px;border:1px solid var(--line)}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--axis);stroke-width:1.4}
+.vec line{stroke-width:3;stroke-linecap:round}
+.vec text{font-family:var(--display);font-size:15px;font-weight:700}
+.v-a line{stroke:var(--lagoon)} .v-a polygon,.v-a text{fill:var(--lagoon)}
+.v-b line{stroke:var(--indigo)} .v-b polygon,.v-b text{fill:var(--indigo)}
+.v-r line{stroke:var(--coral)} .v-r polygon,.v-r text{fill:var(--coral)}
+.ghost line{stroke:var(--axis);stroke-width:2} .ghost polygon{fill:var(--axis)}
+.dashed line{stroke-dasharray:6 5;stroke-width:2}
+.handle{cursor:grab;stroke:#fff;stroke-width:2.5}
+.handle.h-a{fill:var(--lagoon)} .handle.h-b{fill:var(--indigo)} .handle.h-r{fill:var(--coral)}
+.handle:active{cursor:grabbing}
+.tline{stroke:var(--lagoon);stroke-width:1;opacity:.45}
+.readout{font-size:14.5px;line-height:1.6;font-family:var(--display)}
+.readout .big{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.readout .k{color:var(--ink-3)}
+.readout code{font-size:13px}
+.verdict{margin-top:10px;padding:9px 13px;border-radius:12px;font-weight:600;font-family:var(--display);font-size:14.5px;line-height:1.5}
+.verdict.pos{background:var(--lagoon-50);color:var(--lagoon-700)}
+.verdict.zero{background:var(--indigo-50);color:var(--indigo)}
+.verdict.neg{background:var(--coral-50);color:var(--coral-700)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
+.ctrls label{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:14.5px}
+input[type=range]{accent-color:var(--lagoon);width:140px}
+input[type=checkbox]{accent-color:var(--lagoon)}
+input[type=number],input[type=text]{width:64px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:14px}
+.btn{font-family:var(--display);font-weight:600;font-size:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 13px;cursor:pointer}
+.btn:hover{border-color:var(--lagoon);color:var(--lagoon-700)}
+.btn.primary{background:var(--lagoon);color:#fff;border-color:var(--lagoon)}
+.btn.primary:hover{background:var(--lagoon-700);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:none;background:var(--surface);color:var(--ink-2);padding:6px 13px;cursor:pointer;font-family:var(--display);font-size:14px;font-weight:600}
+.seg button.on{background:var(--lagoon);color:#fff}
+.mat{display:inline-grid;gap:3px;padding:4px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;vertical-align:middle}
+.mat span{min-width:34px;text-align:center;padding:3px 4px;border-radius:6px;font-family:var(--mono);font-size:14px;transition:background .2s}
+.mat span.hl-r{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600}
+.mat span.hl-c{background:var(--indigo-50);color:var(--indigo);font-weight:600}
+.mat span.hl-o{background:var(--coral);color:#fff;font-weight:700}
+.mat span.dim{opacity:.25}
+.mrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.mrow .op{font-size:1.2rem;color:var(--ink-3)}
+.calc{font-family:var(--mono);font-size:14px;text-align:center;min-height:2.6em;color:var(--ink)}
+.dt{width:100%;font-family:var(--mono);font-size:13.5px;border-collapse:collapse}
+.dt th,.dt td{text-align:right;padding:7px 10px;cursor:pointer;user-select:none;border-top:1px solid var(--line-2)}
+.dt th{font-family:var(--display);background:#F2F6F5;color:var(--ink-2)}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt tr.sel td{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600}
+.dt td.selc,.dt th.selc{background:var(--indigo-50);color:var(--indigo);font-weight:600}
+.domino{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:16px;margin:6px 0}
+.domino b{padding:3px 8px;border-radius:8px;border:1.5px solid var(--line)}
+.domino b.in-ok{border-color:var(--lagoon);background:var(--lagoon-50);color:var(--lagoon-700)}
+.domino b.in-bad{border-color:var(--coral);background:var(--coral-50);color:var(--coral-700)}
+.shapes{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-family:var(--mono);font-size:14px;margin:22px 0;color:var(--ink-2)}
+.shapes .s{border:1.5px solid var(--lagoon);border-radius:10px;padding:8px 12px;text-align:center;background:var(--surface);color:var(--ink)}
+.shapes .s small{display:block;color:var(--ink-3);font-family:var(--display);font-size:12.5px}
+.shapes .s.g{border-color:var(--indigo)} .shapes .s.r{border-color:var(--coral)}
+
+/* ── Quiz ── */
+.quiz .q{border-top:1px solid var(--line-2);padding:14px 0 6px}
+.quiz .q:first-child{border-top:0}
+.quiz .q p{margin:0 0 10px;font-weight:600;font-size:16.5px}
+.quiz .opts{display:flex;flex-direction:column;gap:7px}
+.quiz .opts button{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--ink);cursor:pointer;font-family:var(--display);font-size:15px}
+.quiz .opts button:hover{border-color:var(--indigo)}
+.quiz .opts button.right{border-color:var(--lagoon);background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600}
+.quiz .opts button.wrong{border-color:var(--coral);background:var(--coral-50);color:var(--coral-700)}
+.quiz .fb{font-size:14.5px;color:var(--ink-2);margin-top:8px;display:none}
+.score{font-weight:800;color:var(--indigo)}
+
+/* ── Recap / next / footer ── */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none;padding:0;margin:0}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;margin:0;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+.recap code{background:rgba(255,255,255,.14);color:#fff}
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.cta{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.cta:hover{background:var(--lagoon-700)}
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:900px){.hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}.herocard{justify-self:start}}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .wgrid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .reads li{grid-template-columns:1fr;gap:4px}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.widget,.mathbox{padding:18px}
+  .recap{padding:24px 20px}
+}
+
+/* ---- article-2 extras ---- */
+.wgrid.two{grid-template-columns:1fr 1fr}
+@media (max-width:640px){.wgrid.two{grid-template-columns:1fr}}
+svg.chart{width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--line);border-radius:12px;touch-action:none}
+.chart text{font-family:var(--display);font-size:11.5px;fill:var(--muted)}
+.chart .ttl{font-size:12px;font-weight:600;fill:var(--ink)}
+.c-line{fill:none;stroke:var(--petrol);stroke-width:2.5}
+.c-pt{fill:var(--petrol);opacity:.85}
+.c-res{stroke:var(--verm);stroke-width:1.5;opacity:.7}
+.c-fit{stroke:var(--green);stroke-width:3}
+.c-cur{fill:var(--verm);stroke:var(--surface);stroke-width:2}
+.c-tan{stroke:var(--verm);stroke-width:2;stroke-dasharray:6 4}
+.c-path{fill:none;stroke:var(--verm);stroke-width:1.8}
+.c-step{fill:var(--verm)}
+.c-ell{fill:none;stroke:var(--petrol);stroke-width:1;opacity:.55}
+.c-min{fill:var(--green)}
+.node rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5;rx:8}
+.node.op rect{fill:var(--petrol-soft);stroke:var(--petrol)}
+.node.act rect{stroke:var(--verm);stroke-width:2}
+.node text{font-family:var(--display);font-size:12px;fill:var(--ink);text-anchor:middle}
+.node .val{font-family:var(--mono);font-size:11px;fill:var(--petrol);font-weight:600}
+.node .grd{font-family:var(--mono);font-size:11px;fill:var(--verm);font-weight:600}
+.edge{stroke:var(--axis);stroke-width:1.6;fill:none}
+.edge.hot{stroke:var(--verm);stroke-width:2.5}
+canvas.db{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--line);image-rendering:auto}
+.status{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;font-size:13px;font-family:var(--display)}
+.status.ok{background:var(--green-soft);color:var(--green)}
+.status.warn{background:var(--petrol-soft);color:var(--petrol)}
+.status.bad{background:var(--verm-soft);color:var(--verm)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;font-family:var(--display);font-size:14.5px;line-height:1.35;text-align:center;margin:24px 0}
+.flow span.b{border:1.5px solid var(--lagoon);border-radius:12px;padding:8px 12px;background:var(--surface);font-weight:600}
+.flow small{font-weight:500;color:var(--ink-3)}
+.flow span.b.r{border-color:var(--verm)} .flow span.b.g{border-color:var(--green)}
+.flow span.ar{color:var(--muted)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin:8px 0;font-family:var(--display);color:var(--ink-2)}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Mathematics <span>for Machine Learning</span></a>
+    <div class="where"><span class="day">Part 3 of 4</span><span class="part-pill">Probability</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Probability for Machine Learning</h1>
+      <p class="hero-sub">What a model's "82% sure" really means. Distributions, Bayes' theorem, maximum likelihood, priors, sampling and entropy, built from coins, deliveries and shopping carts, in plain English.</p>
+      <div class="facts"><span class="fact">75 minute read</span><span class="fact">Python 3 + NumPy</span><span class="fact">Beginner friendly</span><span class="fact hl">9 interactive figures</span></div>
+    </div>
+    <div class="herocard" role="img" aria-label="Five ideas this article teaches you to read">
+      <p class="hd">Five lines you'll be able to explain by the end</p>
+      <ul class="reads">
+        <li><code>rng.normal(30, 5, n)</code><span>Simulate deliveries that average 30 minutes</span></li>
+        <li><code>P(B|A)·P(A) / P(B)</code><span>Why most fraud alerts are false alarms</span></li>
+        <li><code>np.log(p).sum()</code><span>How models are trained: maximum likelihood</span></li>
+        <li><code>softmax(logits / T)</code><span>How a chatbot picks its next word</span></li>
+        <li><code>-(p * np.log(q)).sum()</code><span>Cross-entropy, the classification loss</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+<article>
+<p class="lede">Every morning a weather app tells you "70% chance of rain". It doesn't know whether it will rain. It is telling you how sure it is. That one sentence is a <strong>probability</strong>, and it's exactly what most machine learning models give you too: "82% chance this customer will churn", "96% sure this email is spam", "the next word is probably <em>pizza</em>".</p>
+
+<p>Part 1 gave us the shapes (vectors and matrices). Part 2 gave us the engine (derivatives and gradient descent). This part gives us the <strong>meaning</strong>. It explains what a model's output actually says, why the losses from Part 2 are the "right" ones, how a spam filter can be built from simple counting, and how a language model decides what to say next.</p>
+
+<p>Don't worry if you've found probability confusing before. We'll build everything from coins, dice, deliveries and shopping carts, and every idea comes with a picture you can play with and code you can run.</p>
+
+<p>By the end you will be able to:</p>
+<ul>
+<li>read and write probabilities, and use the AND, OR and NOT rules without a formula sheet,</li>
+<li>recognise the handful of distributions ML uses (Bernoulli, Binomial, Poisson, Gaussian) and pick the right one for a business question,</li>
+<li>work out a conditional probability from a table and use <strong>Bayes' theorem</strong> without falling into the most common trap,</li>
+<li>build a Naive Bayes spam filter and a simple fraud detector from scratch,</li>
+<li>explain <strong>maximum likelihood</strong> and <strong>priors</strong>, and why they lead straight to MSE, cross-entropy and regularisation,</li>
+<li>understand sampling, temperature in language models, <strong>entropy</strong>, <strong>cross-entropy</strong> and <strong>KL divergence</strong>.</li>
+</ul>
+
+<h3>How each concept is taught</h3>
+<div class="legend"><span class="pill p1">Intuition</span><span class="pill">Try it</span><span class="pill p2">Math, decoded</span><span class="pill">By hand</span><span class="pill">Code</span><span class="pill p1">In ML</span><span class="pill p3">In business</span><span class="pill p3">Check yourself</span><span class="pill p4">Common mistake</span></div>
+<p>The "By hand" boxes use only multiplication and division. Do at least one with a pencil; it sticks far better than reading.</p>
+
+<div class="track">
+<h3>The route through this article</h3>
+<p>Fourteen sections in four stages. Each one uses everyday examples first and the maths second.</p>
+<ol class="steps">
+<li class="step"><span class="dot">1</span><b>The basics</b><span class="days">Sections 0–4</span><p>What probability means, distributions, the bell curve, expected value.</p></li>
+<li class="step"><span class="dot">2</span><b>Reasoning with evidence</b><span class="days">Sections 5–8</span><p>Conditional probability, Bayes, a spam filter, correlated features.</p></li>
+<li class="step"><span class="dot">3</span><b>Learning from data</b><span class="days">Sections 9–11</span><p>Maximum likelihood, priors, sampling and temperature.</p></li>
+<li class="step"><span class="dot">4</span><b>Information theory</b><span class="days">Sections 12–13</span><p>Entropy, cross-entropy, KL divergence, and the wrap-up.</p></li>
+</ol>
+<p class="after">Needs Parts 1 and 2 only lightly: dot products, softmax and the idea of a loss. Every number shown comes from code you can run.</p>
+</div>
+
+<!-- ======================= 0 ======================= -->
+<section id="s0">
+<h2><span class="n">0</span>Notation decoder</h2>
+
+<p>Probability has a small vocabulary. Here is all of it. Come back to this table whenever a symbol looks unfamiliar.</p>
+
+<div class="tw"><table>
+<thead><tr><th>You see</th><th>Say it as</th><th>Plain meaning</th></tr></thead>
+<tbody>
+<tr><td><code>P(A)</code></td><td>"probability of A"</td><td>How likely event A is, from 0 (never) to 1 (certain). 0.7 is the same as 70%.</td></tr>
+<tr><td><code>P(not A)</code>, <code>P(Aᶜ)</code></td><td>"probability of not A"</td><td>The chance A doesn't happen: <code>1 − P(A)</code>.</td></tr>
+<tr><td><code>P(A and B)</code>, <code>P(A ∩ B)</code></td><td>"A and B"</td><td>Both happen.</td></tr>
+<tr><td><code>P(A or B)</code>, <code>P(A ∪ B)</code></td><td>"A or B"</td><td>At least one happens.</td></tr>
+<tr><td><code>P(A | B)</code></td><td>"A given B"</td><td>The chance of A <em>once you know</em> B happened. The bar means "given".</td></tr>
+<tr><td><code>X</code></td><td>"random variable X"</td><td>A number whose value depends on chance: tomorrow's orders, a delivery time.</td></tr>
+<tr><td><code>X ~ N(30, 5²)</code></td><td>"X follows a normal distribution…"</td><td>"X is bell-shaped around 30 with spread 5." The squiggle means "is distributed as".</td></tr>
+<tr><td><code>E[X]</code>, <code>μ</code></td><td>"expected value of X", "mu"</td><td>The long-run average of X.</td></tr>
+<tr><td><code>Var(X)</code>, <code>σ²</code>, <code>σ</code></td><td>"variance", "sigma squared", "sigma"</td><td>How spread out X is. σ (the standard deviation) is in the same units as X.</td></tr>
+<tr><td><code>θ</code></td><td>"theta"</td><td>The unknown settings of a model (its weights), which we learn from data.</td></tr>
+<tr><td><code>L(θ)</code>, likelihood</td><td>"likelihood of theta"</td><td>How well settings θ explain the data we saw.</td></tr>
+<tr><td><code>H(P)</code></td><td>"entropy of P"</td><td>How unpredictable something is, in bits.</td></tr>
+<tr><td><code>KL(P ‖ Q)</code></td><td>"KL divergence from Q to P"</td><td>How badly guess Q describes reality P.</td></tr>
+</tbody></table></div>
+
+<div class="box mathbox"><span class="tag">Three golden rules for this article</span>
+<p><strong>1. A probability is a share.</strong> "P = 0.2" means "this happens in about 20 out of every 100 similar situations". When in doubt, turn probabilities into counts of people, orders or days. It makes every problem easier.</p>
+<p><strong>2. "Given" changes the crowd.</strong> P(A | B) means: throw away everyone who isn't B, then ask how many of the rest are A.</p>
+<p><strong>3. Logs turn products into sums.</strong> Multiplying many small probabilities gives numbers too tiny for a computer, so ML adds their logs instead. You'll see this again and again.</p>
+</div>
+</section>
+
+<!-- ======================= 1 ======================= -->
+<section id="s1">
+<h2><span class="n">1</span>What a probability really is</h2>
+
+<div class="box intuition"><span class="tag">Intuition · the weather forecaster's report card</span>
+<p>How would you check whether a forecaster who says "70% chance of rain" is any good? Collect all the days she said 70%. If it rained on about 70 of every 100 of those days, her 70% means something. A probability is a promise about the long run: <strong>out of many similar situations, this share will turn out this way</strong>.</p>
+</div>
+
+<p>A few words we'll use:</p>
+<ul>
+<li>An <strong>experiment</strong> is anything with an uncertain result: flipping a coin, a customer visiting your site, a delivery leaving the kitchen.</li>
+<li>An <strong>outcome</strong> is one possible result: heads; "bought"; "arrived in 32 minutes".</li>
+<li>An <strong>event</strong> is a group of outcomes you care about: "rolled an even number"; "arrived late".</li>
+</ul>
+
+<p>The share of heads in a few flips can be far from 50%, but it settles down as the flips pile up. This is called the <strong>law of large numbers</strong>, and it's why companies trust probabilities estimated from lots of data.</p>
+
+<div class="widget" id="w-lln">
+<p class="wt">Flip a coin, many times</p>
+<p class="wh">Set how biased the coin is, then flip. The line shows the share of heads so far. Early on it jumps around; with more flips it settles near the true value.</p>
+<div class="ctrls"><label>true chance of heads <input type="range" id="ln-p" min="0.05" max="0.95" step="0.05" value="0.5"> <b id="ln-pv">0.5</b></label></div>
+<div class="ctrls"><button class="btn" id="ln-10">Flip 10</button><button class="btn" id="ln-100">Flip 100</button><button class="btn primary" id="ln-1000">Flip 1,000</button><button class="btn" id="ln-reset">Reset</button></div>
+<svg class="chart" id="ln-svg"></svg>
+<div class="readout" id="ln-out"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">import numpy as np
+
+rng = np.random.default_rng(42)
+flips = rng.integers(0, 2, size=10_000)       # 1 = heads, 0 = tails
+
+for n in [10, 100, 1_000, 10_000]:
+    print(f&quot;after {n:&gt;6,} flips: share of heads = {flips[:n].mean():.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>after     10 flips: share of heads = 0.400
+after    100 flips: share of heads = 0.520
+after  1,000 flips: share of heads = 0.509
+after 10,000 flips: share of heads = 0.494</pre></div>
+
+<h3>The three rules you'll use all the time</h3>
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">NOT:   P(not A)   = 1 − P(A)
+OR:    P(A or B)  = P(A) + P(B) − P(A and B)
+AND:   P(A and B) = P(A) × P(B)          ← only if A and B don't affect each other (independent)</div>
+<p>Why subtract in the OR rule? Because outcomes that are both A and B get counted twice when you add P(A) and P(B). Take one copy away.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand · one die</span>
+<div class="eq">Outcomes: 1 2 3 4 5 6 (each 1/6)
+"even" = {2, 4, 6}          P = 3/6 = 0.5
+"big"  = {5, 6}             P = 2/6 ≈ 0.333
+"even AND big" = {6}        P = 1/6 ≈ 0.167
+"even OR big"  = {2,4,5,6}  P = 0.5 + 0.333 − 0.167 = 0.667   (6 was counted twice)
+"not a 6"                   P = 1 − 1/6 ≈ 0.833</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">die = np.array([1, 2, 3, 4, 5, 6])     # every equally likely outcome
+even = die % 2 == 0                     # the event &quot;even&quot;: 2, 4, 6
+big  = die &gt; 4                          # the event &quot;big&quot;: 5, 6
+
+print(&quot;P(even)         =&quot;, round(even.mean(), 3))
+print(&quot;P(not a 6)      =&quot;, round(1 - (die == 6).mean(), 3))
+print(&quot;P(even AND big) =&quot;, round((even &amp; big).mean(), 3))
+print(&quot;P(even OR big)  =&quot;, round((even | big).mean(), 3),
+      &quot;  check:&quot;, round(even.mean() + big.mean() - (even &amp; big).mean(), 3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>P(even)         = 0.5
+P(not a 6)      = 0.833
+P(even AND big) = 0.167
+P(even OR big)  = 0.667   check: 0.667</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>A classifier's output "0.82" is a probability, so it should behave like the forecaster: among all customers given 0.82, about 82% should actually churn. When that holds, the model is called <strong>well calibrated</strong>. Many models aren't, out of the box, which is why tools like calibration curves exist.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Probabilities let you plan with uncertainty instead of ignoring it. "There's a 30% chance this shipment is late" is far more useful to an operations team than a flat "it might be late", because they can compare it with the cost of a backup plan.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> P(customer opens the email) = 0.25. What is P(doesn't open it)? <em>Answer: 0.75.</em></p>
+<p><strong>2.</strong> You flip a fair coin twice. What's P(two heads)? <em>Answer: 0.5 × 0.5 = 0.25. The flips are independent.</em></p>
+<p><strong>3.</strong> After 10 flips you got 8 heads. Is the coin unfair? <em>Answer: not necessarily. With only 10 flips, the share jumps around a lot; you'd need many more flips to be confident.</em></p>
+</details>
+</section>
+
+<!-- ======================= 2 ======================= -->
+<section id="s2">
+<h2><span class="n">2</span>Random variables and distributions</h2>
+
+<p>A <strong>random variable</strong> is just a number that comes out of an uncertain process: how many visitors click an ad today, how many orders arrive in the next hour. Its <strong>distribution</strong> is the full list of possible values and how likely each one is.</p>
+
+<div class="box intuition"><span class="tag">Intuition · a distribution is a recipe for surprise</span>
+<p>A shop owner knows roughly how many customers to expect on a Tuesday. Usually 40 to 60, rarely under 30, almost never 100. That mental picture, "which numbers are common and which are rare", is a distribution. Writing it down precisely lets a computer plan with it.</p>
+</div>
+
+<p>You don't need dozens of distributions. Four cover most of everyday ML:</p>
+
+<div class="tw"><table>
+<thead><tr><th>Distribution</th><th>Describes</th><th>Example question</th><th>Its setting</th></tr></thead>
+<tbody>
+<tr><td><strong>Bernoulli</strong></td><td>One yes/no event</td><td>Will this visitor click?</td><td>p = chance of yes</td></tr>
+<tr><td><strong>Binomial</strong></td><td>How many yeses out of n tries</td><td>How many of 100 visitors click?</td><td>n tries, chance p each</td></tr>
+<tr><td><strong>Categorical</strong></td><td>One choice among several options</td><td>Will they pay by UPI, card or cash?</td><td>one probability per option</td></tr>
+<tr><td><strong>Poisson</strong></td><td>Counts of events in a time window</td><td>How many orders in the next hour?</td><td>λ (lambda) = average count</td></tr>
+</tbody></table></div>
+
+<div class="widget" id="w-dist">
+<p class="wt">Distribution explorer</p>
+<p class="wh">Pick a distribution and move its settings. Each bar is the probability of that exact value.</p>
+<div class="ctrls"><div class="seg" id="ds-kind"><button class="on" data-k="bern">Bernoulli</button><button data-k="binom">Binomial</button><button data-k="pois">Poisson</button></div></div>
+<div class="ctrls" id="ds-ctrls"></div>
+<svg class="chart" id="ds-svg"></svg>
+<div class="readout" id="ds-out"></div>
+</div>
+
+<h3>Binomial: counting successes</h3>
+<p>Each visitor clicks with probability 5%, independently. Out of 100 visitors, how many clicks should you expect on a given day? About 5, but some days 2 and some days 9. The Binomial formula gives the chance of each exact count:</p>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">P(exactly k successes) = C(n, k) × pᵏ × (1 − p)ⁿ⁻ᵏ</div>
+<p><code>pᵏ</code>: k visitors click. <code>(1 − p)ⁿ⁻ᵏ</code>: the other n − k don't. <code>C(n, k)</code> ("n choose k"): the number of different ways to pick <em>which</em> k visitors clicked.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from math import comb
+
+p_click = 0.05                          # each visitor clicks the ad with probability 5%
+n = 100                                 # 100 visitors today
+
+for k in [0, 3, 5, 8, 10]:
+    prob = comb(n, k) * p_click**k * (1 - p_click)**(n - k)    # Binomial formula
+    print(f&quot;P(exactly {k:2d} clicks) = {prob:.3f}&quot;)
+
+days = rng.binomial(n, p_click, size=100_000)                  # simulate 100,000 days
+print(&quot;simulated share of days with exactly 5 clicks:&quot;, round(np.mean(days == 5), 3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>P(exactly  0 clicks) = 0.006
+P(exactly  3 clicks) = 0.140
+P(exactly  5 clicks) = 0.180
+P(exactly  8 clicks) = 0.065
+P(exactly 10 clicks) = 0.017
+simulated share of days with exactly 5 clicks: 0.18</pre></div>
+
+<h3>Poisson: counting arrivals</h3>
+<p>When events arrive one by one with no fixed number of "tries" (orders, support tickets, website errors), independently of each other and at a steady average rate, the Poisson distribution fits. It needs only one number: the average count λ. (If the rate changes through the day, as lunch-time rushes do, use a separate λ for each hour.)</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from math import exp, factorial
+
+avg_orders = 4                          # a small cafe gets 4 orders per hour on average
+
+for k in range(0, 10, 2):
+    prob = avg_orders**k * exp(-avg_orders) / factorial(k)     # Poisson formula
+    print(f&quot;P({k} orders in an hour) = {prob:.3f}&quot;)
+
+p_8_or_fewer = sum(avg_orders**k * exp(-avg_orders) / factorial(k) for k in range(9))
+print(f&quot;P(more than 8 orders)  = {1 - p_8_or_fewer:.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>P(0 orders in an hour) = 0.018
+P(2 orders in an hour) = 0.147
+P(4 orders in an hour) = 0.195
+P(6 orders in an hour) = 0.104
+P(8 orders in an hour) = 0.030
+P(more than 8 orders)  = 0.021</pre></div>
+
+<p>Even with an average of 4 orders an hour, there's a 2% chance of a rush of 9 or more. If the cafe staffs only for the average, it will be swamped a few times a month.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Choosing a distribution is choosing a model's output type. A yes/no classifier outputs a Bernoulli probability (Part 2's sigmoid). A multi-class classifier outputs a Categorical distribution (Part 2's softmax). A model predicting counts, such as daily demand, often uses a Poisson output; scikit-learn's <code>PoissonRegressor</code> and XGBoost's <code>count:poisson</code> objective exist for exactly this.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Staffing call centres, stocking shelves and sizing servers are Poisson problems. Plan for the average and you'll be short-staffed regularly. Plan for, say, the 95th percentile of the distribution and you'll cover all but the rarest rushes. The distribution turns a gut feeling into a number you can budget for.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Which distribution fits "how many of 20 loan applicants will default"? <em>Answer: Binomial (n = 20 tries, each with a default probability).</em></p>
+<p><strong>2.</strong> Which fits "how many website errors in the next 10 minutes"? <em>Answer: Poisson.</em></p>
+</details>
+</section>
+
+<!-- ======================= 3 ======================= -->
+<section id="s3">
+<h2><span class="n">3</span>Continuous values and the bell curve</h2>
+
+<p>Some quantities aren't counts: delivery times, heights, prices. They can take any value, like 31.274 minutes. For these we use a smooth curve instead of bars.</p>
+
+<div class="box intuition"><span class="tag">Intuition · probability is area, not height</span>
+<p>Imagine sand poured along a ruler, piled high where values are common and thin where they're rare. The chance that a delivery takes between 25 and 35 minutes is the <strong>amount of sand</strong> between those two marks. The height of the pile at one exact point isn't a probability; it only tells you how crowded that area is. That height is called the <strong>probability density</strong>.</p>
+</div>
+
+<h3>The normal (Gaussian) distribution</h3>
+<p>The most famous curve is the <strong>normal distribution</strong>, the bell curve. It appears, at least approximately, whenever many small, independent effects add up (traffic lights, kitchen speed and road conditions all nudging a delivery time). This is the <strong>central limit theorem</strong>. Real delivery times can't go below zero and often have a longer right tail, so the bell curve is a convenient approximation, not a law. It has two settings: the <strong>mean</strong> μ (where the peak is) and the <strong>standard deviation</strong> σ (how wide the bell is).</p>
+
+<div class="box mathbox"><span class="tag">The 68–95–99.7 rule</span>
+<p>For any normal distribution:</p>
+<ul>
+<li>about <strong>68%</strong> of values fall within 1 σ of the mean,</li>
+<li>about <strong>95%</strong> within 2 σ,</li>
+<li>about <strong>99.7%</strong> within 3 σ.</li>
+</ul>
+<p>Deliveries averaging 30 minutes with σ = 5: about 68% arrive in 25–35 minutes, 95% in 20–40, and almost all in 15–45.</p>
+</div>
+
+<div class="widget" id="w-norm">
+<p class="wt">The bell curve</p>
+<p class="wh">Set the average and the spread, then choose a range. The shaded area is the probability of landing in that range.</p>
+<div class="ctrls">
+<label>mean μ <input type="range" id="nm-mu" min="20" max="40" step="1" value="30"> <b id="nm-muv">30</b></label>
+<label>spread σ <input type="range" id="nm-sd" min="2" max="10" step="0.5" value="5"> <b id="nm-sdv">5</b></label>
+</div>
+<div class="ctrls">
+<label>from <input type="range" id="nm-a" min="0" max="60" step="1" value="25"> <b id="nm-av">25</b></label>
+<label>to <input type="range" id="nm-b" min="0" max="60" step="1" value="35"> <b id="nm-bv">35</b></label>
+</div>
+<svg class="chart" id="nm-svg"></svg>
+<div class="readout" id="nm-out"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from math import erf, sqrt
+
+def normal_prob(a, b, mean, sd):
+    &quot;&quot;&quot;Chance that a normal value lands between a and b.&quot;&quot;&quot;
+    cdf = lambda x: 0.5 * (1 + erf((x - mean) / (sd * sqrt(2))))
+    return cdf(b) - cdf(a)
+
+mean, sd = 30, 5                        # delivery time in minutes
+for lo, hi in [(25, 35), (20, 40), (15, 45)]:
+    print(f&quot;P({lo} to {hi} min) = {normal_prob(lo, hi, mean, sd):.3f}&quot;)
+print(f&quot;P(over 40 min)   = {normal_prob(40, 1e9, mean, sd):.3f}&quot;)
+
+times = rng.normal(mean, sd, 100_000)  # check by simulating 100,000 deliveries
+print(f&quot;simulated P(over 40 min) = {np.mean(times &gt; 40):.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>P(25 to 35 min) = 0.683
+P(20 to 40 min) = 0.954
+P(15 to 45 min) = 0.997
+P(over 40 min)   = 0.023
+simulated P(over 40 min) = 0.023</pre></div>
+
+<p>The formula and the 100,000 simulated deliveries agree: only 2.3% take longer than 40 minutes. A promise of "40 minutes or it's free" would cost the business on about 1 order in 44.</p>
+
+<div class="box mistake"><span class="tag">Common mistake · density is not probability</span>
+<p>The height of the curve can be bigger than 1. Probabilities can't. Squeeze the bell narrow and its peak must rise so that the total area stays exactly 1:</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from math import pi
+
+def normal_density(x, mean, sd):
+    return np.exp(-0.5 * ((x - mean) / sd) ** 2) / (sd * np.sqrt(2 * pi))
+
+print(&quot;density at the peak, sd = 5  :&quot;, round(normal_density(30, 30, 5), 3))
+print(&quot;density at the peak, sd = 0.1:&quot;, round(normal_density(30, 30, 0.1), 3), &quot; ← bigger than 1, and that&#x27;s fine&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>density at the peak, sd = 5  : 0.08
+density at the peak, sd = 0.1: 3.989  ← bigger than 1, and that&#x27;s fine</pre></div>
+
+<p>A link back to Part 1: standardising a feature (subtract the mean, divide by σ) turns any normal variable into the <strong>standard normal</strong>, with mean 0 and σ = 1. A z-score of 2 means "two standard deviations above average", higher than about 97.7% of all values.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>The Gaussian is everywhere: weights in a neural network start as small random numbers, often drawn from a Gaussian (Part 2's He and Xavier initialisation come in Gaussian and uniform versions), linear regression assumes Gaussian noise (Section 9 shows why that gives MSE), anomaly detectors flag points far out in the tails, and VAEs and diffusion models generate images by transforming Gaussian noise.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Service-level promises are tail questions: "what share of deliveries will break our 40-minute promise?", "how much stock covers 95% of weeks?". Once you know the mean and spread, the bell curve answers them in one line.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Heights average 165 cm with σ = 7. Roughly what share is between 151 and 179 cm? <em>Answer: about 95% (within 2 σ).</em></p>
+<p><strong>2.</strong> What is the probability that a delivery takes <em>exactly</em> 30.000 minutes? <em>Answer: zero. For continuous values only ranges have probability.</em></p>
+</details>
+</section>
+
+<!-- ======================= 4 ======================= -->
+<section id="s4">
+<h2><span class="n">4</span>Expected value and variance</h2>
+
+<div class="box intuition"><span class="tag">Intuition · the scratch-card promotion</span>
+<p>A store plans a scratch card for every customer: 90% win nothing, 9% win ₹100, 1% win ₹500. What does each card cost the store? Not ₹0 (most cards), not ₹500 (the best one), but the <strong>long-run average</strong> over many cards. That average is the <strong>expected value</strong>.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">E[X]   = Σ value × probability                 the long-run average
+Var(X) = E[(X − E[X])²]                         average squared distance from it
+σ      = √Var(X)                                spread, in the original units</div>
+<p>"Multiply each value by its probability and add" is a <strong>dot product</strong> of the values and the probabilities, exactly as in Part 1.</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand</span>
+<div class="eq">E = 0 × 0.90 + 100 × 0.09 + 500 × 0.01 = 0 + 9 + 5 = ₹14 per card</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">prizes = np.array([0, 100, 500])       # ₹ value printed on a scratch card
+chance = np.array([0.90, 0.09, 0.01])  # how often each one appears
+
+expected = prizes @ chance              # Σ value × probability: a dot product (Part 1)
+variance = ((prizes - expected) ** 2) @ chance
+print(f&quot;expected cost per card: ₹{expected:.2f}&quot;)
+print(f&quot;standard deviation    : ₹{np.sqrt(variance):.2f}&quot;)
+
+cards = rng.choice(prizes, size=100_000, p=chance)              # hand out 100,000 cards
+print(f&quot;average over 100,000 simulated cards: ₹{cards.mean():.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>expected cost per card: ₹14.00
+standard deviation    : ₹56.60
+average over 100,000 simulated cards: ₹13.74</pre></div>
+
+<p>₹14 per card on average, but with a standard deviation of ₹56.60: individual cards vary wildly, from ₹0 to ₹500. The simulation lands close to ₹14, and it would land closer with more cards. Expected value tells the finance team what to budget. Variance tells them how bumpy the ride will be.</p>
+
+<h3>Why averages are steadier than single values</h3>
+<p>One delivery can be 20 minutes or 40. The <em>average</em> of 256 deliveries hardly moves. For independent values, the spread of an average shrinks like <strong>σ ÷ √n</strong>: four times the data halves the wobble. (This number, σ ÷ √n, is called the <strong>standard error</strong>.)</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">delivery_times = rng.normal(30, 5, size=1_000_000)    # a big &quot;population&quot; of deliveries
+
+for batch in [1, 16, 256]:
+    means = [rng.choice(delivery_times, batch).mean() for _ in range(2_000)]
+    print(f&quot;batch of {batch:3d}: averages spread by ±{np.std(means):.2f} min   (5 / √{batch} = {5 / np.sqrt(batch):.2f})&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>batch of   1: averages spread by ±5.06 min   (5 / √1 = 5.00)
+batch of  16: averages spread by ±1.23 min   (5 / √16 = 1.25)
+batch of 256: averages spread by ±0.31 min   (5 / √256 = 0.31)</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>This is the probability behind Part 2's <strong>mini-batches</strong>. The true loss is the expected loss over all possible data; a mini-batch gradient is an average over a sample, so it's a noisy estimate whose noise shrinks like 1 ÷ √(batch size). Batch 256 isn't 16× better than batch 16; it's √16 = 4× less noisy, for 16× the compute. That trade-off (together with how much a GPU can process at once) is a big part of why batch sizes of 32 to 512 are so common.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Expected value is the backbone of decisions under uncertainty: expected profit of a promotion, expected loss on a loan (probability of default × amount lost), expected revenue of a sales pipeline (deal size × chance to close). Variance tells you how much buffer to keep for bad months.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> A loan of ₹2 lakh has a 4% chance of default, losing everything if it does. What's the expected loss? <em>Answer: 0.04 × 2,00,000 = ₹8,000.</em></p>
+<p><strong>2.</strong> Going from a batch of 32 to 128 reduces the noise in the average by what factor? <em>Answer: √4 = 2.</em></p>
+</details>
+</section>
+
+<!-- ======================= 5 ======================= -->
+<section id="s5">
+<h2><span class="n">5</span>Joint, marginal and conditional probability</h2>
+
+<p>Real questions involve two things at once: device and purchase, plan and churn, age and default. A simple table of counts answers almost all of them.</p>
+
+<div class="box intuition"><span class="tag">Intuition · "given" means "shrink the crowd"</span>
+<p>1,000 people visited your shop. To find "the chance someone buys, <em>given</em> they're on mobile", don't look at all 1,000 people. Walk over to the mobile visitors only, and ask what share of <em>them</em> bought. Conditional probability is just a share inside a smaller group.</p>
+</div>
+
+<div class="tw"><table>
+<thead><tr><th>1,000 visits</th><th>Bought</th><th>Didn't buy</th><th>Total</th></tr></thead>
+<tbody>
+<tr><td><strong>Mobile</strong></td><td>120</td><td>480</td><td>600</td></tr>
+<tr><td><strong>Desktop</strong></td><td>100</td><td>300</td><td>400</td></tr>
+<tr><td><strong>Total</strong></td><td>220</td><td>780</td><td>1,000</td></tr>
+</tbody></table></div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="tw"><table>
+<thead><tr><th>Type</th><th>Question</th><th>From the table</th></tr></thead>
+<tbody>
+<tr><td><strong>Joint</strong></td><td>P(mobile and buy)</td><td>120 / 1,000 = 0.12</td></tr>
+<tr><td><strong>Marginal</strong></td><td>P(buy), ignoring device</td><td>220 / 1,000 = 0.22 (the row/column totals, the "margins")</td></tr>
+<tr><td><strong>Conditional</strong></td><td>P(buy | mobile)</td><td>120 / 600 = 0.20 (only the mobile row)</td></tr>
+</tbody></table></div>
+<div class="eq">P(A | B) = P(A and B) / P(B)        "the joint share, inside group B"</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">#                bought  didn&#x27;t buy
+counts = np.array([[120,     480],     # mobile visitors
+                   [100,     300]])    # desktop visitors
+total = counts.sum()
+
+p_mobile          = counts[0].sum() / total
+p_buy             = counts[:, 0].sum() / total
+p_mobile_and_buy  = counts[0, 0] / total
+p_buy_if_mobile   = counts[0, 0] / counts[0].sum()          # look only at the mobile row
+p_buy_if_desktop  = counts[1, 0] / counts[1].sum()
+
+print(f&quot;P(mobile) = {p_mobile:.2f}   P(buy) = {p_buy:.2f}   P(mobile and buy) = {p_mobile_and_buy:.2f}&quot;)
+print(f&quot;P(buy | mobile) = {p_buy_if_mobile:.2f}   P(buy | desktop) = {p_buy_if_desktop:.2f}&quot;)
+print(f&quot;independent?  P(mobile)·P(buy) = {p_mobile * p_buy:.3f}  vs  P(mobile and buy) = {p_mobile_and_buy:.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>P(mobile) = 0.60   P(buy) = 0.22   P(mobile and buy) = 0.12
+P(buy | mobile) = 0.20   P(buy | desktop) = 0.25
+independent?  P(mobile)·P(buy) = 0.132  vs  P(mobile and buy) = 0.120</pre></div>
+
+<p>Mobile visitors buy 20% of the time, desktop visitors 25%. So device and buying are <strong>not independent</strong>: knowing the device changes the odds. The quick test agrees: if they were independent, P(mobile) × P(buy) would equal P(mobile and buy), but 0.132 ≠ 0.120.</p>
+
+<div class="widget" id="w-tab">
+<p class="wt">Build your own table</p>
+<p class="wh">Type any four counts. Every probability updates, and the verdict tells you whether device and buying are independent.</p>
+<div class="tw" style="max-width:460px"><table>
+<thead><tr><th></th><th>Bought</th><th>Didn't buy</th></tr></thead>
+<tbody>
+<tr><td><strong>Mobile</strong></td><td><input type="number" id="tb-a" value="120" min="0"></td><td><input type="number" id="tb-b" value="480" min="0"></td></tr>
+<tr><td><strong>Desktop</strong></td><td><input type="number" id="tb-c" value="100" min="0"></td><td><input type="number" id="tb-d" value="300" min="0"></td></tr>
+</tbody></table></div>
+<div class="ctrls"><button class="btn" id="tb-ind">Make them independent</button><button class="btn" id="tb-reset">Reset</button></div>
+<div class="readout" id="tb-out"></div>
+</div>
+
+<div class="box mistake"><span class="tag">Common mistake · P(A | B) is not P(B | A)</span>
+<p>P(buy | mobile) = 120/600 = 0.20, but P(mobile | buy) = 120/220 ≈ 0.55. "Most buyers use mobile" and "most mobile users buy" are completely different claims. Mixing them up is one of the most common errors in business reporting, and Section 6 shows how costly it can be.</p>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>A classifier's output is a conditional probability: P(churn | this customer's features). Naive Bayes (Section 7) is built entirely from conditional probabilities. And the "independence" idea matters a lot: many algorithms assume features or examples are independent, and results go wrong quietly when they aren't.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Every "conversion rate by channel" or "default rate by region" in a dashboard is a conditional probability. The table view also exposes a trap: a channel with a high conversion rate but tiny traffic may matter less than a mediocre channel with huge traffic. Look at the joint counts, not just the conditional rates.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> From the table, what is P(desktop | didn't buy)? <em>Answer: 300 / 780 ≈ 0.38.</em></p>
+<p><strong>2.</strong> If P(A | B) = P(A), what does that tell you? <em>Answer: A and B are independent; knowing B doesn't change the chance of A.</em></p>
+</details>
+</section>
+
+<!-- ======================= 6 ======================= -->
+<section id="s6">
+<h2><span class="n">6</span>Bayes' theorem: updating beliefs with evidence</h2>
+
+<div class="box intuition"><span class="tag">Story · the fraud alert that's usually wrong</span>
+<p>A bank's fraud system catches 95% of frauds and wrongly flags only 3% of honest payments. It sounds excellent. Your card payment gets flagged. What's the chance it's really fraud? Most people guess "about 95%". The true answer is about <strong>14%</strong>. The reason is that fraud is rare: only 0.5% of payments are fraudulent, so the few frauds are buried under false alarms from the huge number of honest payments.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">P(fraud | alert) = P(alert | fraud) × P(fraud) / P(alert)
+
+prior          P(fraud)          what you believed before the evidence (the base rate)
+likelihood     P(alert | fraud)  how well the evidence fits "fraud"
+posterior      P(fraud | alert)  what you should believe after the evidence</div>
+<p>Bayes' theorem is the conditional-probability formula from Section 5, flipped around. It lets you turn "how likely is the evidence if it's fraud" into "how likely is fraud given the evidence".</p>
+</div>
+
+<div class="box byhand"><span class="tag">By hand · count 100,000 payments</span>
+<div class="eq">fraud:  0.5% of 100,000 =    500   → 95% flagged =   475 alerts
+honest: 99.5%            = 99,500   →  3% flagged = 2,985 alerts
+                                                      ─────
+                                         total alerts  3,460
+
+P(fraud | alert) = 475 / 3,460 ≈ 0.137</div>
+<p>Counting people (or payments) instead of juggling percentages is the easiest way to do any Bayes problem.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">p_fraud       = 0.005    # 0.5% of transactions are fraud (the base rate)
+p_alert_fraud = 0.95     # the system flags 95% of frauds
+p_alert_legit = 0.03     # ...but also flags 3% of honest transactions
+
+p_alert = p_alert_fraud * p_fraud + p_alert_legit * (1 - p_fraud)
+p_fraud_given_alert = p_alert_fraud * p_fraud / p_alert          # Bayes&#x27; theorem
+print(f&quot;P(fraud | alert) = {p_fraud_given_alert:.3f}&quot;)
+
+# Same answer by simply counting 100,000 transactions
+fraud = rng.random(100_000) &lt; p_fraud
+alert = np.where(fraud, rng.random(100_000) &lt; p_alert_fraud, rng.random(100_000) &lt; p_alert_legit)
+print(f&quot;alerts: {alert.sum():,}   of which real fraud: {(alert &amp; fraud).sum():,}   share = {(alert &amp; fraud).sum() / alert.sum():.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>P(fraud | alert) = 0.137
+alerts: 3,457   of which real fraud: 474   share = 0.137</pre></div>
+
+<div class="widget" id="w-bayes">
+<p class="wt">1,000 payments, one alarm system</p>
+<p class="wh">Each dot is one payment. Move the sliders and watch how many of the flagged dots are really fraud.</p>
+<div class="ctrls">
+<label>fraud base rate <input type="range" id="by-base" min="0.1" max="20" step="0.1" value="2"> <b id="by-basev">2%</b></label>
+<label>catches fraud <input type="range" id="by-sens" min="50" max="100" step="1" value="95"> <b id="by-sensv">95%</b></label>
+<label>false alarms <input type="range" id="by-fa" min="0.5" max="20" step="0.5" value="3"> <b id="by-fav">3%</b></label>
+</div>
+<div class="lg"><span><i style="background:var(--coral)"></i>fraud, flagged</span><span><i style="background:var(--coral);opacity:.3"></i>fraud, missed</span><span><i style="background:var(--saffron)"></i>honest, flagged (false alarm)</span><span><i style="background:var(--line)"></i>honest, not flagged</span></div>
+<div class="wgrid">
+<svg class="chart" id="by-svg" style="background:var(--surface)"></svg>
+<div class="readout" id="by-out"></div>
+</div>
+</div>
+
+<p>Things to try: raise the base rate to 10% and the same alarm becomes much more trustworthy. Lower false alarms to 0.5% and precision jumps. For rare events, <strong>cutting false alarms matters more than catching a few more true cases</strong>.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>This is the probability behind <strong>precision</strong> and <strong>class imbalance</strong>. When the positive class is rare (fraud, disease, defects), even a model with high accuracy can produce mostly false alarms, so accuracy is a misleading metric and precision, recall and PR curves matter. Bayes' theorem also powers Naive Bayes, Bayesian A/B testing, and any model that combines prior knowledge with data.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Every alerting system faces this: fraud flags, machine-failure warnings, churn alerts sent to account managers. If 86% of alerts are false, teams stop trusting them. Bayes tells you the precision you'll get <em>before</em> you launch, from the base rate and the two error rates.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> A test catches 90% of a rare defect (1% of items) and false-alarms on 10% of good items. Of 1,000 items, how many alerts, and how many real? <em>Answer: 9 real + 99 false = 108 alerts; only 9/108 ≈ 8% are real.</em></p>
+<p><strong>2.</strong> In Bayes' theorem, what is the "prior"? <em>Answer: what you believed before seeing the evidence, here the base rate of fraud.</em></p>
+</details>
+</section>
+
+<!-- ======================= 7 ======================= -->
+<section id="s7">
+<h2><span class="n">7</span>Naive Bayes: a spam filter from counting words</h2>
+
+<p>Bayes' theorem becomes a real classifier with one bold simplification. To decide whether a message is spam, look at its words and ask: are these words more typical of spam or of normal ("ham") messages?</p>
+
+<div class="box intuition"><span class="tag">Intuition · a detective weighing clues</span>
+<p>A detective doesn't decide on one clue. "Free" is a mild hint of spam. "Cash" is another. "Win" is another. Each clue nudges the odds, and together they add up to a verdict. Naive Bayes treats every word as a separate clue and simply combines their nudges.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">P(spam | words) ∝ P(spam) × P(word₁ | spam) × P(word₂ | spam) × …</div>
+<ul>
+<li><strong>∝</strong> means "is proportional to": we compute the same thing for "ham" and compare the two.</li>
+<li><strong>"Naive"</strong>: it assumes each word appears independently of the others, given the class. That's obviously not true ("free" and "prize" often travel together), but the classifier works surprisingly well anyway.</li>
+<li><strong>Laplace smoothing</strong>: add 1 to every word count, so a word never seen in spam doesn't make P(spam) exactly zero.</li>
+<li><strong>Logs</strong>: multiplying many small probabilities underflows, so we add log-probabilities (golden rule 3).</li>
+</ul>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from collections import Counter
+
+spam = [&quot;win cash now&quot;, &quot;free prize win&quot;, &quot;claim free cash&quot;, &quot;win a free phone&quot;]
+ham  = [&quot;meeting at noon&quot;, &quot;lunch now&quot;, &quot;project update at noon&quot;, &quot;call me about the project&quot;]
+
+def word_counts(msgs):
+    return Counter(w for m in msgs for w in m.split())
+
+spam_counts, ham_counts = word_counts(spam), word_counts(ham)
+vocab = set(spam_counts) | set(ham_counts)
+
+def log_score(message, counts, prior):
+    total = sum(counts.values())
+    score = np.log(prior)
+    for w in message.split():
+        p_word = (counts[w] + 1) / (total + len(vocab))     # +1 = Laplace smoothing
+        score += np.log(p_word)                             # add logs instead of multiplying
+    return score
+
+for msg in [&quot;free cash now&quot;, &quot;project meeting now&quot;]:
+    s, h = log_score(msg, spam_counts, 0.5), log_score(msg, ham_counts, 0.5)
+    p_spam = 1 / (1 + np.exp(h - s))                        # turn the two scores into a probability
+    print(f&quot;{msg!r:24s} → P(spam) = {p_spam:.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>&#x27;free cash now&#x27;          → P(spam) = 0.930
+&#x27;project meeting now&#x27;    → P(spam) = 0.155</pre></div>
+
+<p>"free cash now" scores 93% spam; "project meeting now" only 15.5%. Eight training messages and a few lines of counting. To make sure our hand-made version is right, compare it with scikit-learn's implementation:</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+
+vec = CountVectorizer(token_pattern=r&quot;\b\w+\b&quot;)
+X_train = vec.fit_transform(spam + ham)
+nb = MultinomialNB(alpha=1.0).fit(X_train, [1] * 4 + [0] * 4)
+
+print(&quot;scikit-learn P(spam):&quot;, nb.predict_proba(vec.transform([&quot;free cash now&quot;, &quot;project meeting now&quot;]))[:, 1].round(3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>scikit-learn P(spam): [0.93  0.155]</pre></div>
+
+<p>Identical probabilities. You now know exactly what <code>MultinomialNB</code> computes.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Naive Bayes is fast, needs little data, and is a strong baseline for text classification (spam, sentiment, topic tagging). Its independence assumption also makes it a useful teaching contrast: logistic regression (Part 2) learns how much each word matters directly, without assuming independence, and usually wins once you have more data.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Email spam filters, routing support tickets by keywords, flagging product reviews that mention "refund" or "broken": Naive Bayes trains in seconds on a laptop, and its word probabilities are easy to show to a non-technical stakeholder ("messages with 'refund' are 6× more likely to be complaints").</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Why do we add 1 to every word count? <em>Answer: so an unseen word doesn't give a probability of exactly zero, which would wipe out every other clue.</em></p>
+<p><strong>2.</strong> What does the "naive" in Naive Bayes assume? <em>Answer: that the words are independent of each other once you know the class.</em></p>
+</details>
+</section>
+
+<!-- ======================= 8 ======================= -->
+<section id="s8">
+<h2><span class="n">8</span>Two features at once: the multivariate Gaussian</h2>
+
+<p>Real data has several features that move together. Bigger orders usually contain more items. Taller people usually weigh more. The <strong>multivariate Gaussian</strong> describes a cloud of points like this, using a mean vector and the covariance matrix from Part 1.</p>
+
+<div class="box intuition"><span class="tag">Intuition · "unusual" depends on the pattern</span>
+<p>A ₹4,000 order with 8 items is big, but it fits the pattern: lots of items, lots of money. A ₹4,000 order with just 1 item breaks the pattern, even though neither number is extreme on its own. Spotting fraud means judging the <em>combination</em>, not each feature separately.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">x ~ N(μ, Σ)         μ = mean vector,   Σ = covariance matrix (Part 1, Section 12)
+
+Mahalanobis distance:  d(x) = √( (x − μ)ᵀ Σ⁻¹ (x − μ) )</div>
+<p>The bell curve becomes a hill whose contour lines are <strong>ellipses</strong> tilted along the correlation. The Mahalanobis distance measures how far a point is from the centre <em>in units of the cloud's own shape</em>: a step along the stretched direction counts little; a step across it counts a lot.</p>
+</div>
+
+<div class="widget" id="w-mvn">
+<p class="wt">How unusual is this order?</p>
+<p class="wh">Change the correlation, then drag the coral point. Plain distance draws circles; Mahalanobis distance follows the ellipses.</p>
+<div class="ctrls"><label>correlation <input type="range" id="mv-r" min="-0.95" max="0.95" step="0.05" value="0.8"> <b id="mv-rv">0.8</b></label></div>
+<div class="wgrid">
+<svg class="plane" id="mv-svg"></svg>
+<div class="readout" id="mv-out"></div>
+</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">mean = [2.0, 4.0]                        # order value (₹ thousand), number of items
+cov  = [[1.0, 1.6],
+        [1.6, 4.0]]                      # big orders tend to have more items (correlation 0.8)
+orders = rng.multivariate_normal(mean, cov, size=5_000)
+
+mu = orders.mean(axis=0)
+C  = np.cov(orders, rowvar=False)        # the covariance matrix (Part 1, Section 12)
+C_inv = np.linalg.inv(C)
+sd = orders.std(axis=0)
+
+def plain_distance(x):  return np.sqrt(np.sum(((x - mu) / sd) ** 2))        # ignores correlation
+def mahalanobis(x):     d = x - mu; return np.sqrt(d @ C_inv @ d)           # respects it
+
+for name, x in [(&quot;typical order&quot;,          [2.2, 4.5]),
+                (&quot;big but consistent&quot;,     [4.0, 8.0]),
+                (&quot;big value, only 1 item&quot;, [4.0, 1.0])]:
+    x = np.array(x)
+    print(f&quot;{name:24s} plain = {plain_distance(x):.2f}   Mahalanobis = {mahalanobis(x):.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>typical order            plain = 0.32   Mahalanobis = 0.25
+big but consistent       plain = 2.84   Mahalanobis = 2.12
+big value, only 1 item   plain = 2.52   Mahalanobis = 5.59</pre></div>
+
+<p>Plain distance ranks "big but consistent" (2.84) as stranger than "big value, only 1 item" (2.52). Mahalanobis distance gets it right: the 1-item order is more than twice as unusual (5.59 vs 2.12), because it goes against the correlation.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Gaussian anomaly detection, Gaussian Discriminant Analysis, Gaussian Mixture Models (a "soft" version of k-means), Gaussian processes and the latent space of VAEs all build on the multivariate Gaussian. It's also the reason correlated features matter so much: the covariance matrix holds the whole story of how features move together.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Fraud and anomaly teams use exactly this idea: an expense claim, a transaction or a sensor reading is suspicious not because one number is large, but because the combination is unlike anything normal. Mahalanobis-style scores catch "normal-looking numbers in an abnormal mix".</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Two features are perfectly uncorrelated and standardised. How do Mahalanobis and plain (standardised) distance compare? <em>Answer: they are the same; the covariance matrix is the identity.</em></p>
+<p><strong>2.</strong> What shape are the contour lines of a 2-D Gaussian with correlated features? <em>Answer: tilted ellipses.</em></p>
+</details>
+</section>
+
+<!-- ======================= 9 ======================= -->
+<section id="s9">
+<h2><span class="n">9</span>Maximum likelihood: which settings best explain the data?</h2>
+
+<p>So far we knew the probabilities and asked about the data. Machine learning works the other way round: we have the data and want the settings (the model's weights). <strong>Maximum likelihood estimation (MLE)</strong> is the most common way to do that, and it is where Part 2's loss functions come from.</p>
+
+<div class="box intuition"><span class="tag">Intuition · the detective's best explanation</span>
+<p>A friend flips a coin 10 times and gets 7 heads. Which coin is it most likely to be: a fair one (50% heads), a 70% coin or a 90% coin? Ask each candidate: "if you were the coin, how likely would 7 heads out of 10 be?" The candidate that makes the observed data <strong>most likely</strong> wins. That's maximum likelihood.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">likelihood       L(p) = P(data | p) = p⁷ × (1 − p)³          for 7 heads, 3 tails
+log-likelihood   log L(p) = 7·log(p) + 3·log(1 − p)
+MLE              p̂ = the p that makes L(p) as big as possible = 7/10</div>
+<p>The hat on p̂ means "estimated from data". Setting the derivative of the log-likelihood to zero (Part 2, Section 5) gives p̂ = heads ÷ flips: the obvious answer, now with a reason behind it.</p>
+</div>
+
+<div class="box mistake"><span class="tag">Common mistake · likelihood is not "the probability that p is true"</span>
+<p>L(0.7) answers "if the coin were a 70% coin, how likely is this data?". It does <em>not</em> say "there is an X% chance the coin is a 70% coin". The likelihood curve doesn't even add up to 1 over p. Turning it into a genuine probability for p needs a prior and Bayes' theorem, which is what Section 10 does.</p>
+</div>
+
+<div class="widget" id="w-lik">
+<p class="wt">Find the most likely coin</p>
+<p class="wh">Choose how many heads you saw. The curve shows how well each possible coin explains it; its peak is the MLE. The prior slider is for Section 10.</p>
+<div class="ctrls">
+<label>flips <input type="range" id="lk-n" min="1" max="100" step="1" value="10"> <b id="lk-nv">10</b></label>
+<label>heads <input type="range" id="lk-h" min="0" max="10" step="1" value="7"> <b id="lk-hv">7</b></label>
+<label>prior: pretend heads &amp; tails (each) <input type="range" id="lk-a" min="0" max="20" step="1" value="0"> <b id="lk-av">0</b></label>
+</div>
+<svg class="chart" id="lk-svg"></svg>
+<div class="readout" id="lk-out"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">heads, flips = 7, 10
+p_grid = np.linspace(0.01, 0.99, 99)                   # candidate values for the coin&#x27;s bias
+
+likelihood = p_grid**heads * (1 - p_grid)**(flips - heads)
+log_lik    = heads * np.log(p_grid) + (flips - heads) * np.log(1 - p_grid)
+
+print(&quot;p with the highest likelihood    :&quot;, p_grid[np.argmax(likelihood)].round(2))
+print(&quot;p with the highest log-likelihood:&quot;, p_grid[np.argmax(log_lik)].round(2))
+print(&quot;simple share of heads            :&quot;, heads / flips)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>p with the highest likelihood    : 0.7
+p with the highest log-likelihood: 0.7
+simple share of heads            : 0.7</pre></div>
+
+<h3>Why everyone uses the log-likelihood</h3>
+<p>With lots of data, the likelihood is a product of many probabilities, each below 1. The product quickly becomes too small for a computer to store. Logs turn the product into a sum and keep everything well-behaved. The peak stays in the same place, because log never changes which value is biggest.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">probs = np.full(1000, 0.3)                 # 1,000 data points, each given probability 0.3
+print(&quot;product of probabilities:&quot;, np.prod(probs))          # too small for a computer: 0.0
+print(&quot;sum of log-probabilities:&quot;, round(np.sum(np.log(probs)), 2))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>product of probabilities: 0.0
+sum of log-probabilities: -1203.97</pre></div>
+
+<h3>The big payoff: Part 2's losses are maximum likelihood</h3>
+<p>Here is something many courses never say clearly. The loss functions you minimised in Part 2 weren't arbitrary choices. Each one is <strong>negative log-likelihood</strong> under a simple assumption about the data:</p>
+
+<div class="tw"><table>
+<thead><tr><th>If you assume…</th><th>…maximising likelihood is the same as minimising</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td>Targets = prediction + Gaussian noise (of a fixed size)</td><td><strong>Mean squared error</strong></td><td>Regression</td></tr>
+<tr><td>Targets are yes/no (Bernoulli)</td><td><strong>Binary cross-entropy</strong></td><td>Logistic regression</td></tr>
+<tr><td>Targets are one of k classes (Categorical)</td><td><strong>Softmax cross-entropy</strong></td><td>Classifiers, language models</td></tr>
+<tr><td>Targets are counts (Poisson)</td><td><strong>Poisson loss</strong></td><td>Demand forecasting</td></tr>
+</tbody></table></div>
+
+<p>First check, using Part 2's ad-spend data: the weight with the lowest MSE and the weight with the highest Gaussian likelihood are the same.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">rng7 = np.random.default_rng(7)                          # the ad-spend data from Part 2
+ad_spend = rng7.uniform(1, 10, 20).round(1)
+sales = (3.0 * ad_spend + 8 + rng7.normal(0, 2, 20)).round(1)
+
+w_grid = np.linspace(2.5, 4.0, 1501)
+mse = [np.mean((w * ad_spend + 5.5 - sales) ** 2) for w in w_grid]
+
+sigma = 2.0                                               # assumed noise level
+log_lik = [np.sum(-0.5 * ((sales - (w * ad_spend + 5.5)) / sigma) ** 2
+                  - np.log(sigma * np.sqrt(2 * np.pi))) for w in w_grid]
+
+print(&quot;w with the lowest MSE           :&quot;, w_grid[np.argmin(mse)].round(3))
+print(&quot;w with the highest likelihood   :&quot;, w_grid[np.argmax(log_lik)].round(3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>w with the lowest MSE           : 3.248
+w with the highest likelihood   : 3.248</pre></div>
+
+<p>Second check: for yes/no outcomes, the negative log-likelihood and Part 2's binary cross-entropy are literally the same number.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">y = np.array([1, 0, 1, 1, 0])               # what happened (1 = defaulted)
+p = np.array([0.9, 0.2, 0.7, 0.6, 0.1])     # the model&#x27;s predicted probability of 1
+
+# Negative log-likelihood: −log(chance the model gave to what actually happened)
+nll = -np.sum(np.log(np.where(y == 1, p, 1 - p)))
+bce = -np.sum(y * np.log(p) + (1 - y) * np.log(1 - p))   # the cross-entropy formula from Part 2
+print(f&quot;negative log-likelihood = {nll:.4f}&quot;)
+print(f&quot;binary cross-entropy    = {bce:.4f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>negative log-likelihood = 1.3014
+binary cross-entropy    = 1.3014</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Training almost any model is maximum likelihood in disguise: logistic regression, neural network classifiers, and large language models, which are trained to maximise the likelihood of the next token in billions of sentences. When you need a loss for a new kind of target, ask "what distribution describes this target?" and take its negative log-likelihood.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Picking the loss is picking an assumption about your data. Demand counts of 0, 1, 2, 3 per store-day aren't Gaussian, and a Poisson loss usually forecasts them better than MSE. Knowing the link between distributions and losses lets you choose on purpose instead of by default.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> 45 of 200 customers clicked. What is the MLE of the click rate? <em>Answer: 45/200 = 0.225.</em></p>
+<p><strong>2.</strong> Which loss does maximum likelihood give for yes/no targets? <em>Answer: binary cross-entropy.</em></p>
+</details>
+</section>
+
+<!-- ======================= 10 ======================= -->
+<section id="s10">
+<h2><span class="n">10</span>Priors and MAP: common sense for small data</h2>
+
+<div class="box intuition"><span class="tag">Story · the three-flip coin</span>
+<p>You flip a new coin 3 times and get 3 heads. Maximum likelihood says the coin lands heads <strong>100%</strong> of the time. No sensible person believes that: you know most coins are roughly fair, and 3 flips is very little evidence. A <strong>prior</strong> is a way of writing down that common sense, so the model doesn't over-react to small samples.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">MLE:  maximise  P(data | θ)
+MAP:  maximise  P(data | θ) × P(θ)        ← P(θ) is the prior</div>
+<p><strong>MAP</strong> ("maximum a posteriori") picks the settings that are most believable <em>after</em> combining the data with the prior, which is Bayes' theorem from Section 6 applied to model weights. For a coin, a simple prior acts like <strong>pretend flips</strong>: start as if you'd already seen 2 heads and 2 tails. (In technical terms this is the MAP estimate under a Beta(3, 3) prior; the pretend-flips picture is all you need to use it.)</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def estimate(heads, flips, prior_heads=0, prior_tails=0):
+    &quot;&quot;&quot;MLE when the prior counts are 0; MAP with &#x27;pretend&#x27; prior counts otherwise.&quot;&quot;&quot;
+    return (heads + prior_heads) / (flips + prior_heads + prior_tails)
+
+print(&quot;3 flips, 3 heads    MLE:&quot;, estimate(3, 3),
+      &quot;   MAP:&quot;, round(estimate(3, 3, prior_heads=2, prior_tails=2), 3))
+print(&quot;300 flips, 210 heads MLE:&quot;, estimate(210, 300),
+      &quot;   MAP:&quot;, round(estimate(210, 300, prior_heads=2, prior_tails=2), 3))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>3 flips, 3 heads    MLE: 1.0    MAP: 0.714
+300 flips, 210 heads MLE: 0.7    MAP: 0.697</pre></div>
+
+<p>With 3 flips, the prior pulls the estimate from an absurd 100% down to a reasonable 71%. With 300 flips, it barely matters (0.697 vs 0.700): the data has taken over. That's exactly how a prior should behave. Try it with the "prior" slider in the Section 9 widget: set it to 2 and drag the flips down to 3.</p>
+
+<h3>Priors are regularisation</h3>
+<p>This is the second big link to Part 2. Take the log of the MAP formula and you get "log-likelihood + log-prior". The log-prior becomes a penalty on the weights:</p>
+
+<div class="tw"><table>
+<thead><tr><th>Prior belief about each weight</th><th>Becomes the penalty</th><th>Known as</th></tr></thead>
+<tbody>
+<tr><td>Gaussian around 0: "weights are probably small"</td><td>λ·Σ wᵢ²</td><td><strong>L2 / Ridge</strong> / weight decay</td></tr>
+<tr><td>Laplace, sharply peaked at 0: "most weights are probably zero or tiny"</td><td>λ·Σ |wᵢ|</td><td><strong>L1 / Lasso</strong> (its MAP answer sets many weights to exactly 0)</td></tr>
+<tr><td>Add-one pseudo-counts on word frequencies</td><td>Laplace smoothing</td><td>Naive Bayes (Section 7)</td></tr>
+</tbody></table></div>
+
+<p>The MAP solution with a Gaussian prior and scikit-learn's Ridge regression give the same weights. The penalty strength is λ = σ² ÷ τ²: the noise variance divided by the prior's variance, so a tighter prior (small τ) means stronger regularisation.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.linear_model import Ridge
+
+rng3 = np.random.default_rng(3)
+X = rng3.normal(size=(30, 4))
+y = X @ np.array([2.0, -1.0, 0.0, 0.5]) + rng3.normal(0, 1, 30)
+
+lam = 5.0
+w_map = np.linalg.solve(X.T @ X + lam * np.eye(4), X.T @ y)   # MAP with a Gaussian prior on w
+w_ridge = Ridge(alpha=lam, fit_intercept=False).fit(X, y).coef_
+print(&quot;MAP (Gaussian prior):&quot;, w_map.round(4))
+print(&quot;Ridge regression    :&quot;, w_ridge.round(4))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>MAP (Gaussian prior): [ 1.7988 -1.0451  0.0753  0.3181]
+Ridge regression    : [ 1.7988 -1.0451  0.0753  0.3181]</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Every time you tune <code>alpha</code> in Ridge or Lasso, or <code>weight_decay</code> in PyTorch, you're choosing how strong your prior is. A stronger prior helps when data is small or noisy; with huge datasets the data dominates and the prior matters less. The full Bayesian approach goes further and keeps a whole distribution over weights instead of one best value, which gives uncertainty estimates.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>A new product with 2 sales and 2 five-star reviews shouldn't outrank a product with 900 reviews averaging 4.7. Ranking by a "smoothed" rating (adding a few pretend average reviews, often called a Bayesian average) is MAP-style thinking in action, and it's a common way to stop tiny samples from topping a chart.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> A product has 1 review: 5 stars. With 4 pretend reviews of 3 stars added, what's its smoothed average? <em>Answer: (5 + 12) / 5 = 3.4.</em></p>
+<p><strong>2.</strong> Which prior corresponds to L2 regularisation? <em>Answer: a Gaussian prior centred at zero.</em></p>
+</details>
+</section>
+
+<!-- ======================= 11 ======================= -->
+<section id="s11">
+<h2><span class="n">11</span>Sampling and simulation</h2>
+
+<p>Sometimes a probability is too messy to work out with a formula. Then you can let the computer <strong>play out the situation thousands of times</strong> and count. This is called <strong>Monte Carlo simulation</strong>, named after the famous casino in Monaco.</p>
+
+<div class="box intuition"><span class="tag">Intuition · a rehearsal, many times over</span>
+<p>Before opening night, a theatre rehearses. A simulation rehearses your business 100,000 times in a second: random kitchen time, random road time, random traffic. Count how many rehearsals ran late, and you have the probability of being late.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">n = 100_000
+cooking = rng.normal(15, 4, n).clip(min=5)        # minutes in the kitchen
+riding  = rng.normal(18, 5, n).clip(min=5)        # minutes on the road
+traffic = rng.exponential(3, n)                   # extra delay: usually small, sometimes big
+
+total = cooking + riding + traffic
+print(f&quot;average delivery time : {total.mean():.1f} min&quot;)
+print(f&quot;P(late, over 45 min)  : {np.mean(total &gt; 45):.3f}&quot;)
+print(f&quot;95% of orders arrive within {np.percentile(total, 95):.1f} min&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>average delivery time : 36.0 min
+P(late, over 45 min)  : 0.101
+95% of orders arrive within 47.8 min</pre></div>
+
+<p>Working this out by hand would be fiddly: the minimum-time clipping and the skewed traffic delay make the formulas messy. The simulation answers in three lines: on average 36 minutes, a 10% chance of being late, and a 47.8-minute promise would be kept 95% of the time. Want to test "what if we cut kitchen time by 3 minutes"? Change one number and run again.</p>
+
+<h3>How a language model picks the next word</h3>
+<p>A language model doesn't "know" the next word. It produces a Categorical distribution over its whole vocabulary (Part 2's softmax), then <strong>samples</strong> from it. A setting called <strong>temperature</strong> T reshapes the distribution first: the logits are divided by T before the softmax.</p>
+
+<ul>
+<li><strong>Low temperature</strong> (below 1) sharpens the distribution: the top word wins more often. As T gets close to 0 it wins every time (this is called greedy decoding). Safe and repetitive.</li>
+<li><strong>High temperature</strong> (above 1) flattens it: unusual words get more chances. Creative, and sometimes nonsensical.</li>
+</ul>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def softmax(z):
+    e = np.exp(z - z.max())
+    return e / e.sum()
+
+words  = np.array([&quot;pizza&quot;, &quot;pasta&quot;, &quot;salad&quot;, &quot;sushi&quot;])
+logits = np.array([2.0, 1.5, 0.5, 0.1])          # a language model&#x27;s scores for the next word
+
+for T in [0.5, 1.0, 2.0]:
+    probs = softmax(logits / T)
+    print(f&quot;temperature {T}: &quot; + &quot;  &quot;.join(f&quot;{w} {p:.2f}&quot; for w, p in zip(words, probs)))
+
+picks = rng.choice(words, size=10_000, p=softmax(logits))
+print(&quot;10,000 samples, T = 1: &quot; + &quot;  &quot;.join(f&quot;{w} {np.mean(picks == w):.2f}&quot; for w in words))</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>temperature 0.5: pizza 0.69  pasta 0.26  salad 0.03  sushi 0.02
+temperature 1.0: pizza 0.51  pasta 0.31  salad 0.11  sushi 0.08
+temperature 2.0: pizza 0.38  pasta 0.30  salad 0.18  sushi 0.15
+10,000 samples, T = 1: pizza 0.50  pasta 0.31  salad 0.11  sushi 0.07</pre></div>
+
+<div class="widget" id="w-temp">
+<p class="wt">Temperature and sampling</p>
+<p class="wh">A model is completing "For dinner tonight, let's have …". Move the temperature, then sample a few completions.</p>
+<div class="ctrls"><label>temperature T <input type="range" id="tp-t" min="0.1" max="3" step="0.1" value="1"> <b id="tp-tv">1</b></label><button class="btn primary" id="tp-go">Sample 12</button></div>
+<div class="wgrid">
+<svg class="chart" id="tp-svg"></svg>
+<div class="readout" id="tp-out"></div>
+</div>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Randomness is built into deep learning: random weight initialisation, shuffled mini-batches, <strong>dropout</strong> (randomly switching neurons off), data augmentation (random crops and flips), and sampling text or images from generative models. Monte Carlo methods also estimate quantities that have no formula, from option prices to the uncertainty of a model's prediction.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Simulation is the practical tool for "what if" planning: delivery promises, inventory levels under random demand, revenue ranges for next quarter. It replaces a single, falsely precise forecast with a range and a probability, which is what decision-makers actually need.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> You simulate 50,000 deliveries and 4,000 are late. Estimate P(late). <em>Answer: 4,000 / 50,000 = 0.08.</em></p>
+<p><strong>2.</strong> A chatbot keeps giving the same dull answer. Raise or lower the temperature? <em>Answer: raise it (a little), to flatten the distribution.</em></p>
+</details>
+</section>
+
+<!-- ======================= 12 ======================= -->
+<section id="s12">
+<h2><span class="n">12</span>Information theory: entropy, cross-entropy and KL divergence</h2>
+
+<p>The last piece connects probability to the losses of deep learning. It starts with a simple question: <strong>how surprised should you be?</strong></p>
+
+<div class="box intuition"><span class="tag">Intuition · news value</span>
+<p>"It's sunny in the desert today" is hardly news: you expected it. "It snowed in the desert" is front-page news. Rare events carry more <strong>information</strong> than common ones. Information theory measures that surprise: an event with probability p carries <code>−log₂(p)</code> bits of surprise. A coin flip (p = ½) is 1 bit; a 1-in-1,000 event is about 10 bits.</p>
+</div>
+
+<h3>Entropy: the average surprise</h3>
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">H(P) = −Σ p(x) · log₂ p(x)        "average surprise", in bits</div>
+<p>High entropy means hard to predict (a fair coin, a 50/50 rainy city). Low entropy means predictable (a desert, a heavily biased coin). Zero entropy means certain.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def entropy(p):
+    p = np.asarray(p, dtype=float)
+    p = p[p &gt; 0]
+    return -np.sum(p * np.log2(p))          # in bits
+
+print(&quot;fair coin          :&quot;, round(entropy([0.5, 0.5]), 3), &quot;bits&quot;)
+print(&quot;coin with 90% heads:&quot;, round(entropy([0.9, 0.1]), 3), &quot;bits&quot;)
+print(&quot;rain 50/50 city    :&quot;, round(entropy([0.5, 0.5]), 3), &quot;bits&quot;)
+print(&quot;desert (1% rain)   :&quot;, round(entropy([0.01, 0.99]), 3), &quot;bits&quot;)
+print(&quot;fair 6-sided die   :&quot;, round(entropy([1/6] * 6), 3), &quot;bits&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>fair coin          : 1.0 bits
+coin with 90% heads: 0.469 bits
+rain 50/50 city    : 1.0 bits
+desert (1% rain)   : 0.081 bits
+fair 6-sided die   : 2.585 bits</pre></div>
+
+<h3>Cross-entropy: surprise when you believe the wrong thing</h3>
+<p>Suppose the real mix of payments is P (60% UPI, 30% card, 10% cash), but your model believes Q. <strong>Cross-entropy</strong> H(P, Q) is your average surprise when reality follows P but you expected Q. It can never be lower than H(P), and it equals H(P) only when Q is exactly right.</p>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">H(P, Q)   = −Σ p(x) · log q(x)          cross-entropy
+KL(P ‖ Q) = H(P, Q) − H(P)               extra surprise caused by believing Q instead of P</div>
+<p><strong>KL divergence</strong> is the "penalty for being wrong": 0 when Q matches P, larger the worse Q is. It is not a true distance, because KL(P ‖ Q) and KL(Q ‖ P) are usually different.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def cross_entropy(p, q):
+    return -np.sum(np.asarray(p) * np.log2(q))
+
+def kl(p, q):
+    return cross_entropy(p, q) - entropy(p)
+
+actual   = [0.6, 0.3, 0.1]       # real share of payments: UPI, card, cash
+good_mdl = [0.55, 0.33, 0.12]
+bad_mdl  = [0.2, 0.3, 0.5]
+
+print(f&quot;entropy of the real mix       : {entropy(actual):.3f} bits&quot;)
+for name, q in [(&quot;good model&quot;, good_mdl), (&quot;bad model&quot;, bad_mdl)]:
+    print(f&quot;{name}: cross-entropy = {cross_entropy(actual, q):.3f}   KL = {kl(actual, q):.3f}&quot;)
+print(f&quot;KL is not symmetric: KL(P‖Q) = {kl(actual, bad_mdl):.3f}, KL(Q‖P) = {kl(bad_mdl, actual):.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>entropy of the real mix       : 1.295 bits
+good model: cross-entropy = 1.303   KL = 0.008
+bad model: cross-entropy = 2.014   KL = 0.719
+KL is not symmetric: KL(P‖Q) = 0.719, KL(Q‖P) = 0.844</pre></div>
+
+<div class="widget" id="w-kl">
+<p class="wt">Reality versus your model</p>
+<p class="wh">Set the real mix (P) and your model's guess (Q). Each is rescaled to add up to 1. Make Q match P and watch KL drop to zero.</p>
+<div class="wgrid two">
+<div><p class="k"><b>Reality P</b></p>
+<div class="ctrls"><label>UPI <input type="range" id="kl-p0" min="1" max="100" value="60"></label><label>card <input type="range" id="kl-p1" min="1" max="100" value="30"></label><label>cash <input type="range" id="kl-p2" min="1" max="100" value="10"></label></div></div>
+<div><p class="k"><b>Model Q</b></p>
+<div class="ctrls"><label>UPI <input type="range" id="kl-q0" min="1" max="100" value="20"></label><label>card <input type="range" id="kl-q1" min="1" max="100" value="30"></label><label>cash <input type="range" id="kl-q2" min="1" max="100" value="50"></label></div></div>
+</div>
+<svg class="chart" id="kl-svg"></svg>
+<div class="readout" id="kl-out"></div>
+</div>
+
+<div class="box ml"><span class="tag">Why this is the classification loss</span>
+<p>In training, P is the true label (100% on the correct class) and Q is the model's softmax output. Then H(P) = 0, so cross-entropy and KL divergence are the same thing: <code>−log(probability given to the correct class)</code>. That's exactly Part 2's cross-entropy loss and Section 9's negative log-likelihood. Three names, one idea: <strong>make the model less surprised by the truth</strong>.</p>
+<p>One unit detail: this article uses log₂, which measures surprise in <strong>bits</strong>. ML libraries use the natural log, which measures it in <strong>nats</strong> (1 nat ≈ 1.44 bits). The numbers differ by that constant factor, so the best model is exactly the same either way.</p>
+</div>
+
+<h3>Information gain: how decision trees choose a question</h3>
+<p>A decision tree asks the question that removes the most uncertainty. "Information gain" is entropy before the split minus the (weighted) entropy after it.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def node_entropy(churn, stay):
+    return entropy([churn / (churn + stay), stay / (churn + stay)])
+
+parent = node_entropy(8, 12)                    # 20 customers: 8 churned, 12 stayed
+
+def info_gain(left, right):                     # left/right = (churn, stay) after the split
+    n = sum(left) + sum(right)
+    after = sum(left) / n * node_entropy(*left) + sum(right) / n * node_entropy(*right)
+    return parent - after
+
+print(f&quot;entropy before any split  : {parent:.3f} bits&quot;)
+print(f&quot;split on &#x27;filed a complaint&#x27;: gain = {info_gain((6, 2), (2, 10)):.3f} bits&quot;)
+print(f&quot;split on &#x27;uses mobile app&#x27; : gain = {info_gain((4, 6), (4, 6)):.3f} bits&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>entropy before any split  : 0.971 bits
+split on &#x27;filed a complaint&#x27;: gain = 0.256 bits
+split on &#x27;uses mobile app&#x27; : gain = 0.000 bits</pre></div>
+
+<p>Splitting on "filed a complaint" removes a quarter of a bit of uncertainty. Splitting on "uses the mobile app" removes none, because churn rates are identical in both groups. A decision tree would ask about complaints first.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<ul>
+<li><strong>Cross-entropy</strong>: the loss of every classifier and language model ("perplexity" is 2 to the power of the cross-entropy in bits, or e to the power of it in nats).</li>
+<li><strong>Information gain / entropy</strong>: how decision trees and random forests choose splits (<code>criterion="entropy"</code> in scikit-learn).</li>
+<li><strong>KL divergence</strong>: part of the VAE loss; knowledge distillation (a small model learning a big model's probabilities); the penalty in RLHF fine-tuning that keeps a chat model close to its original behaviour; t-SNE.</li>
+<li><strong>Mutual information</strong>: how much knowing one feature reduces uncertainty about the target, used for feature selection.</li>
+</ul>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Entropy is a neat measure of uncertainty in any mix: how concentrated a customer's spending is across categories, how diverse a product portfolio is, how predictable demand is. KL divergence and its close relatives (such as the population stability index, PSI) are common ways to monitor <strong>data drift</strong>: if this month's mix of customers drifts far (in KL) from the training data, it's time to retrain the model.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Which has higher entropy: a fair die or a fair coin? <em>Answer: the die (2.585 bits vs 1 bit); there are more equally likely outcomes.</em></p>
+<p><strong>2.</strong> Your model gives the correct class probability 0.25. What is the cross-entropy loss, in bits? <em>Answer: −log₂(0.25) = 2 bits.</em></p>
+<p><strong>3.</strong> If KL(P ‖ Q) = 0, what do you know? <em>Answer: Q is exactly equal to P.</em></p>
+</details>
+</section>
+
+<!-- ======================= 13 ======================= -->
+<section id="s13">
+<h2><span class="n">13</span>Bridge to ML/DL, mistakes, quiz and cheat sheet</h2>
+
+<h3>Where you'll meet these ideas next</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea from this article</th><th>Shows up later as…</th></tr></thead>
+<tbody>
+<tr><td>Probability as a long-run share</td><td>Model calibration, predicted probabilities, thresholds</td></tr>
+<tr><td>Bernoulli, Categorical, Poisson, Gaussian</td><td>Output layers (sigmoid, softmax), Poisson regression, Gaussian noise assumptions, weight initialisation</td></tr>
+<tr><td>Expected value, σ ÷ √n</td><td>Loss as an expected value, mini-batch noise, bagging and random forests (averaging reduces variance)</td></tr>
+<tr><td>Conditional probability, independence</td><td>Every classifier's output; i.i.d. assumptions; train/test leakage</td></tr>
+<tr><td>Bayes' theorem, base rates</td><td>Naive Bayes, precision under class imbalance, Bayesian A/B tests</td></tr>
+<tr><td>Multivariate Gaussian, Mahalanobis</td><td>Anomaly detection, GMMs, Gaussian processes, VAE latent spaces</td></tr>
+<tr><td>Maximum likelihood</td><td>MSE, cross-entropy and Poisson losses; how LLMs are trained</td></tr>
+<tr><td>Priors and MAP</td><td>Ridge, Lasso, weight decay, smoothing, Bayesian deep learning</td></tr>
+<tr><td>Sampling, Monte Carlo, temperature</td><td>Dropout, augmentation, text generation, diffusion models, uncertainty estimates</td></tr>
+<tr><td>Entropy, cross-entropy, KL, information gain</td><td>Classification loss, perplexity, decision trees, VAEs, distillation, RLHF, drift monitoring</td></tr>
+</tbody></table></div>
+
+<h3>Where each idea earns money</h3>
+<div class="tw"><table>
+<thead><tr><th>Concept</th><th>Business use</th></tr></thead>
+<tbody>
+<tr><td>Poisson and normal tails</td><td>Staffing, stock levels and delivery promises that hold 95% of the time</td></tr>
+<tr><td>Expected value</td><td>Promotion costs, expected loan losses, pipeline forecasts</td></tr>
+<tr><td>Conditional probability</td><td>Conversion and default rates by segment</td></tr>
+<tr><td>Bayes' theorem</td><td>Predicting how many alerts will be false before launching a system</td></tr>
+<tr><td>Naive Bayes</td><td>Fast spam filtering and ticket routing</td></tr>
+<tr><td>Mahalanobis distance</td><td>Fraud and anomaly scoring on combinations of features</td></tr>
+<tr><td>Priors / smoothing</td><td>Fair rankings for products or sellers with few reviews</td></tr>
+<tr><td>Monte Carlo simulation</td><td>"What if" planning with ranges instead of single numbers</td></tr>
+<tr><td>KL divergence</td><td>Detecting data drift so models get retrained on time</td></tr>
+</tbody></table></div>
+
+<h3>Common mistakes and fixes</h3>
+<div class="box mistake"><span class="tag">Mistakes and fixes</span>
+<ol>
+<li><strong>Confusing P(A | B) with P(B | A).</strong> Write both out as counts in a table before concluding anything.</li>
+<li><strong>Ignoring the base rate.</strong> For rare events, even a good detector gives mostly false alarms. Do the Bayes count first.</li>
+<li><strong>Treating density as probability.</strong> For continuous values, only areas (ranges) have probabilities.</li>
+<li><strong>Trusting small samples.</strong> 3 out of 3 isn't 100%. Use a prior or smoothing, and report how much data you have.</li>
+<li><strong>Multiplying many probabilities.</strong> The result underflows to 0. Add log-probabilities instead.</li>
+<li><strong>Assuming independence without checking.</strong> Compare P(A | B) with P(A); if they differ, the events are linked.</li>
+<li><strong>Planning for the average.</strong> Averages hide the tails. Use the distribution's percentiles for promises and capacity.</li>
+</ol>
+</div>
+
+<h3>Quiz</h3>
+<div class="widget quiz" id="quiz"><p class="wt">Ten questions. Click an answer to see why.</p><div id="quiz-body"></div><p class="readout">Score: <span class="score" id="quiz-score">0 / 10</span></p></div>
+
+<h3>Cheat sheet</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea</th><th>One line</th><th>Formula / code</th></tr></thead>
+<tbody>
+<tr><td>Complement</td><td>The chance it doesn't happen</td><td><code>1 − P(A)</code></td></tr>
+<tr><td>OR</td><td>Add, then remove the double count</td><td><code>P(A) + P(B) − P(A and B)</code></td></tr>
+<tr><td>AND (independent)</td><td>Multiply</td><td><code>P(A) × P(B)</code></td></tr>
+<tr><td>Conditional</td><td>A share inside group B</td><td><code>P(A and B) / P(B)</code></td></tr>
+<tr><td>Bayes</td><td>Flip a conditional using the base rate</td><td><code>P(B|A)·P(A) / P(B)</code></td></tr>
+<tr><td>Binomial</td><td>Successes out of n tries</td><td><code>rng.binomial(n, p)</code></td></tr>
+<tr><td>Poisson</td><td>Counts per time window</td><td><code>rng.poisson(lam)</code></td></tr>
+<tr><td>Normal</td><td>The bell curve; 68–95–99.7</td><td><code>rng.normal(mu, sd)</code></td></tr>
+<tr><td>Expected value</td><td>Long-run average</td><td><code>values @ probs</code></td></tr>
+<tr><td>Noise of an average</td><td>Shrinks with √n</td><td><code>sd / np.sqrt(n)</code></td></tr>
+<tr><td>Mahalanobis</td><td>Distance that respects correlation</td><td><code>np.sqrt(d @ inv(C) @ d)</code></td></tr>
+<tr><td>MLE</td><td>Settings that make the data most likely</td><td>minimise negative log-likelihood</td></tr>
+<tr><td>MAP</td><td>MLE + a prior = regularisation</td><td><code>Ridge</code>, <code>Lasso</code>, smoothing</td></tr>
+<tr><td>Temperature</td><td>Sharpen or flatten before sampling</td><td><code>softmax(logits / T)</code></td></tr>
+<tr><td>Entropy</td><td>Average surprise</td><td><code>-(p * np.log2(p)).sum()</code></td></tr>
+<tr><td>Cross-entropy / KL</td><td>Surprise using the wrong beliefs / the extra part</td><td><code>-(p * np.log(q)).sum()</code></td></tr>
+</tbody></table></div>
+</section>
+
+<div class="recap" id="recap">
+<h2>Quick recap</h2>
+<ul>
+<li>A <strong>probability</strong> is a long-run share. Turn percentages into counts of people or orders, and most problems become simple.</li>
+<li>A few <strong>distributions</strong> cover everyday ML: Bernoulli (yes/no), Binomial (successes out of n), Categorical (one of k), Poisson (counts) and the <strong>Gaussian</strong> (bell curve, 68–95–99.7).</li>
+<li><strong>Expected value</strong> is the long-run average; <strong>variance</strong> is the bumpiness. Averages are steadier by a factor of √n, which is why mini-batches work.</li>
+<li><strong>"Given" shrinks the crowd.</strong> <strong>Bayes' theorem</strong> flips a conditional and reminds you that rare events produce mostly false alarms.</li>
+<li><strong>Maximum likelihood</strong> picks the settings that best explain the data, and it produces MSE and cross-entropy. <strong>Priors</strong> add common sense, and they become L2, L1 and smoothing.</li>
+<li><strong>Sampling</strong> answers questions formulas can't, and <strong>temperature</strong> controls how adventurous a language model is.</li>
+<li><strong>Entropy</strong> measures surprise; <strong>cross-entropy</strong> is the classification loss; <strong>KL divergence</strong> is the price of believing the wrong distribution.</li>
+</ul>
+</div>
+<div class="next"><div><small>Coming up next</small><h3>Part 4: Statistics for Machine Learning</h3><p>How to tell whether a model is really better or just lucky: error bars, the bootstrap, the bias–variance trade-off, data leakage, cross-validation, A/B tests and drift.</p></div><a class="cta" href="article4_statistics_for_ml.html">Read Part 4</a></div>
+
+</article>
+</div>
+
+<footer><b>Mathematics for Machine Learning</b>, Part 3 of 4. Every Python output shown was produced by running the code; interactive figures run in your browser and use fresh random numbers each time.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+/* ---------- progress bar ---------- */
+(function(){var bar=document.getElementById('progress');function p(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}addEventListener('scroll',p,{passive:true});p();})();
+/* ---------- code: highlight + copy ---------- */
+try{ if(window.hljs) document.querySelectorAll('pre code.language-python').forEach(b=>hljs.highlightElement(b)); }catch(e){}
+document.querySelectorAll('.code').forEach(c=>{const b=c.querySelector('button'),code=c.querySelector('code');
+  if(b) b.addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(code.innerText).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200);});});});
+
+/* ---------- helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function fmt(v,d=2){const p=10**d;let r=Math.round(v*p)/p;if(Object.is(r,-0))r=0;return String(r);}
+function pct(v,d=1){return fmt(v*100,d)+'%';}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent,x,y,s,attrs={}){const t=el('text',Object.assign({x,y},attrs),parent);t.textContent=s;return t;}
+function frame(svg,W,H,xr,yr,opts={}){
+  const cw=(svg.parentNode&&svg.parentNode.clientWidth)||W; if(cw<W) W=Math.max(cw,300);   // narrow screens: keep text readable
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML='';
+  const m=Object.assign({l:46,r:14,t:24,b:34},opts.m||{});
+  const X=x=>m.l+(x-xr[0])/(xr[1]-xr[0])*(W-m.l-m.r);
+  const Y=y=>H-m.b-(y-yr[0])/(yr[1]-yr[0])*(H-m.t-m.b);
+  const g=el('g',{},svg);
+  (opts.xt||[]).forEach(v=>{el('line',{x1:X(v),x2:X(v),y1:m.t,y2:H-m.b,class:'gridline'},g);txt(g,X(v),H-m.b+15,String(opts.xf?opts.xf(v):v),{'text-anchor':'middle'});});
+  (opts.yt||[]).forEach(v=>{el('line',{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),class:'gridline'},g);txt(g,m.l-6,Y(v)+4,String(opts.yf?opts.yf(v):v),{'text-anchor':'end'});});
+  if(opts.xl) txt(g,(m.l+W-m.r)/2,H-3,opts.xl,{'text-anchor':'middle'});
+  if(opts.yl) txt(g,m.l,m.t-9,opts.yl,{'text-anchor':'start'});
+  const cid='clip'+Math.random().toString(36).slice(2);
+  const cp=el('clipPath',{id:cid},svg); el('rect',{x:m.l,y:m.t-2,width:W-m.l-m.r,height:H-m.t-m.b+2},cp);
+  const layer=el('g',{'clip-path':`url(#${cid})`},svg), top=el('g',{},svg);
+  return {X,Y,layer,top,m,W,H};
+}
+function niceTicks(max,count=5){const raw=max/count,p=10**Math.floor(Math.log10(raw)),n=raw/p,step=(n<1.5?1:n<3?2:n<7?5:10)*p;const t=[];for(let v=0;v<=max+1e-9;v+=step)t.push(Math.round(v));return t;}
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+const ncdf=(x,mu,sd)=>0.5*(1+erf((x-mu)/(sd*Math.SQRT2)));
+const npdf=(x,mu,sd)=>Math.exp(-0.5*((x-mu)/sd)**2)/(sd*Math.sqrt(2*Math.PI));
+function seg(id,cb){document.querySelectorAll(id+' button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll(id+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b);}));}
+const H2=p=>-p.reduce((s,v)=>s+(v>0?v*Math.log2(v):0),0);
+
+/* ---------- W-lln: coin flips ---------- */
+(function(){
+  let flips=[];
+  const pv=()=>+$('#ln-p').value;
+  function add(k){const p=pv();for(let i=0;i<k;i++)flips.push(Math.random()<p?1:0);draw();}
+  function draw(){
+    const p=pv(); $('#ln-pv').textContent=p;
+    const n=flips.length,N=Math.max(10,n);
+    const F=frame($('#ln-svg'),640,250,[0,N],[0,1],{xt:niceTicks(N),yt:[0,0.25,0.5,0.75,1],xl:'number of flips',yl:'share of heads so far'});
+    el('line',{x1:F.X(0),x2:F.X(N),y1:F.Y(p),y2:F.Y(p),stroke:'var(--indigo)','stroke-width':1.6,'stroke-dasharray':'6 5'},F.layer);
+    txt(F.top,F.X(N)-4,F.Y(p)-6,'true chance = '+p,{'text-anchor':'end',fill:'var(--indigo)','font-weight':700});
+    if(n){let d='',h=0;const step=Math.max(1,Math.floor(n/800));
+      for(let i=0;i<n;i++){h+=flips[i];if(i%step===0||i===n-1)d+=(d?'L':'M')+F.X(i+1)+','+F.Y(h/(i+1))+' ';}
+      el('path',{d,class:'c-line'},F.layer);
+      const heads=flips.reduce((a,b)=>a+b,0),share=heads/n;
+      el('circle',{cx:F.X(n),cy:F.Y(share),r:5,class:'c-cur'},F.top);
+      $('#ln-out').innerHTML=`<p><span class="k">flips</span> <b>${n.toLocaleString('en-IN')}</b> &nbsp; <span class="k">heads</span> <b>${heads.toLocaleString('en-IN')}</b> &nbsp; <span class="k">share</span> <span class="big" style="color:var(--coral)">${fmt(share,3)}</span> &nbsp; <span class="k">off by</span> ${fmt(Math.abs(share-p),3)}</p>
+      <p class="k">${n<50?'With so few flips the share can be far from the truth. Keep flipping.':(n<1000?'Getting closer, but still wobbling.':'With thousands of flips the share sits very close to the true chance: the law of large numbers.')}</p>`;
+    } else $('#ln-out').innerHTML='<p class="k">Press a button to start flipping.</p>';
+  }
+  $('#ln-10').onclick=()=>add(10); $('#ln-100').onclick=()=>add(100); $('#ln-1000').onclick=()=>add(1000);
+  $('#ln-reset').onclick=()=>{flips=[];draw();}; $('#ln-p').addEventListener('input',()=>{flips=[];draw();});
+  draw();
+})();
+
+/* ---------- W-dist: distribution explorer ---------- */
+(function(){
+  let kind='bern'; const st={p:0.3,n:20,lam:4};
+  const box=$('#ds-ctrls');
+  function controls(){
+    const s=(id,lab,min,max,step,val)=>`<label>${lab} <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"> <b id="${id}v">${val}</b></label>`;
+    box.innerHTML = kind==='bern'? s('ds-p','chance of yes p',0.01,0.99,0.01,st.p)
+      : kind==='binom'? s('ds-n','tries n',1,60,1,st.n)+s('ds-p','chance each p',0.01,0.99,0.01,st.p)
+      : s('ds-l','average count λ',0.5,15,0.5,st.lam);
+    box.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>{if(i.id==='ds-p')st.p=+i.value;if(i.id==='ds-n')st.n=+i.value;if(i.id==='ds-l')st.lam=+i.value;$('#'+i.id+'v').textContent=i.value;draw();}));
+  }
+  function pmf(){
+    if(kind==='bern') return [1-st.p,st.p];
+    if(kind==='binom'){const n=st.n,p=st.p,a=[Math.pow(1-p,n)];for(let k=0;k<n;k++)a.push(a[k]*(n-k)/(k+1)*p/(1-p));return a;}
+    const K=Math.ceil(st.lam+5*Math.sqrt(st.lam)+3),a=[Math.exp(-st.lam)];for(let k=0;k<K;k++)a.push(a[k]*st.lam/(k+1));return a;
+  }
+  function draw(){
+    const a=pmf(),K=a.length-1,mx=Math.max(...a);
+    const F=frame($('#ds-svg'),640,250,[-0.6,K+0.6],[0,mx*1.18],{xt:K<=20?[...Array(K+1).keys()]:niceTicks(K,10),yt:niceY(mx*1.18),xl:kind==='bern'?'0 = no, 1 = yes':'value',yl:'probability',yf:v=>fmt(v,2)});
+    const w=Math.min(0.38,0.38)*(F.X(1)-F.X(0));
+    let mode=0;a.forEach((v,k)=>{if(v>a[mode]*(1+1e-9))mode=k;el('rect',{x:F.X(k)-w,y:F.Y(v),width:2*w,height:F.Y(0)-F.Y(v),fill:'var(--lagoon)',opacity:.85,rx:2},F.layer);if(K<=12)txt(F.top,F.X(k),F.Y(v)-5,fmt(v,3),{'text-anchor':'middle',fill:'var(--ink)'});});
+    let mean,vari,sent;
+    if(kind==='bern'){mean=st.p;vari=st.p*(1-st.p);sent=`One visitor: a ${pct(st.p,0)} chance of "yes" (1) and a ${pct(1-st.p,0)} chance of "no" (0).`;}
+    else if(kind==='binom'){mean=st.n*st.p;vari=st.n*st.p*(1-st.p);sent=`${st.n} visitors, each ${pct(st.p,0)} likely to click: expect about ${fmt(mean,1)} clicks, most often ${mode}.`;}
+    else {mean=st.lam;vari=st.lam;let c=0,k95=0;for(let k=0;k<a.length;k++){c+=a[k];if(c>=0.95){k95=k;break;}}sent=`An average of ${st.lam} per hour. Planning for ${k95} covers 95% of hours.`;}
+    $('#ds-out').innerHTML=`<p><span class="k">mean</span> <b>${fmt(mean,2)}</b> &nbsp; <span class="k">variance</span> <b>${fmt(vari,2)}</b> &nbsp; <span class="k">most likely value</span> <b>${mode}${mode+1<a.length&&Math.abs(a[mode+1]-a[mode])<1e-9*a[mode]?' (tied with '+(mode+1)+')':''}</b></p><div class="verdict zero">${sent}</div>`;
+  }
+  function niceY(m){const s=m>0.6?0.2:m>0.3?0.1:m>0.12?0.05:0.02;const t=[];for(let v=0;v<=m+1e-9;v+=s)t.push(+v.toFixed(2));return t;}
+  seg('#ds-kind',b=>{kind=b.dataset.k;controls();draw();});
+  controls(); draw();
+})();
+
+/* ---------- W-norm: bell curve ---------- */
+(function(){
+  const ids=['mu','sd','a','b'];
+  ids.forEach(i=>$('#nm-'+i).addEventListener('input',draw));
+  function draw(){
+    const mu=+$('#nm-mu').value,sd=+$('#nm-sd').value;let a=+$('#nm-a').value,b=+$('#nm-b').value;
+    ids.forEach(i=>$('#nm-'+i+'v').textContent=$('#nm-'+i).value);
+    if(a>b)[a,b]=[b,a];
+    const top=npdf(mu,mu,sd)*1.15;
+    const F=frame($('#nm-svg'),640,250,[0,60],[0,top],{xt:[0,10,20,30,40,50,60],xl:'delivery time (minutes)',yl:'density'});
+    let sh=`M${F.X(a)},${F.Y(0)} `;for(let i=0;i<=80;i++){const x=a+(b-a)*i/80;sh+=`L${F.X(x)},${F.Y(npdf(x,mu,sd))} `;}sh+=`L${F.X(b)},${F.Y(0)} Z`;
+    el('path',{d:sh,fill:'var(--coral)',opacity:.28},F.layer);
+    let d='';for(let i=0;i<=240;i++){const x=60*i/240;d+=(i?'L':'M')+F.X(x)+','+F.Y(npdf(x,mu,sd))+' ';}
+    el('path',{d,class:'c-line'},F.layer);
+    [-2,-1,1,2].forEach(k=>{const x=mu+k*sd;if(x>0&&x<60){el('line',{x1:F.X(x),x2:F.X(x),y1:F.Y(0),y2:F.Y(npdf(x,mu,sd)),stroke:'var(--axis)','stroke-dasharray':'3 3'},F.layer);txt(F.top,F.X(x),F.Y(0)-4,(k>0?'+':'')+k+'σ',{'text-anchor':'middle'});}});
+    const P=ncdf(b,mu,sd)-ncdf(a,mu,sd),za=(a-mu)/sd,zb=(b-mu)/sd;
+    $('#nm-out').innerHTML=`<p><span class="k">P(${a} to ${b} minutes)</span> = <span class="big" style="color:var(--coral)">${pct(P,1)}</span></p>
+      <p><span class="k">in z-scores:</span> from ${fmt(za,2)}σ to ${fmt(zb,2)}σ &nbsp; <span class="k">P(over ${b} min)</span> ${pct(1-ncdf(b,mu,sd),1)}</p>
+      <p class="k">Try a range of exactly ±1σ, ±2σ and ±3σ around the mean: you'll get about 68%, 95% and 99.7%, whatever μ and σ are.</p>`;
+  }
+  draw();
+})();
+
+/* ---------- W-tab: joint table ---------- */
+(function(){
+  const ids=['a','b','c','d'],def=[120,480,100,300];
+  const g=()=>ids.map(i=>Math.max(0,+$('#tb-'+i).value||0));
+  ids.forEach(i=>$('#tb-'+i).addEventListener('input',draw));
+  $('#tb-reset').onclick=()=>{ids.forEach((i,k)=>$('#tb-'+i).value=def[k]);draw();};
+  $('#tb-ind').onclick=()=>{const [a,b,c,d]=g();const dt=c+d,r=a/(a+b||1);const nc=Math.round(dt*r);$('#tb-c').value=nc;$('#tb-d').value=dt-nc;draw();};
+  function draw(){
+    const [a,b,c,d]=g(),T=a+b+c+d;
+    if(!T||!(a+b)||!(c+d)||!(a+c)){$('#tb-out').innerHTML='<p class="k">Each row and the "Bought" column need at least one visit.</p>';return;}
+    const pm=(a+b)/T,pb=(a+c)/T,pmb=a/T,pbm=a/(a+b),pbd=c/(c+d),pmgb=a/(a+c);
+    const ind=Math.abs(pbm-pbd)<0.005;
+    $('#tb-out').innerHTML=`<p><span class="k">total visits</span> <b>${T.toLocaleString('en-IN')}</b> &nbsp; <span class="k">P(buy)</span> <b>${fmt(pb,3)}</b> &nbsp; <span class="k">P(mobile)</span> <b>${fmt(pm,3)}</b> &nbsp; <span class="k">P(mobile and buy)</span> <b>${fmt(pmb,3)}</b></p>
+      <p><span class="k">P(buy | mobile)</span> = ${a} / ${a+b} = <b>${fmt(pbm,3)}</b> &nbsp; <span class="k">P(buy | desktop)</span> = ${c} / ${c+d} = <b>${fmt(pbd,3)}</b></p>
+      <p><span class="k">P(mobile | buy)</span> = ${a} / ${a+c} = <b>${fmt(pmgb,3)}</b> &nbsp;<span class="k">(not the same as P(buy | mobile)!)</span></p>
+      <div class="verdict ${ind?'pos':'zero'}">${ind?'Independent: buyers are equally common on both devices, so knowing the device tells you nothing about buying.':`Not independent: knowing the device changes the chance of buying (${pct(pbm)} vs ${pct(pbd)}).`}</div>`;
+  }
+  draw();
+})();
+
+/* ---------- W-bayes: 1,000 payments ---------- */
+(function(){
+  const ids=['base','sens','fa'];
+  ids.forEach(i=>$('#by-'+i).addEventListener('input',draw));
+  function draw(){
+    const base=+$('#by-base').value/100,sens=+$('#by-sens').value/100,fa=+$('#by-fa').value/100;
+    $('#by-basev').textContent=fmt(base*100,1)+'%';$('#by-sensv').textContent=fmt(sens*100,0)+'%';$('#by-fav').textContent=fmt(fa*100,1)+'%';
+    const fraud=Math.round(1000*base),caught=Math.round(fraud*sens),missed=fraud-caught,falseA=Math.round((1000-fraud)*fa);
+    const svg=$('#by-svg');svg.setAttribute('viewBox','0 0 400 250');svg.innerHTML='';
+    const cols=40;let i=0;
+    const put=(n,fill,op)=>{for(let k=0;k<n;k++,i++){const x=(i%cols)*10+5,y=Math.floor(i/cols)*10+5;el('circle',{cx:x,cy:y,r:3.8,fill,opacity:op},svg);}};
+    put(caught,'var(--coral)',1);put(missed,'var(--coral)',.3);put(falseA,'var(--saffron)',1);put(1000-fraud-falseA,'var(--line)',1);
+    const exact=sens*base/(sens*base+fa*(1-base));
+    const alerts=caught+falseA;
+    $('#by-out').innerHTML=`<p><span class="k">per 1,000 payments</span><br>${fraud} fraud → ${caught} flagged, ${missed} missed<br>${1000-fraud} honest → ${falseA} false alarms</p>
+      <p><span class="k">alerts</span> <b>${alerts}</b>, of which real fraud <b>${caught}</b></p>
+      <p><span class="k">P(fraud | alert)</span> <span class="big" style="color:var(--coral)">${pct(exact,1)}</span></p>
+      <div class="verdict ${exact<0.5?'neg':'pos'}">${exact<0.5?`Most alerts are false alarms: only about ${fmt(exact*10,1)} in every 10 flagged payments is really fraud.`:`Most alerts are real: about ${fmt(exact*10,1)} in every 10 flagged payments is fraud.`}</div>`;
+  }
+  draw();
+})();
+
+/* ---------- W-mvn: Mahalanobis ---------- */
+(function(){
+  const svg=$('#mv-svg'); const R=4,W=400,s=W/(2*R);
+  const X=x=>W/2+x*s,Y=y=>W/2-y*s,wx=px=>(px-W/2)/s,wy=py=>(W/2-py)/s;
+  let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+  const Z=[];for(let i=0;i<350;i++){const u=Math.max(rnd(),1e-9),v=rnd();const r=Math.sqrt(-2*Math.log(u));Z.push([r*Math.cos(2*Math.PI*v),r*Math.sin(2*Math.PI*v)]);}
+  let pt=[2,-1.5];
+  svg.setAttribute('viewBox',`0 0 ${W} ${W}`);
+  const layer=el('g',{},svg), h=el('circle',{r:9,class:'handle h-r'},svg);
+  let drag=false;
+  h.addEventListener('pointerdown',e=>{drag=true;h.setPointerCapture(e.pointerId);e.preventDefault();});
+  h.addEventListener('pointermove',e=>{if(!drag)return;const q=svg.createSVGPoint();q.x=e.clientX;q.y=e.clientY;const p=q.matrixTransform(svg.getScreenCTM().inverse());pt=[clamp(Math.round(wx(p.x)*10)/10,-3.8,3.8),clamp(Math.round(wy(p.y)*10)/10,-3.8,3.8)];draw();});
+  const stop=()=>{drag=false;}; h.addEventListener('pointerup',stop); h.addEventListener('pointercancel',stop);
+  function draw(){
+    const r=+$('#mv-r').value;$('#mv-rv').textContent=r;
+    layer.innerHTML='';
+    for(let i=-R;i<=R;i++){el('line',{x1:X(i),y1:0,x2:X(i),y2:W,class:i===0?'axis':'gridline'},layer);el('line',{x1:0,y1:Y(i),x2:W,y2:Y(i),class:i===0?'axis':'gridline'},layer);}
+    Z.forEach(z=>{const x=z[0],y=r*z[0]+Math.sqrt(1-r*r)*z[1];el('circle',{cx:X(x),cy:Y(y),r:2.3,fill:'var(--lagoon)',opacity:.45},layer);});
+    const l1=1+r,l2=1-r,v1=[Math.SQRT1_2,Math.SQRT1_2],v2=[Math.SQRT1_2,-Math.SQRT1_2];
+    [1,2,3].forEach(c=>{let d='';for(let k=0;k<=100;k++){const t=2*Math.PI*k/100,a=c*Math.sqrt(l1)*Math.cos(t),b=c*Math.sqrt(l2)*Math.sin(t);d+=(k?'L':'M')+X(a*v1[0]+b*v2[0])+','+Y(a*v1[1]+b*v2[1])+' ';}
+      el('path',{d,fill:'none',stroke:'var(--indigo)','stroke-width':1.6,opacity:.8},layer);});
+    const pd=Math.hypot(pt[0],pt[1]);
+    el('circle',{cx:X(0),cy:Y(0),r:pd*s,fill:'none',stroke:'var(--axis)','stroke-dasharray':'4 4'},layer);
+    h.setAttribute('cx',X(pt[0])); h.setAttribute('cy',Y(pt[1]));
+    const md=Math.sqrt((pt[0]**2-2*r*pt[0]*pt[1]+pt[1]**2)/(1-r*r)), share=Math.exp(-md*md/2);
+    $('#mv-out').innerHTML=`<p><span class="k">point</span> (${fmt(pt[0],1)}, ${fmt(pt[1],1)}) in standard units<br><span class="k">x = order value, y = number of items</span></p>
+      <p><span class="k">plain distance</span> <b>${fmt(pd,2)}</b> (the dashed circle)</p>
+      <p><span class="k">Mahalanobis distance</span> <span class="big" style="color:var(--coral)">${fmt(md,2)}</span></p>
+      <p><span class="k">normal orders at least this unusual</span> <b>${share<0.001?'under 0.1%':pct(share,1)}</b></p>
+      <div class="verdict ${md>3?'neg':(md>2?'zero':'pos')}">${md>3?'Flag it: this combination is very unlike normal orders.':(md>2?'Unusual, worth a second look.':'Looks like a normal order.')}</div>
+      <p class="k">Ellipses mark Mahalanobis distance 1, 2 and 3.</p>`;
+  }
+  $('#mv-r').addEventListener('input',draw); draw();
+})();
+
+/* ---------- W-lik: likelihood ---------- */
+(function(){
+  const N=$('#lk-n'),Hh=$('#lk-h'),A=$('#lk-a');
+  [N,Hh,A].forEach(i=>i.addEventListener('input',draw));
+  function draw(){
+    const n=+N.value;Hh.max=n;if(+Hh.value>n)Hh.value=n;const h=+Hh.value,a=+A.value;
+    $('#lk-nv').textContent=n;$('#lk-hv').textContent=h;$('#lk-av').textContent=a;
+    const ps=[...Array(199).keys()].map(i=>(i+1)/200);
+    const ll=p=>h*Math.log(p)+(n-h)*Math.log(1-p), lp=p=>(h+a)*Math.log(p)+(n-h+a)*Math.log(1-p);
+    const m1=Math.max(...ps.map(ll)),m2=Math.max(...ps.map(lp));
+    const F=frame($('#lk-svg'),640,250,[0,1],[0,1.12],{xt:[0,0.2,0.4,0.6,0.8,1],yt:[0,0.5,1],xl:'possible chance of heads p',yl:'how well p explains the data (scaled)'});
+    let d='';ps.forEach((p,i)=>{d+=(i?'L':'M')+F.X(p)+','+F.Y(Math.exp(ll(p)-m1))+' ';});el('path',{d,class:'c-line'},F.layer);
+    const mle=h/n;el('line',{x1:F.X(mle),x2:F.X(mle),y1:F.Y(0),y2:F.Y(1),stroke:'var(--lagoon)','stroke-dasharray':'4 4'},F.layer);
+    let html=`<p><span class="k">data</span> ${h} heads in ${n} flips</p><p><span style="color:var(--lagoon);font-weight:700">MLE</span> p̂ = ${h}/${n} = <span class="big" style="color:var(--lagoon)">${fmt(mle,3)}</span></p>`;
+    if(a>0){let d2='';ps.forEach((p,i)=>{d2+=(i?'L':'M')+F.X(p)+','+F.Y(Math.exp(lp(p)-m2))+' ';});el('path',{d:d2,fill:'none',stroke:'var(--coral)','stroke-width':2.5},F.layer);
+      const map=(h+a)/(n+2*a);el('line',{x1:F.X(map),x2:F.X(map),y1:F.Y(0),y2:F.Y(1),stroke:'var(--coral)','stroke-dasharray':'4 4'},F.layer);
+      html+=`<p><span style="color:var(--coral);font-weight:700">MAP</span> with ${a} pretend heads and ${a} pretend tails: (${h}+${a})/(${n}+${2*a}) = <span class="big" style="color:var(--coral)">${fmt(map,3)}</span></p>`;}
+    html+=`<p class="k">${n<15?'Few flips: the curve is wide, so many values of p are almost as believable.':'More flips: the curve gets narrow, so the data pins p down.'}${a>0?' The prior pulls the estimate towards 0.5; more real data weakens that pull.':''}</p>`;
+    $('#lk-out').innerHTML=html;
+  }
+  draw();
+})();
+
+/* ---------- W-temp: temperature ---------- */
+(function(){
+  const words=['pizza','pasta','salad','sushi'],logits=[2.0,1.5,0.5,0.1];
+  const probs=T=>{const z=logits.map(v=>v/T),m=Math.max(...z),e=z.map(v=>Math.exp(v-m)),s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s);};
+  let samples=[];
+  function sample(){const p=probs(+$('#tp-t').value);samples=[];for(let k=0;k<12;k++){let r=Math.random(),i=0;while(i<3&&r>p[i]){r-=p[i];i++;}samples.push(words[i]);}draw();}
+  function draw(){
+    const T=+$('#tp-t').value;$('#tp-tv').textContent=T;const p=probs(T);
+    const F=frame($('#tp-svg'),360,240,[-0.6,3.6],[0,1],{yt:[0,0.25,0.5,0.75,1],yl:'probability',m:{b:28}});
+    const w=0.32*(F.X(1)-F.X(0));
+    p.forEach((v,i)=>{el('rect',{x:F.X(i)-w,y:F.Y(v),width:2*w,height:F.Y(0)-F.Y(v),fill:i===0?'var(--coral)':'var(--lagoon)',opacity:.85,rx:2},F.layer);txt(F.top,F.X(i),F.Y(v)-5,fmt(v,2),{'text-anchor':'middle',fill:'var(--ink)'});txt(F.top,F.X(i),F.H-8,words[i],{'text-anchor':'middle'});});
+    const ent=H2(p);
+    $('#tp-out').innerHTML=`<p><span class="k">entropy of the next-word choice</span> <b>${fmt(ent,2)}</b> bits (max 2)</p>
+      <div class="verdict ${p[0]>0.9?'zero':(T<0.95?'zero':(T>1.05?'neg':'pos'))}">${p[0]>0.9?'Very low temperature: "pizza" wins about '+Math.round(p[0]*100)+'% of the time. Predictable and repetitive.':(T<0.95?'Low temperature: sharper. The top word now wins '+Math.round(p[0]*100)+'% of the time (it was 51% at T = 1).':(T>1.05?'High temperature: flatter. Less likely words get more chances; varied, sometimes odd.':'T = 1: the model\'s own probabilities, unchanged.'))}</div>
+      <p style="margin-top:10px">${samples.length?samples.map(s=>`<code>${s}</code>`).join(' '):'<span class="k">Press "Sample 12" to generate completions.</span>'}</p>`;
+  }
+  $('#tp-t').addEventListener('input',()=>{samples=[];draw();}); $('#tp-go').onclick=sample; draw();
+})();
+
+/* ---------- W-kl: entropy / cross-entropy / KL ---------- */
+(function(){
+  const ids=['p0','p1','p2','q0','q1','q2'],cats=['UPI','card','cash'];
+  ids.forEach(i=>$('#kl-'+i).addEventListener('input',draw));
+  function norm(v){const s=v.reduce((a,b)=>a+b,0);return v.map(x=>x/s);}
+  function draw(){
+    const P=norm([0,1,2].map(i=>+$('#kl-p'+i).value)),Q=norm([0,1,2].map(i=>+$('#kl-q'+i).value));
+    const HP=H2(P),HPQ=-P.reduce((s,p,i)=>s+p*Math.log2(Q[i]),0),KL=HPQ-HP,KLr=-Q.reduce((s,q,i)=>s+q*Math.log2(P[i]),0)-H2(Q);
+    const F=frame($('#kl-svg'),640,230,[-0.6,2.6],[0,1],{yt:[0,0.25,0.5,0.75,1],yl:'share',m:{b:28}});
+    const w=0.2*(F.X(1)-F.X(0));
+    [0,1,2].forEach(i=>{
+      el('rect',{x:F.X(i)-w*2.05,y:F.Y(P[i]),width:2*w,height:F.Y(0)-F.Y(P[i]),fill:'var(--lagoon)',rx:2},F.layer);
+      el('rect',{x:F.X(i)+w*0.05,y:F.Y(Q[i]),width:2*w,height:F.Y(0)-F.Y(Q[i]),fill:'var(--coral)',rx:2},F.layer);
+      txt(F.top,F.X(i)-w,F.Y(P[i])-5,fmt(P[i],2),{'text-anchor':'middle',fill:'var(--lagoon-700)'});
+      txt(F.top,F.X(i)+w,F.Y(Q[i])-5,fmt(Q[i],2),{'text-anchor':'middle',fill:'var(--coral-700)'});
+      txt(F.top,F.X(i),F.H-8,cats[i],{'text-anchor':'middle'});});
+    $('#kl-out').innerHTML=`<div class="lg"><span><i style="background:var(--lagoon)"></i>reality P</span><span><i style="background:var(--coral)"></i>model Q</span></div>
+      <p><span class="k">entropy H(P)</span> <b>${fmt(HP,3)}</b> bits &nbsp; <span class="k">cross-entropy H(P, Q)</span> <b>${fmt(HPQ,3)}</b> bits</p>
+      <p><span class="k">KL(P ‖ Q)</span> = ${fmt(HPQ,3)} − ${fmt(HP,3)} = <span class="big" style="color:var(--coral)">${fmt(KL,3)}</span> bits &nbsp; <span class="k">KL(Q ‖ P)</span> ${fmt(KLr,3)}</p>
+      <div class="verdict ${KL<0.01?'pos':(KL<0.2?'zero':'neg')}">${KL<0.01?'Q matches P: almost no extra surprise.':(KL<0.2?'Close: a small price for the model\'s mistakes.':'Far off: the model is often surprised by reality.')}</div>`;
+  }
+  draw();
+})();
+
+/* ---------- quiz ---------- */
+(function(){
+  const Q=[
+    ['P(a delivery is late) = 0.15. What is P(it is on time)?',['0.15','0.85','1.15','It depends'],1,'The complement rule: 1 − 0.15 = 0.85.'],
+    ['Which distribution fits "number of support tickets in the next hour"?',['Bernoulli','Binomial','Poisson','Normal'],2,'Counts of arrivals in a time window: Poisson.'],
+    ['Deliveries ~ Normal(mean 30, σ 5). About what share take 20 to 40 minutes?',['50%','68%','95%','99.7%'],2,'20 to 40 is ±2σ around the mean: about 95%.'],
+    ['A raffle: 99% win ₹0, 1% win ₹1,000. What is the expected prize?',['₹0','₹10','₹100','₹1,000'],1,'0 × 0.99 + 1,000 × 0.01 = ₹10.'],
+    ['Of 400 desktop visitors, 100 bought. What is P(buy | desktop)?',['0.10','0.22','0.25','0.40'],2,'Only look at the desktop group: 100 / 400 = 0.25.'],
+    ['A fraud alert catches 95% of frauds, but fraud is very rare. Most alerts will be…',['real fraud','false alarms','impossible to say','exactly 95% real'],1,'Rare events + a small false-alarm rate on a huge honest group = mostly false alarms (Bayes).'],
+    ['7 heads in 10 flips. What is the maximum likelihood estimate of P(heads)?',['0.5','0.7','0.3','1.0'],1,'The value that makes the data most likely is heads ÷ flips.'],
+    ['Minimising MSE is the same as maximum likelihood if you assume…',['Poisson counts','Gaussian noise','yes/no labels','no noise at all'],1,'Gaussian noise makes the negative log-likelihood a scaled sum of squared errors.'],
+    ['A Gaussian prior on the weights corresponds to…',['L1 / Lasso','L2 / Ridge','dropout','early stopping'],1,'The log of a Gaussian prior is a −λ·Σw² penalty: L2.'],
+    ['Lowering a language model\'s temperature makes its output…',['more random','more predictable','longer','impossible to sample'],1,'Dividing logits by a small T sharpens the softmax, so the top word wins more often.']
+  ];
+  const body=$('#quiz-body');let score=0;
+  Q.forEach((q,qi)=>{const d=document.createElement('div');d.className='q';
+    d.innerHTML=`<p>${qi+1}. ${q[0]}</p><div class="opts">${q[1].map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><div class="fb">${q[3]}</div>`;
+    const btns=d.querySelectorAll('button');let done=false;
+    btns.forEach(b=>b.addEventListener('click',()=>{if(done)return;done=true;const i=+b.dataset.i;btns[q[2]].classList.add('right');if(i!==q[2])b.classList.add('wrong');else score++;d.querySelector('.fb').style.display='block';$('#quiz-score').textContent=`${score} / ${Q.length}`;}));
+    body.appendChild(d);});
+})();
+
+</script>
+</body>
+</html>

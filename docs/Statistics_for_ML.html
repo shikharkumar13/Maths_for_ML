@@ -1,0 +1,1565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statistics for ML | Mathematics for Machine Learning</title>
+<meta name="description" content="Part 4 of the Mathematics for Machine Learning series: estimators, error bars, the bootstrap, the bias–variance trade-off, data leakage, cross-validation, fair model comparison, A/B tests and drift, explained simply with interactive figures and verified Python code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#16213A; --ink-2:#4A5674; --ink-3:#7C86A2;
+  --paper:#F4F7F6; --surface:#FFFFFF; --line:#DDE5E3; --line-2:#EBF0EF;
+  --lagoon:#0B8A7A; --lagoon-700:#066B5F; --lagoon-50:#E4F3F0; --lagoon-100:#C9E8E2;
+  --saffron:#F2A900; --saffron-800:#7A5300; --saffron-50:#FFF5D6; --saffron-100:#FDE7A6;
+  --indigo:#3D3A9E; --indigo-50:#EEEDFA; --indigo-100:#D9D7F5;
+  --coral:#E8505B; --coral-700:#B42833; --coral-50:#FDECEE;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --text:'Literata', Georgia, serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+  /* widget aliases (figures were built on these names) */
+  --bg:var(--paper); --muted:var(--ink-2);
+  --petrol:var(--lagoon); --petrol-soft:var(--lagoon-50);
+  --green:var(--indigo); --green-soft:var(--indigo-50);
+  --verm:var(--coral); --verm-soft:var(--coral-50);
+  --grid:#E4EBE9; --axis:#A3AFAC;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:var(--text);font-size:18px;line-height:1.75;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+a{color:var(--lagoon-700)}
+code{font-family:var(--mono);font-size:.82em;background:var(--lagoon-50);color:var(--lagoon-700);padding:.12em .4em;border-radius:5px}
+strong{font-weight:600}
+em{font-style:italic}
+:focus-visible{outline:2px solid var(--lagoon);outline-offset:3px;border-radius:4px}
+
+/* ── Top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand span{color:var(--lagoon)}
+.where{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:14px;color:var(--ink-2)}
+.part-pill{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600;padding:3px 10px;border-radius:99px}
+#progress{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--lagoon)}
+
+/* ── Hero ── */
+.hero{background:var(--surface);border-bottom:1px solid var(--line)}
+.hero-in{max-width:1180px;margin:0 auto;padding:72px 24px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero h1{text-wrap:balance;font-family:var(--display);font-weight:800;font-size:clamp(40px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+.hero-sub{font-size:20px;line-height:1.6;color:var(--ink-2);margin:22px 0 28px;max-width:30em}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{font-family:var(--display);font-size:14px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.fact.hl{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.herocard{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px 22px 10px;width:100%;max-width:520px;justify-self:end}
+.herocard .hd{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:12px}
+.reads{list-style:none;margin-top:6px}
+.reads li{display:grid;grid-template-columns:190px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.5}
+.reads li code{justify-self:start;white-space:nowrap}
+.reads li:nth-child(1) code{background:var(--lagoon-100);color:var(--lagoon-700)}
+.reads li:nth-child(2) code{background:var(--indigo-100);color:var(--indigo)}
+.reads li:nth-child(3) code{background:var(--saffron-100);color:var(--saffron-800)}
+.reads li:nth-child(4) code{background:var(--coral-50);color:var(--coral-700)}
+.reads li:nth-child(5) code{background:var(--line-2);color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){
+  .reads li{opacity:0;animation:fade .45s ease-out forwards}
+  .reads li:nth-child(1){animation-delay:.3s}.reads li:nth-child(2){animation-delay:.6s}
+  .reads li:nth-child(3){animation-delay:.9s}.reads li:nth-child(4){animation-delay:1.2s}.reads li:nth-child(5){animation-delay:1.5s}
+}
+@keyframes fade{to{opacity:1}}
+
+/* ── Page ── */
+.page{max-width:1180px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:minmax(0,760px);justify-content:center}
+.rail{position:sticky;top:84px;align-self:start;font-family:var(--display);max-height:calc(100vh - 100px);overflow-y:auto}
+.rail h2{font-size:14px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+.rail ol{list-style:none;border-left:2px solid var(--line)}
+.rail a{display:flex;gap:10px;padding:5px 0 5px 14px;margin-left:-2px;border-left:2px solid transparent;font-size:14px;line-height:1.35;color:var(--ink-2);text-decoration:none}
+.rail a .n{color:var(--ink-3);min-width:16px;flex-shrink:0}
+.rail a:hover{color:var(--ink)}
+.rail a.on{color:var(--lagoon-700);border-left-color:var(--lagoon);font-weight:600}
+.rail a.on .n{color:var(--lagoon)}
+.rail .gap{height:10px}
+article{min-width:0}
+
+/* ── Text ── */
+.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+article p{margin-bottom:18px}
+article ul,article ol{padding-left:22px;margin-bottom:18px}
+article li{margin-bottom:6px}
+section{padding-top:56px}
+section h2{text-wrap:balance;font-family:var(--display);font-weight:700;font-size:32px;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;display:flex;gap:14px;align-items:baseline}
+section h2 .n{font-size:18px;font-weight:700;color:var(--lagoon);min-width:18px}
+h3{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.3;margin:32px 0 10px}
+h4{font-family:var(--display);font-weight:700;font-size:17px;margin:22px 0 8px}
+
+/* ── Callout boxes ── */
+.box{border-radius:14px;padding:18px 22px;margin:24px 0;font-size:17px;line-height:1.7;background:var(--surface);border:1px solid var(--line)}
+.box > :last-child{margin-bottom:0}
+.box p{margin-bottom:12px}
+.box ul,.box ol{margin-bottom:8px}
+.box .tag{display:block;font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:0;margin-bottom:6px}
+.intuition{background:var(--lagoon-50);border-color:transparent}
+.intuition .tag{color:var(--lagoon-700)}
+.mathbox{background:var(--indigo-50);border-color:transparent;border-radius:18px;padding:22px 24px}
+.mathbox .tag{color:var(--indigo);font-size:16px}
+.byhand{background:var(--surface);border:1px dashed #C4D0CD}
+.byhand .tag{color:var(--ink-2)}
+.ml{border-left:3px solid var(--lagoon);border-radius:0 14px 14px 0}
+.ml .tag{color:var(--lagoon-700)}
+.biz{background:var(--saffron-50);border-color:var(--saffron-100)}
+.biz .tag{color:var(--saffron-800)}
+.mistake{background:var(--coral-50);border-color:#F4C6CA}
+.mistake .tag{color:var(--coral-700)}
+.eq{font-family:var(--mono);font-size:14.5px;line-height:1.7;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:12px 0;overflow-x:auto;white-space:pre}
+.mathbox .eq,.byhand .eq{background:rgba(255,255,255,.75)}
+
+/* ── Check yourself (reveal) ── */
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+details.check{margin:26px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 20px}
+details.check summary{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;background:var(--saffron);color:var(--ink);padding:8px 15px;border-radius:10px}
+details.check summary::after{content:'+';font-size:18px;line-height:1}
+details.check[open] summary::after{content:'−'}
+details.check[open] summary{margin-bottom:14px}
+details.check p{font-size:16.5px;margin-bottom:10px}
+details.check em{color:var(--ink-2)}
+
+/* ── Code panels ── */
+.code{background:#16213A;border-radius:14px 14px 0 0;margin:22px 0 0;overflow:hidden}
+.code.solo{border-radius:14px;margin-bottom:22px}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:7px 10px 7px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--display);font-size:13px;color:#9AA6C4}
+.code-h button{font-family:var(--display);font-size:13px;font-weight:600;color:#CFE9E4;background:rgba(255,255,255,.08);border:0;border-radius:7px;padding:5px 11px;cursor:pointer}
+.code-h button:hover{background:rgba(255,255,255,.16)}
+.code pre{margin:0;padding:16px 18px 18px;overflow-x:auto}
+.code code{background:none;color:#E6EAF3;font-size:14px;line-height:1.7;padding:0;border-radius:0;white-space:pre;font-family:var(--mono)}
+.out{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;margin:0 0 22px;overflow:hidden}
+.out .code-h{color:var(--ink-3);border-bottom:1px solid var(--line);background:#F2F6F5}
+.out pre{margin:0;padding:14px 18px;overflow-x:auto;font-family:var(--mono);font-size:14px;line-height:1.65;color:var(--ink)}
+.hljs-keyword,.hljs-literal{color:#5EE0CB}
+.hljs-built_in,.hljs-title,.hljs-title.function_,.hljs-params{color:#B7B3FF}
+.hljs-string{color:#FFC94D}
+.hljs-number{color:#FF9AA0}
+.hljs-comment{color:#8A96B8;font-style:italic}
+.hljs-meta{color:#5EE0CB}
+
+/* ── Tables ── */
+.tw{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto;margin:22px 0}
+.tw table{width:100%;border-collapse:collapse;font-family:var(--text);font-size:15.5px}
+.tw th{text-align:left;font-family:var(--display);font-weight:600;font-size:13.5px;color:var(--ink-2);background:#F2F6F5;padding:10px 16px;white-space:nowrap}
+.tw td{padding:10px 16px;border-top:1px solid var(--line-2);vertical-align:top;line-height:1.55}
+.tw td code{font-size:.85em;white-space:nowrap}
+.box .tw,.mathbox .tw{margin:14px 0}
+
+/* ── Roadmap track ── */
+.track{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;margin:36px 0 8px}
+.track h3{margin:0 0 6px}
+.track > p{font-size:16.5px;color:var(--ink-2);margin-bottom:22px}
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative;padding:0;margin:0}
+.steps::before{content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--line)}
+.step{position:relative;margin:0}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--lagoon);border:2px solid var(--lagoon);display:grid;place-items:center;font-family:var(--display);font-size:13px;font-weight:700;color:#fff;position:relative;box-shadow:0 0 0 5px var(--lagoon-50)}
+.step b{display:block;font-family:var(--display);font-size:16px;margin-top:12px}
+.step .days{font-family:var(--display);font-size:13.5px;color:var(--lagoon-700);font-weight:600}
+.step p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
+.track .after{font-size:15.5px;color:var(--ink-2);border-top:1px solid var(--line-2);margin-top:20px;padding-top:14px;margin-bottom:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.pill{font-family:var(--display);font-size:14px;font-weight:600;padding:5px 12px;border-radius:99px;background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.pill.p1{background:var(--lagoon-50);border-color:var(--lagoon-100);color:var(--lagoon-700)}
+.pill.p2{background:var(--indigo-50);border-color:var(--indigo-100);color:var(--indigo)}
+.pill.p3{background:var(--saffron-50);border-color:var(--saffron-100);color:var(--saffron-800)}
+.pill.p4{background:var(--coral-50);border-color:#F4C6CA;color:var(--coral-700)}
+
+/* ── Interactive figures ── */
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;margin:30px 0;font-family:var(--display);font-size:15px;line-height:1.55}
+.widget .wt{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 4px;color:var(--ink)}
+.widget .wt::before{content:'Try it';display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--lagoon);color:#fff;padding:2px 8px;border-radius:6px;margin-right:10px;vertical-align:3px}
+.quiz .wt::before{content:'Quiz';background:var(--indigo)}
+.widget .wh{color:var(--ink-2);font-size:14.5px;margin:0 0 14px;font-family:var(--display)}
+.widget p{margin-bottom:8px}
+.wgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+svg.plane{width:100%;height:auto;display:block;touch-action:none;background:var(--paper);border-radius:12px;border:1px solid var(--line)}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--axis);stroke-width:1.4}
+.vec line{stroke-width:3;stroke-linecap:round}
+.vec text{font-family:var(--display);font-size:15px;font-weight:700}
+.v-a line{stroke:var(--lagoon)} .v-a polygon,.v-a text{fill:var(--lagoon)}
+.v-b line{stroke:var(--indigo)} .v-b polygon,.v-b text{fill:var(--indigo)}
+.v-r line{stroke:var(--coral)} .v-r polygon,.v-r text{fill:var(--coral)}
+.ghost line{stroke:var(--axis);stroke-width:2} .ghost polygon{fill:var(--axis)}
+.dashed line{stroke-dasharray:6 5;stroke-width:2}
+.handle{cursor:grab;stroke:#fff;stroke-width:2.5}
+.handle.h-a{fill:var(--lagoon)} .handle.h-b{fill:var(--indigo)} .handle.h-r{fill:var(--coral)}
+.handle:active{cursor:grabbing}
+.tline{stroke:var(--lagoon);stroke-width:1;opacity:.45}
+.readout{font-size:14.5px;line-height:1.6;font-family:var(--display)}
+.readout .big{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.readout .k{color:var(--ink-3)}
+.readout code{font-size:13px}
+.verdict{margin-top:10px;padding:9px 13px;border-radius:12px;font-weight:600;font-family:var(--display);font-size:14.5px;line-height:1.5}
+.verdict.pos{background:var(--lagoon-50);color:var(--lagoon-700)}
+.verdict.zero{background:var(--indigo-50);color:var(--indigo)}
+.verdict.neg{background:var(--coral-50);color:var(--coral-700)}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
+.ctrls label{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:14.5px}
+input[type=range]{accent-color:var(--lagoon);width:140px}
+input[type=checkbox]{accent-color:var(--lagoon)}
+input[type=number],input[type=text]{width:64px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:14px}
+.btn{font-family:var(--display);font-weight:600;font-size:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 13px;cursor:pointer}
+.btn:hover{border-color:var(--lagoon);color:var(--lagoon-700)}
+.btn.primary{background:var(--lagoon);color:#fff;border-color:var(--lagoon)}
+.btn.primary:hover{background:var(--lagoon-700);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:none;background:var(--surface);color:var(--ink-2);padding:6px 13px;cursor:pointer;font-family:var(--display);font-size:14px;font-weight:600}
+.seg button.on{background:var(--lagoon);color:#fff}
+.mat{display:inline-grid;gap:3px;padding:4px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;vertical-align:middle}
+.mat span{min-width:34px;text-align:center;padding:3px 4px;border-radius:6px;font-family:var(--mono);font-size:14px;transition:background .2s}
+.mat span.hl-r{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600}
+.mat span.hl-c{background:var(--indigo-50);color:var(--indigo);font-weight:600}
+.mat span.hl-o{background:var(--coral);color:#fff;font-weight:700}
+.mat span.dim{opacity:.25}
+.mrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.mrow .op{font-size:1.2rem;color:var(--ink-3)}
+.calc{font-family:var(--mono);font-size:14px;text-align:center;min-height:2.6em;color:var(--ink)}
+.dt{width:100%;font-family:var(--mono);font-size:13.5px;border-collapse:collapse}
+.dt th,.dt td{text-align:right;padding:7px 10px;cursor:pointer;user-select:none;border-top:1px solid var(--line-2)}
+.dt th{font-family:var(--display);background:#F2F6F5;color:var(--ink-2)}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt tr.sel td{background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600}
+.dt td.selc,.dt th.selc{background:var(--indigo-50);color:var(--indigo);font-weight:600}
+.domino{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:16px;margin:6px 0}
+.domino b{padding:3px 8px;border-radius:8px;border:1.5px solid var(--line)}
+.domino b.in-ok{border-color:var(--lagoon);background:var(--lagoon-50);color:var(--lagoon-700)}
+.domino b.in-bad{border-color:var(--coral);background:var(--coral-50);color:var(--coral-700)}
+.shapes{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-family:var(--mono);font-size:14px;margin:22px 0;color:var(--ink-2)}
+.shapes .s{border:1.5px solid var(--lagoon);border-radius:10px;padding:8px 12px;text-align:center;background:var(--surface);color:var(--ink)}
+.shapes .s small{display:block;color:var(--ink-3);font-family:var(--display);font-size:12.5px}
+.shapes .s.g{border-color:var(--indigo)} .shapes .s.r{border-color:var(--coral)}
+
+/* ── Quiz ── */
+.quiz .q{border-top:1px solid var(--line-2);padding:14px 0 6px}
+.quiz .q:first-child{border-top:0}
+.quiz .q p{margin:0 0 10px;font-weight:600;font-size:16.5px}
+.quiz .opts{display:flex;flex-direction:column;gap:7px}
+.quiz .opts button{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--ink);cursor:pointer;font-family:var(--display);font-size:15px}
+.quiz .opts button:hover{border-color:var(--indigo)}
+.quiz .opts button.right{border-color:var(--lagoon);background:var(--lagoon-50);color:var(--lagoon-700);font-weight:600}
+.quiz .opts button.wrong{border-color:var(--coral);background:var(--coral-50);color:var(--coral-700)}
+.quiz .fb{font-size:14.5px;color:var(--ink-2);margin-top:8px;display:none}
+.score{font-weight:800;color:var(--indigo)}
+
+/* ── Recap / next / footer ── */
+.recap{margin-top:64px;background:var(--ink);color:#E6EAF3;border-radius:18px;padding:30px 30px 26px}
+.recap h2{font-family:var(--display);font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:16px}
+.recap ul{list-style:none;padding:0;margin:0}
+.recap li{font-size:16.5px;line-height:1.6;padding:8px 0 8px 32px;margin:0;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.recap li:first-child{border-top:0}
+.recap li::before{content:'✓';position:absolute;left:0;top:9px;width:20px;height:20px;border-radius:50%;background:var(--saffron);color:var(--ink);font-family:var(--display);font-size:12px;font-weight:800;display:grid;place-items:center}
+.recap strong{color:#fff}
+.recap code{background:rgba(255,255,255,.14);color:#fff}
+.next{margin-top:28px;background:var(--lagoon-50);border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.next small{font-family:var(--display);font-size:14px;color:var(--lagoon-700);font-weight:600}
+.next h3{font-size:20px;margin:2px 0 4px}
+.next p{font-size:15.5px;color:var(--ink-2);margin:0}
+.cta{flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15.5px;background:var(--lagoon);color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px}
+.cta:hover{background:var(--lagoon-700)}
+footer{border-top:1px solid var(--line);background:var(--surface);text-align:center;padding:30px 24px;font-family:var(--display);font-size:14.5px;color:var(--ink-3)}
+footer b{color:var(--ink);font-weight:700}
+
+/* ── Responsive ── */
+@media (max-width:900px){.hero-in{grid-template-columns:1fr;padding:48px 20px 44px;gap:32px}.herocard{justify-self:start}}
+@media (max-width:640px){
+  body{font-size:17px}
+  .page{padding:40px 18px 72px}
+  .where .day{display:none}
+  .brand{font-size:15px}
+  .brand span{display:none}
+  section h2{font-size:26px}
+  .wgrid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr;gap:18px}
+  .steps::before{top:14px;bottom:14px;left:13px;right:auto;width:2px;height:auto}
+  .step{display:grid;grid-template-columns:28px 1fr;column-gap:14px}
+  .step b{margin-top:2px}
+  .step > *:not(.dot){grid-column:2}
+  .reads li{grid-template-columns:1fr;gap:4px}
+  .next{flex-direction:column;align-items:flex-start}
+  .track,.widget,.mathbox{padding:18px}
+  .recap{padding:24px 20px}
+}
+
+/* ---- article-2 extras ---- */
+.wgrid.two{grid-template-columns:1fr 1fr}
+@media (max-width:640px){.wgrid.two{grid-template-columns:1fr}}
+svg.chart{width:100%;height:auto;display:block;background:var(--paper);border:1px solid var(--line);border-radius:12px;touch-action:none}
+.chart text{font-family:var(--display);font-size:11.5px;fill:var(--muted)}
+.chart .ttl{font-size:12px;font-weight:600;fill:var(--ink)}
+.c-line{fill:none;stroke:var(--petrol);stroke-width:2.5}
+.c-pt{fill:var(--petrol);opacity:.85}
+.c-res{stroke:var(--verm);stroke-width:1.5;opacity:.7}
+.c-fit{stroke:var(--green);stroke-width:3}
+.c-cur{fill:var(--verm);stroke:var(--surface);stroke-width:2}
+.c-tan{stroke:var(--verm);stroke-width:2;stroke-dasharray:6 4}
+.c-path{fill:none;stroke:var(--verm);stroke-width:1.8}
+.c-step{fill:var(--verm)}
+.c-ell{fill:none;stroke:var(--petrol);stroke-width:1;opacity:.55}
+.c-min{fill:var(--green)}
+.node rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5;rx:8}
+.node.op rect{fill:var(--petrol-soft);stroke:var(--petrol)}
+.node.act rect{stroke:var(--verm);stroke-width:2}
+.node text{font-family:var(--display);font-size:12px;fill:var(--ink);text-anchor:middle}
+.node .val{font-family:var(--mono);font-size:11px;fill:var(--petrol);font-weight:600}
+.node .grd{font-family:var(--mono);font-size:11px;fill:var(--verm);font-weight:600}
+.edge{stroke:var(--axis);stroke-width:1.6;fill:none}
+.edge.hot{stroke:var(--verm);stroke-width:2.5}
+canvas.db{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--line);image-rendering:auto}
+.status{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;font-size:13px;font-family:var(--display)}
+.status.ok{background:var(--green-soft);color:var(--green)}
+.status.warn{background:var(--petrol-soft);color:var(--petrol)}
+.status.bad{background:var(--verm-soft);color:var(--verm)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;font-family:var(--display);font-size:14.5px;line-height:1.35;text-align:center;margin:24px 0}
+.flow span.b{border:1.5px solid var(--lagoon);border-radius:12px;padding:8px 12px;background:var(--surface);font-weight:600}
+.flow small{font-weight:500;color:var(--ink-3)}
+.flow span.b.r{border-color:var(--verm)} .flow span.b.g{border-color:var(--green)}
+.flow span.ar{color:var(--muted)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin:8px 0;font-family:var(--display);color:var(--ink-2)}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top">Mathematics <span>for Machine Learning</span></a>
+    <div class="where"><span class="day">Part 4 of 4</span><span class="part-pill">Statistics</span></div>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <h1>Statistics for Machine Learning</h1>
+      <p class="hero-sub">How to tell whether a model is really better, or just lucky. Error bars, the bootstrap, overfitting, leakage, cross-validation, A/B tests and drift, built from orders, test sets and experiments, in plain English.</p>
+      <div class="facts"><span class="fact">80 minute read</span><span class="fact">Python 3 + scikit-learn</span><span class="fact">Beginner friendly</span><span class="fact hl">8 interactive figures</span></div>
+    </div>
+    <div class="herocard" role="img" aria-label="Five ideas this article teaches you to read">
+      <p class="hd">Five lines you'll be able to explain by the end</p>
+      <ul class="reads">
+        <li><code>sqrt(p*(1-p)/n)</code><span>How much a test score can wobble</span></li>
+        <li><code>rng.integers(0, n, n)</code><span>The bootstrap: an error bar for any metric</span></li>
+        <li><code>make_pipeline(...)</code><span>How to stop data leakage</span></li>
+        <li><code>cross_val_score(...)</code><span>A score you can trust</span></li>
+        <li><code>ks_2samp(train, prod)</code><span>Has production data drifted?</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+<article>
+<p class="lede">Your new churn model scores 87% accuracy. The old one scored 86%. Should you replace it? Most people say yes. A statistician asks three questions first: <em>87% on how many customers? Would a different test set give 84% or 90%? Did any information from the test set sneak into training?</em> This article teaches you to ask those questions, and to answer them with a few lines of code.</p>
+
+<p>Part 3 was about <strong>probability</strong>: if you know how the world works, what data should you expect? <strong>Statistics</strong> runs the other way: you have some data, so what can you honestly say about the world? Every number a model produces (an accuracy, an AUC, a lift in sales) comes from a limited sample, so every one of them is a <strong>guess with a margin of error</strong>. Ignoring that margin is one of the most common ways ML projects go wrong, and one of the easiest to avoid.</p>
+
+<p>As before, everything is built from everyday examples (orders, customers, test sets, A/B tests), with pictures you can play with and code you can run.</p>
+
+<p>By the end you will be able to:</p>
+<ul>
+<li>explain what an <strong>estimator</strong> is, and what bias and variance mean for it,</li>
+<li>describe data properly before modelling: skew, medians, logs and the right kind of correlation,</li>
+<li>put an honest <strong>error bar</strong> on almost any model metric, using a formula or the <strong>bootstrap</strong>,</li>
+<li>explain the <strong>bias–variance trade-off</strong>, and recognise underfitting and overfitting,</li>
+<li>set up train/validation/test splits and <strong>cross-validation</strong> without leaking information,</li>
+<li>compare two models fairly, read an A/B test, and detect when production data has <strong>drifted</strong>.</li>
+</ul>
+
+<h3>How each concept is taught</h3>
+<div class="legend"><span class="pill p1">Intuition</span><span class="pill">Try it</span><span class="pill p2">Math, decoded</span><span class="pill">By hand</span><span class="pill">Code</span><span class="pill p1">In ML</span><span class="pill p3">In business</span><span class="pill p3">Check yourself</span><span class="pill p4">Common mistake</span></div>
+
+<div class="track">
+<h3>The route through this article</h3>
+<p>Thirteen sections in four stages: from describing data to deciding whether a model really is better.</p>
+<ol class="steps">
+<li class="step"><span class="dot">1</span><b>Estimates and their errors</b><span class="days">Sections 0–4</span><p>Samples, estimators, describing data, error bars, the bootstrap.</p></li>
+<li class="step"><span class="dot">2</span><b>Why models fail</b><span class="days">Section 5</span><p>The bias–variance trade-off: underfitting and overfitting.</p></li>
+<li class="step"><span class="dot">3</span><b>Evaluating honestly</b><span class="days">Sections 6–9</span><p>Splits, leakage, cross-validation, fair comparisons, baselines.</p></li>
+<li class="step"><span class="dot">4</span><b>After launch</b><span class="days">Sections 10–12</span><p>A/B tests, data drift, and the wrap-up.</p></li>
+</ol>
+<p class="after">Builds on Part 3 (distributions, the bell curve, σ ÷ √n). Every number shown comes from code you can run.</p>
+</div>
+
+<!-- ======================= 0 ======================= -->
+<section id="s0">
+<h2><span class="n">0</span>Notation decoder</h2>
+
+<div class="tw"><table>
+<thead><tr><th>You see</th><th>Say it as</th><th>Plain meaning</th></tr></thead>
+<tbody>
+<tr><td>population</td><td>"the population"</td><td>Everything you care about: all customers, all future orders. Usually too big or not yet existing.</td></tr>
+<tr><td>sample, <code>n</code></td><td>"a sample of size n"</td><td>The part you actually have data for.</td></tr>
+<tr><td><code>μ</code>, <code>σ</code></td><td>"mu", "sigma"</td><td>The population's true mean and spread (unknown).</td></tr>
+<tr><td><code>x̄</code>, <code>s</code></td><td>"x bar", "s"</td><td>The sample's mean and spread: our estimates of μ and σ.</td></tr>
+<tr><td><code>θ̂</code></td><td>"theta hat"</td><td>Any estimate. The hat always means "worked out from data".</td></tr>
+<tr><td>SE</td><td>"standard error"</td><td>How much an estimate would wobble if you repeated the data collection. σ ÷ √n for a mean.</td></tr>
+<tr><td>95% CI</td><td>"95% confidence interval"</td><td>A range built so that, over many repeats, 95% of such ranges contain the true value.</td></tr>
+<tr><td><code>r</code>, <code>ρ</code></td><td>"r", "rho"</td><td>Correlation, from −1 to +1. Pearson's r for straight-line links; Spearman's ρ for any link that steadily rises or falls.</td></tr>
+<tr><td><code>H₀</code></td><td>"H-nought", null hypothesis</td><td>The boring explanation: "there's no real difference".</td></tr>
+<tr><td>p-value</td><td>"p-value"</td><td>If H₀ were true, how often would chance alone produce a result at least this extreme?</td></tr>
+<tr><td><code>α</code></td><td>"alpha", significance level</td><td>The false-alarm rate you accept, usually 0.05.</td></tr>
+</tbody></table></div>
+
+<div class="box mathbox"><span class="tag">Three golden rules for this article</span>
+<p><strong>1. Every metric is an estimate.</strong> "87% accuracy" really means "87%, give or take something". Always ask for the "something".</p>
+<p><strong>2. The test set is sealed until the very end.</strong> Anything that looks at test data before the final check (choosing features, tuning, scaling) makes the result too optimistic.</p>
+<p><strong>3. Compare like with like.</strong> Two models must be judged on the same data, the same way. Otherwise you're measuring the data, not the models.</p>
+</div>
+</section>
+
+<!-- ======================= 1 ======================= -->
+<section id="s1">
+<h2><span class="n">1</span>Populations, samples and estimators</h2>
+
+<div class="box intuition"><span class="tag">Intuition · tasting soup</span>
+<p>A cook tastes one spoonful to judge a whole pot of soup. The pot is the <strong>population</strong>; the spoonful is the <strong>sample</strong>; "it needs salt" is an <strong>estimate</strong>. A good spoonful comes from a well-stirred pot (a random sample). A spoonful skimmed from the top, where the oil floats, would mislead the cook every time.</p>
+</div>
+
+<p>An <strong>estimator</strong> is a recipe that turns a sample into a guess: "add up the order values and divide by n" is an estimator of the average order value. Two questions decide whether a recipe is good:</p>
+
+<div class="box intuition"><span class="tag">Intuition · the dartboard</span>
+<p>Imagine throwing many darts, one per possible sample. <strong>Bias</strong> is whether the darts are centred on the bullseye or off to one side. <strong>Variance</strong> is how widely they scatter. You want both small: darts that cluster tightly <em>around the bullseye</em>. A tight cluster in the wrong place (low variance, high bias) can be just as bad as a loose cluster around the right place (high variance, low bias).</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">bias(θ̂)     = (average of θ̂ over many samples) − true value      0 means "unbiased"
+variance(θ̂) = how much θ̂ changes from sample to sample</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">import numpy as np
+
+rng = np.random.default_rng(0)
+population = rng.lognormal(mean=7, sigma=0.6, size=1_000_000)   # every order ever: values in ₹
+true_mean, true_var = population.mean(), population.var()
+
+samples = rng.choice(population, size=(20_000, 5))   # 20,000 small samples, 5 orders each
+
+print(f&quot;true mean            : ₹{true_mean:,.0f}&quot;)
+print(f&quot;average sample mean  : ₹{samples.mean(axis=1).mean():,.0f}   ← unbiased: hits the truth on average&quot;)
+print(f&quot;true variance        : {true_var:,.0f}&quot;)
+print(f&quot;average var (÷ n)    : {samples.var(axis=1, ddof=0).mean():,.0f}   ← biased: too small&quot;)
+print(f&quot;average var (÷ n − 1): {samples.var(axis=1, ddof=1).mean():,.0f}   ← unbiased&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>true mean            : ₹1,314
+average sample mean  : ₹1,314   ← unbiased: hits the truth on average
+true variance        : 748,778
+average var (÷ n)    : 604,682   ← biased: too small
+average var (÷ n − 1): 755,853   ← unbiased</pre></div>
+
+<p>Small samples of 5 orders each: the sample mean is right on average (unbiased), but the variance computed by dividing by n comes out about 20% too small. Dividing by <strong>n − 1</strong> fixes that. Why? The sample mean is pulled towards the sample's own points, so distances to it look a little smaller than distances to the true mean. Dividing by a slightly smaller number compensates. (This makes the <em>variance</em> unbiased; its square root, the standard deviation, is still a touch too small on average, but the difference rarely matters.) This is why <code>np.std</code> has a <code>ddof</code> argument, and why pandas' <code>.std()</code> (which uses n − 1) and NumPy's (which uses n by default) give slightly different answers.</p>
+
+<div class="widget" id="w-samp">
+<p class="wt">Draw many samples, watch the estimates</p>
+<p class="wh">Order values are skewed (a few big orders). Choose a sample size and an estimator, then draw 500 samples. The histogram shows where the 500 estimates land; the dashed line is the true value.</p>
+<div class="ctrls"><label>sample size n <input type="range" id="sp-n" min="2" max="200" step="1" value="10"> <b id="sp-nv">10</b></label>
+<div class="seg" id="sp-est"><button class="on" data-e="mean">mean</button><button data-e="median">median</button></div>
+<button class="btn primary" id="sp-go">Draw 500 samples</button></div>
+<svg class="chart" id="sp-svg"></svg>
+<div class="readout" id="sp-out"></div>
+</div>
+
+<p>Two things to notice: bigger samples make the histogram narrower (variance shrinks like 1 ÷ n, so the spread shrinks like 1 ÷ √n, as in Part 3), and the sample median of skewed data sits below the mean, because it estimates a different thing: the typical order, not the average one.</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>A model's test accuracy is an estimator of its accuracy on all future data. Cross-validation <em>reduces</em> that estimator's variance by averaging over several splits; the bootstrap and confidence intervals <em>measure</em> it. And the "bias–variance trade-off" in Section 5 is the same dartboard idea, applied to whole models instead of single numbers.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>A survey of customers who chose to reply, or a dataset of only the users who completed sign-up, is a spoonful from the top of the pot: <strong>sampling bias</strong>. Collecting more data the same way doesn't fix it, and models trained on it inherit it. Ask "how was this sample collected?" before "how big is it?".</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> An estimator's guesses average out to exactly the truth, but vary a lot. Biased or unbiased? High or low variance? <em>Answer: unbiased, high variance.</em></p>
+<p><strong>2.</strong> You survey only customers who contacted support. What's the problem? <em>Answer: sampling bias; they are not representative of all customers.</em></p>
+</details>
+</section>
+
+<!-- ======================= 2 ======================= -->
+<section id="s2">
+<h2><span class="n">2</span>Describing data before you model it</h2>
+
+<p>Before training anything, look at your data's shape. Five minutes here prevents days of confusion later.</p>
+
+<h3>Mean, median and skew</h3>
+<div class="box intuition"><span class="tag">Intuition · a billionaire walks into a café</span>
+<p>Ten people in a café earn ₹50,000 a month each. A billionaire walks in. The <strong>mean</strong> income in the room jumps many times over; the <strong>median</strong> (the middle person) is still ₹50,000. The mean is pulled by extremes; the median isn't. Data with a long tail of big values is called <strong>right-skewed</strong>, and money (incomes, order values, house prices) is almost always like this.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from scipy.stats import skew
+
+print(f&quot;mean order   : ₹{population.mean():,.0f}&quot;)
+print(f&quot;median order : ₹{np.median(population):,.0f}&quot;)
+print(f&quot;share of orders below the mean: {np.mean(population &lt; population.mean()):.1%}&quot;)
+print(f&quot;skewness, raw values : {skew(population):.2f}&quot;)
+print(f&quot;skewness, log values : {skew(np.log(population)):.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>mean order   : ₹1,314
+median order : ₹1,097
+share of orders below the mean: 61.8%
+skewness, raw values : 2.26
+skewness, log values : -0.00</pre></div>
+
+<p>62% of orders are below the "average" order, so the average is not typical. Taking the <strong>log</strong> of the values removes the skew completely here (skewness from 2.26 to 0). Linear models and distance-based methods often work better on log-transformed money features, and errors on a log scale treat a ₹100 miss on a ₹500 order like a ₹1,000 miss on a ₹5,000 order.</p>
+
+<h3>Correlation, the right way</h3>
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<ul>
+<li><strong>Pearson's r</strong> measures how well the points fit a <em>straight line</em>, from −1 to +1. It's easily dragged around by a single outlier.</li>
+<li><strong>Spearman's ρ</strong> replaces values by their ranks (1st, 2nd, 3rd…) and then computes Pearson on the ranks. It measures any steadily rising or falling relationship and is much less affected by outliers (though not immune to them).</li>
+</ul>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from scipy.stats import pearsonr, spearmanr
+
+x = rng.normal(size=50)                    # e.g. minutes on site
+y = rng.normal(size=50)                    # e.g. something unrelated
+print(f&quot;unrelated         : Pearson {pearsonr(x, y)[0]:+.2f}   Spearman {spearmanr(x, y)[0]:+.2f}&quot;)
+
+x_out, y_out = np.append(x, 15), np.append(y, 15)          # add ONE extreme customer
+print(f&quot;+ one outlier     : Pearson {pearsonr(x_out, y_out)[0]:+.2f}   Spearman {spearmanr(x_out, y_out)[0]:+.2f}&quot;)
+
+curve = np.exp(x)                                           # perfectly rising, but curved
+print(f&quot;curved, monotonic : Pearson {pearsonr(x, curve)[0]:+.2f}   Spearman {spearmanr(x, curve)[0]:+.2f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>unrelated         : Pearson +0.25   Spearman +0.22
++ one outlier     : Pearson +0.87   Spearman +0.26
+curved, monotonic : Pearson +0.87   Spearman +1.00</pre></div>
+
+<p>Three lessons in three lines. First, with only 50 points, two completely unrelated variables can show a correlation of 0.2 or more just by chance (here +0.25). Second, <strong>one</strong> extreme customer turned that weak noise into an impressive-looking 0.87 for Pearson, while Spearman stayed near 0.26. Third, a perfectly consistent but curved relationship gets Spearman's full +1.00 while Pearson says only 0.87.</p>
+
+<div class="widget" id="w-corr">
+<p class="wt">Pearson vs Spearman</p>
+<p class="wh">Set the true relationship, then add an outlier or bend the pattern. Watch which correlation tells the truth.</p>
+<div class="ctrls"><label>true correlation <input type="range" id="cr-r" min="-0.9" max="0.9" step="0.1" value="0"> <b id="cr-rv">0</b></label>
+<label><input type="checkbox" id="cr-out"> add one extreme outlier</label>
+<label><input type="checkbox" id="cr-curve"> curved (exponential) pattern</label><button class="btn" id="cr-new">New sample</button></div>
+<div class="wgrid">
+<svg class="plane" id="cr-svg"></svg>
+<div class="readout" id="cr-out-r"></div>
+</div>
+</div>
+
+<div class="box mistake"><span class="tag">Common mistake · correlation is not causation</span>
+<p>Ice-cream sales and sunburn cases rise together, but ice cream doesn't cause sunburn; hot weather drives both. In business data, a <strong>hidden common cause</strong> is everywhere: customers who use the premium feature churn less, but maybe it's because loyal customers are the ones who try premium features. A model can use a correlation to <em>predict</em>; deciding what to <em>change</em> needs an experiment (Section 10).</p>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Exploring data drives feature engineering: log-transform skewed features, use medians for robust imputation of missing values, check correlations between features (multicollinearity, Part 1) and with the target. Tree-based models are unaffected by skew in their input features (a log doesn't change where a split falls); linear models, neural networks and k-NN often benefit from fixing it.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> House prices: mean ₹95 lakh, median ₹60 lakh. Which way is the data skewed? <em>Answer: right-skewed; a few very expensive houses pull the mean up.</em></p>
+<p><strong>2.</strong> Your scatter plot has one point far away from the others. Which correlation should you trust more? <em>Answer: Spearman's, and also look at the point: is it an error?</em></p>
+</details>
+</section>
+
+<!-- ======================= 3 ======================= -->
+<section id="s3">
+<h2><span class="n">3</span>How sure is a test score? The standard error</h2>
+
+<div class="box intuition"><span class="tag">Intuition · a cricket batter's average</span>
+<p>A batter who scores 80 in her first two innings doesn't have a "true" average of 80; a couple of good days can do that. After 100 innings, her average means something. A model's test accuracy works the same way: on 100 test customers it's a rough guess; on 10,000 it's solid.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">accuracy is a proportion:     SE = √( p × (1 − p) / n )
+rough 95% range:              p ± 1.96 × SE        (the bell curve from Part 3)</div>
+<p>Each test example is a Bernoulli trial (right or wrong, Part 3), so the accuracy is the average of n yes/no values, and the σ ÷ √n rule applies (as long as the test examples are independent, e.g. not several rows from the same customer).</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">true_acc = 0.85                           # the model&#x27;s real accuracy on ALL future customers
+
+for n in [100, 500, 2_000, 10_000]:
+    se = np.sqrt(true_acc * (1 - true_acc) / n)               # standard error of an accuracy
+    sims = rng.binomial(n, true_acc, size=10_000) / n          # 10,000 possible test sets
+    lo, hi = np.percentile(sims, [2.5, 97.5])
+    print(f&quot;test set of {n:&gt;6,}: ±{1.96 * se:.3f}   (simulated 95% range {lo:.3f} to {hi:.3f})&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>test set of    100: ±0.070   (simulated 95% range 0.780 to 0.920)
+test set of    500: ±0.031   (simulated 95% range 0.818 to 0.880)
+test set of  2,000: ±0.016   (simulated 95% range 0.835 to 0.866)
+test set of 10,000: ±0.007   (simulated 95% range 0.843 to 0.857)</pre></div>
+
+<p>With 100 test customers, a model whose true accuracy is 85% could easily score anywhere from 78% to 92%. That's why "87% vs 86%" on a small test set tells you almost nothing. To pin accuracy down to about ±1 point, you need several thousand test examples. The formula and the 10,000 simulated test sets agree.</p>
+
+<div class="widget" id="w-test">
+<p class="wt">How big should the test set be?</p>
+<p class="wh">Set the model's true accuracy and the test-set size. The bars show how likely each score is, across all the different test sets of that size you might have drawn.</p>
+<div class="ctrls">
+<label>true accuracy <input type="range" id="ts-p" min="0.5" max="0.99" step="0.01" value="0.85"> <b id="ts-pv">0.85</b></label>
+<label>test-set size <input type="range" id="ts-n" min="1" max="4" step="0.05" value="2"> <b id="ts-nv">100</b></label>
+</div>
+<svg class="chart" id="ts-svg"></svg>
+<div class="readout" id="ts-out"></div>
+</div>
+
+<div class="box biz"><span class="tag">In business</span>
+<p>A dashboard that shows "model accuracy this week: 91.2%" with no error bar invites over-reaction to noise. A drop to 89.8% on a week with 300 cases is probably nothing; on a week with 30,000 cases it's almost certainly a real drop. Showing the range alongside the number saves a lot of unnecessary meetings.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Accuracy 0.9 on 400 test examples. Roughly what is the 95% range? <em>Answer: SE = √(0.9 × 0.1 / 400) = 0.015, so about 0.87 to 0.93.</em></p>
+<p><strong>2.</strong> To halve the error bar, how much bigger must the test set be? <em>Answer: four times bigger.</em></p>
+</details>
+</section>
+
+<!-- ======================= 4 ======================= -->
+<section id="s4">
+<h2><span class="n">4</span>Confidence intervals and the bootstrap</h2>
+
+<p>The formula in Section 3 works for accuracy. But what about AUC, F1, median revenue per customer, or "precision at the top 100"? Their formulas are messy or don't exist. The <strong>bootstrap</strong> gives an error bar for almost <em>any</em> metric with one simple trick. (It struggles with very small samples and with extremes such as "the maximum", but works well for everyday model metrics.)</p>
+
+<div class="box intuition"><span class="tag">Intuition · pretend your sample is the population</span>
+<p>You can't go back and collect new test sets. So make pretend ones: draw rows from your test set <strong>at random, with replacement</strong> (some rows get picked twice, some not at all) until you have a new set of the same size. Compute the metric. Repeat a couple of thousand times. The spread of those results shows how much the metric could have wobbled.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">What a 95% confidence interval really means</span>
+<p>"If we repeated the whole process (collect data, compute the interval) many times, about 95% of the intervals would contain the true value." It does <em>not</em> mean "there's a 95% chance the true value is in this particular interval", though in everyday use people often read it that way. The practical takeaway is the same: values inside the interval are plausible; values far outside it aren't.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.metrics import roc_auc_score
+
+n = 400
+y_test = (rng.random(n) &lt; 0.3).astype(int)                 # 30% of test customers churned
+scores = y_test * 1.0 + rng.normal(0, 0.8, n)              # a model&#x27;s churn scores
+
+auc = roc_auc_score(y_test, scores)
+boot = []
+for _ in range(2_000):
+    idx = rng.integers(0, n, n)                             # resample the test set WITH replacement
+    if y_test[idx].min() != y_test[idx].max():               # need both classes present
+        boot.append(roc_auc_score(y_test[idx], scores[idx]))
+lo, hi = np.percentile(boot, [2.5, 97.5])
+print(f&quot;AUC = {auc:.3f}   95% bootstrap interval: {lo:.3f} to {hi:.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>AUC = 0.833   95% bootstrap interval: 0.792 to 0.872</pre></div>
+
+<p>An AUC of 0.833 on 400 customers really means "somewhere around 0.79 to 0.87". If a competing model scores 0.85 on the same data, you haven't shown it's better yet (Section 8 shows how to check properly).</p>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Report every final metric with an interval: "AUC 0.833 (95% CI 0.79–0.87)". The bootstrap also powers <strong>bagging</strong> and <strong>random forests</strong>, which train each tree on a bootstrap sample of the rows and average the trees to cut variance. It's also used to put error bars on feature importances and on predictions themselves.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>"The new pricing raised revenue per customer by ₹42 (95% CI ₹5 to ₹80)" tells a manager both the likely gain and the risk that it's close to zero. A bare "₹42" invites over-confidence. The bootstrap lets analysts give that range for medians and other metrics where textbook formulas don't apply.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> In a bootstrap sample of size n, why do some rows appear twice? <em>Answer: rows are drawn with replacement.</em></p>
+<p><strong>2.</strong> Two models' intervals overlap a lot. Can you conclude they're equally good? <em>Answer: no. Overlap doesn't prove they're equal, and two intervals can even overlap a little while the difference is real. Test the difference itself, ideally with a paired comparison on the same rows (Section 8).</em></p>
+</details>
+</section>
+
+<!-- ======================= 5 ======================= -->
+<section id="s5">
+<h2><span class="n">5</span>The bias–variance trade-off</h2>
+
+<p>This is one of the most important statistical ideas in machine learning. It explains why a model that's perfect on training data can be useless on new data, and why the "best" model is usually neither the simplest nor the most complex.</p>
+
+<div class="box intuition"><span class="tag">Intuition · three students and an exam</span>
+<p>Student A only learned one rule of thumb, "the answer is usually C". He does badly on practice tests and the real exam alike: <strong>underfitting</strong> (high bias). Student B memorised every practice question word for word. She aces the practice tests and fails the real exam, whose questions are slightly different: <strong>overfitting</strong> (high variance). Student C learned the underlying ideas. Decent on practice, decent on the exam: <strong>a good fit</strong>.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded</span>
+<div class="eq">expected test error  =  bias²  +  variance  +  noise</div>
+<ul>
+<li><strong>Bias²</strong>: how far the model's <em>average</em> prediction (over many possible training sets) is from the truth. Too-simple models have high bias.</li>
+<li><strong>Variance</strong>: how much the model's prediction changes when you train it on a different sample. Too-flexible models have high variance.</li>
+<li><strong>Noise</strong>: randomness in the data itself. No model can beat it.</li>
+</ul>
+<p>This exact split holds for squared error; the same idea guides model choice for every loss.</p>
+</div>
+
+<p>To see it, fit polynomials of different degrees to many noisy samples of the same seasonal pattern, and measure each part directly:</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">import warnings
+warnings.simplefilter(&quot;ignore&quot;, np.exceptions.RankWarning)
+
+def true_pattern(x):
+    return np.sin(2 * np.pi * x)                           # e.g. demand through the year
+
+x_grid = np.linspace(0, 1, 100)
+
+x_train = np.linspace(0, 1, 15)                         # 15 measurements, evenly spread
+
+def experiment(degree, n_datasets=300, noise=0.3):
+    preds, train_err, test_err = [], [], []
+    for _ in range(n_datasets):                             # many different &quot;years&quot; of noisy data
+        x = x_train
+        y = true_pattern(x) + rng.normal(0, noise, len(x))
+        coefs = np.polyfit(x, y, degree)                    # fit a polynomial of this degree
+        preds.append(np.polyval(coefs, x_grid))
+        train_err.append(np.mean((np.polyval(coefs, x) - y) ** 2))
+        y_new = true_pattern(x_grid) + rng.normal(0, noise, 100)
+        test_err.append(np.mean((np.polyval(coefs, x_grid) - y_new) ** 2))
+    preds = np.array(preds)
+    bias2 = np.mean((preds.mean(axis=0) - true_pattern(x_grid)) ** 2)
+    variance = np.mean(preds.var(axis=0))
+    return bias2, variance, np.mean(train_err), np.mean(test_err)
+
+print(&quot;degree   bias²   variance   train error   test error&quot;)
+for d in [1, 3, 5, 9, 12]:
+    b2, v, tr, te = experiment(d)
+    print(f&quot;{d:&gt;6}   {b2:5.3f}   {v:8.3f}   {tr:11.3f}   {te:10.3f}&quot;)
+print(&quot;noise² (the floor no model can beat) =&quot;, 0.3 ** 2)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>degree   bias²   variance   train error   test error
+     1   0.211      0.010         0.323        0.312
+     3   0.006      0.022         0.072        0.117
+     5   0.000      0.032         0.051        0.122
+     9   0.000      0.066         0.030        0.156
+    12   0.000      0.517         0.012        0.609
+noise² (the floor no model can beat) = 0.09</pre></div>
+
+<p>Degree 1 (a straight line) can't bend to follow the seasons: huge bias, tiny variance, poor on both training and test data. Degree 3 to 5 captures the pattern: bias near zero and modest variance, giving the lowest test error (about 0.12, against a noise floor of 0.09 that no model can beat). Degree 12 hugs every noisy training point (training error 0.012!) but swings wildly between them: tiny bias, big variance, and the worst test error.</p>
+
+<div class="widget" id="w-bv">
+<p class="wt">Too simple, just right, too flexible</p>
+<p class="wh">Each thin line is the same type of model trained on a different noisy sample. The thick line is their average; the dashed line is the true pattern. Right: training and test error for every degree.</p>
+<div class="ctrls"><label>polynomial degree <input type="range" id="bv-d" min="1" max="12" step="1" value="3"> <b id="bv-dv">3</b></label></div>
+<div class="wgrid two">
+<svg class="chart" id="bv-fit"></svg>
+<svg class="chart" id="bv-err"></svg>
+</div>
+<div class="readout" id="bv-out"></div>
+</div>
+
+<div class="box mathbox"><span class="tag">How to tell which problem you have</span>
+<div class="tw"><table>
+<thead><tr><th></th><th>Training error</th><th>Validation error</th><th>Fixes</th></tr></thead>
+<tbody>
+<tr><td><strong>Underfitting</strong> (high bias)</td><td>high</td><td>high, close to training</td><td>more flexible model, better features, less regularisation</td></tr>
+<tr><td><strong>Overfitting</strong> (high variance)</td><td>low</td><td>much higher than training</td><td>more data, simpler model, regularisation (Parts 2 and 3), early stopping, dropout, bagging</td></tr>
+<tr><td><strong>Good fit</strong></td><td>low-ish</td><td>a little above training</td><td>stop tuning; check on the test set once</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Almost every model setting is a bias–variance dial: tree depth, number of neighbours in k-NN, polynomial degree, network size, the regularisation strength λ, the number of boosting rounds. Ensembles attack one side directly: <strong>bagging</strong> and random forests average many high-variance models to cut variance; <strong>boosting</strong> adds models one after another to cut bias. (Very large neural networks can behave in more surprising ways, sometimes called "double descent", but the train-vs-validation diagnosis above still applies.)</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>An overfit model looks brilliant in the presentation (it was evaluated on data it had seen) and disappoints in production. Asking "what was the validation error, and how far is it from training error?" is the single best question a manager can ask a data team.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Training accuracy 99%, validation accuracy 71%. Bias or variance problem? <em>Answer: variance (overfitting).</em></p>
+<p><strong>2.</strong> Training and validation accuracy are both 62%, far below what you need. What should you try? <em>Answer: a more flexible model or better features; the model is underfitting.</em></p>
+</details>
+</section>
+
+<!-- ======================= 6 ======================= -->
+<section id="s6">
+<h2><span class="n">6</span>Train, validation, test and data leakage</h2>
+
+<div class="box intuition"><span class="tag">Intuition · practice papers, mock exam, real exam</span>
+<p>A student learns from <strong>practice papers</strong> (the training set), checks progress and adjusts their study plan using a <strong>mock exam</strong> (the validation set), and is graded once on the <strong>real exam</strong> (the test set). If the student sees the real exam questions beforehand, the grade stops meaning anything, however good it looks.</p>
+</div>
+
+<div class="tw"><table>
+<thead><tr><th>Set</th><th>Used for</th><th>Typical share</th></tr></thead>
+<tbody>
+<tr><td><strong>Training</strong></td><td>Fitting the model's weights</td><td>60–80%</td></tr>
+<tr><td><strong>Validation</strong></td><td>Choosing features, models and settings (or use cross-validation, Section 7)</td><td>10–20%</td></tr>
+<tr><td><strong>Test</strong></td><td>One final, honest estimate. Never used for decisions.</td><td>10–20%</td></tr>
+</tbody></table></div>
+
+<p><strong>Data leakage</strong> is when information that wouldn't be available at prediction time, or information from the evaluation data, sneaks into training. It makes results look far better than they are. Here's a dramatic example: 100 customers, 5,000 features of pure random noise, and random labels. There is nothing to learn.</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline
+
+X_noise = rng.normal(size=(100, 5_000))     # 100 customers, 5,000 random features
+y_noise = rng.integers(0, 2, 100)          # random labels: there is NOTHING to learn
+
+# Wrong: pick the 20 &quot;best&quot; features using ALL the labels, then cross-validate
+X_picked = SelectKBest(f_classif, k=20).fit_transform(X_noise, y_noise)
+leaky = cross_val_score(LogisticRegression(max_iter=1000), X_picked, y_noise, cv=5).mean()
+
+# Right: feature selection happens INSIDE each training fold
+pipe = make_pipeline(SelectKBest(f_classif, k=20), LogisticRegression(max_iter=1000))
+honest = cross_val_score(pipe, X_noise, y_noise, cv=5).mean()
+
+print(f&quot;leaky accuracy : {leaky:.1%}   ← looks like a great model&quot;)
+print(f&quot;honest accuracy: {honest:.1%}   ← the truth: no better than a coin flip&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>leaky accuracy : 89.0%   ← looks like a great model
+honest accuracy: 50.0%   ← the truth: no better than a coin flip</pre></div>
+
+<p>The leaky version chose the 20 features that <em>happened</em> to line up with the labels across all 100 customers, including the ones later used for validation. Cross-validation then rewarded it for a pattern it had already peeked at. The honest pipeline does the selection inside each training fold and reveals the truth. This exact mistake has shown up in published research.</p>
+
+<div class="box mistake"><span class="tag">The common kinds of leakage</span>
+<ul>
+<li><strong>Preprocessing on all the data:</strong> fitting a scaler, imputer, feature selector or PCA before splitting. Fix: put every step in a <code>Pipeline</code> so it's fitted on training folds only.</li>
+<li><strong>Target leakage:</strong> a feature that is only known after the outcome, such as "number of cancellation calls" in a churn model, or "account closed date". Fix: ask "would I know this value at the moment I make the prediction?".</li>
+<li><strong>Time leakage:</strong> shuffling time-ordered data, so the model trains on the future to predict the past. Fix: split by time (Section 7).</li>
+<li><strong>Duplicate or related rows:</strong> the same customer, patient or image appearing in both train and test. Fix: split by group (all rows of a customer go to the same side).</li>
+<li><strong>Tuning on the test set:</strong> checking test scores again and again while adjusting the model. Fix: tune on validation data; touch the test set once.</li>
+</ul>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>One of the main jobs of scikit-learn's <code>Pipeline</code> and <code>ColumnTransformer</code> is preventing leakage: inside cross-validation, every step is fitted on the training split and only applied to the validation split. In deep learning, the same rule applies to normalisation statistics, vocabularies and tokenisers built from data.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Leakage is one of the most common reasons a model that "scored 95% in testing" fails in production. A churn model built with "complaints in the 30 days before the customer left" used a window that ends at the churn date. In production you predict weeks earlier, when those complaints haven't happened yet, so the model is far weaker than its test score. A leakage review should be part of every model sign-off.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> You standardise all features using the mean and std of the full dataset, then split. Is that leakage? <em>Answer: yes, a mild form; fit the scaler on the training data only.</em></p>
+<p><strong>2.</strong> A loan-default model uses "number of missed payments" from the loan's whole history. What's wrong? <em>Answer: target leakage; missed payments happen after the approval decision.</em></p>
+</details>
+</section>
+
+<!-- ======================= 7 ======================= -->
+<section id="s7">
+<h2><span class="n">7</span>Cross-validation</h2>
+
+<p>A single validation split gives a single, wobbly number. <strong>Cross-validation</strong> uses every row for validation exactly once, and averages.</p>
+
+<div class="box intuition"><span class="tag">Intuition · rotating the judges</span>
+<p>A talent show splits its audience into 5 groups. Each round, one group votes and the other four watch. After 5 rounds every group has voted once, and the average vote is far more reliable than any single group's. In <strong>k-fold cross-validation</strong>, the data is split into k groups (folds); each fold takes a turn as the validation set while the model trains on the rest.</p>
+</div>
+
+<div class="widget" id="w-kf">
+<p class="wt">How the folds rotate</p>
+<p class="wh">Each square is a row of data, in time order from left to right. Step through the folds. Switch to time-series mode to see why shuffled folds are wrong for time-ordered data.</p>
+<div class="ctrls"><div class="seg" id="kf-mode"><button class="on" data-m="kfold">k-fold</button><button data-m="ts">time series</button></div>
+<label>folds k <input type="range" id="kf-k" min="2" max="10" step="1" value="5"> <b id="kf-kv">5</b></label>
+<button class="btn" id="kf-prev">← Prev</button><button class="btn primary" id="kf-next">Next fold →</button></div>
+<svg class="chart" id="kf-svg" style="background:var(--surface)"></svg>
+<div class="readout" id="kf-out"></div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.preprocessing import StandardScaler
+
+X, y = load_breast_cancer(return_X_y=True)            # 569 patients, 30 features
+model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
+
+single = []
+for seed in range(5):                                  # five different random train/test splits
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=seed, stratify=y)
+    single.append(model.fit(X_tr, y_tr).score(X_te, y_te))
+print(&quot;five single splits:&quot;, np.round(single, 3))
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+folds = cross_val_score(model, X, y, cv=cv)
+print(&quot;5-fold CV scores  :&quot;, folds.round(3))
+print(f&quot;CV estimate       : {folds.mean():.3f} ± {folds.std():.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>five single splits: [0.982 0.991 0.982 0.974 0.974]
+5-fold CV scores  : [0.956 0.974 0.982 1.    0.982]
+CV estimate       : 0.979 ± 0.014</pre></div>
+
+<p>Five different random splits gave five different accuracies, from 97.4% to 99.1%: the same model, just different luck. Cross-validation reports the average of the folds, 97.9%, which is more trustworthy than any single split; the ± 1.4% is how much the fold scores vary (their standard deviation), not a confidence interval. The fold scores themselves range from 95.6% to 100%.</p>
+
+<h3>Choosing the right kind of fold</h3>
+<div class="tw"><table>
+<thead><tr><th>Data</th><th>Use</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Classification</td><td><code>StratifiedKFold</code></td><td>Keeps the class mix (nearly) the same in every fold (vital when one class is rare)</td></tr>
+<tr><td>Several rows per customer / patient / store</td><td><code>GroupKFold</code></td><td>All of a group's rows stay together, so the model isn't tested on someone it has already seen</td></tr>
+<tr><td>Time-ordered (sales, prices, logs)</td><td><code>TimeSeriesSplit</code></td><td>Always trains on the past and validates on the future</td></tr>
+</tbody></table></div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.model_selection import TimeSeriesSplit
+
+days = np.arange(12)                                   # 12 days of data, in time order
+for i, (train, val) in enumerate(TimeSeriesSplit(n_splits=4).split(days), 1):
+    print(f&quot;fold {i}: train on days {train.min()}–{train.max()}   validate on days {val.min()}–{val.max()}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>fold 1: train on days 0–3   validate on days 4–5
+fold 2: train on days 0–5   validate on days 6–7
+fold 3: train on days 0–7   validate on days 8–9
+fold 4: train on days 0–9   validate on days 10–11</pre></div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p><code>GridSearchCV</code> and <code>RandomizedSearchCV</code> run cross-validation for every setting they try. If you also want an honest estimate of the tuned model, either keep a separate test set or use <strong>nested cross-validation</strong> (an outer loop for evaluation, an inner loop for tuning). Deep-learning projects usually use one validation split instead, because training k times is expensive.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>For forecasting (demand, revenue, staffing), always validate the way the model will be used: train on everything up to a date and forecast the weeks after it. A forecast model validated with shuffled folds will look much better than it ever performs.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> With 5-fold CV, how many times is the model trained, and how often is each row used for validation? <em>Answer: 5 times; each row is validated exactly once.</em></p>
+<p><strong>2.</strong> Your data has 10 rows per customer. Which splitter should you use? <em>Answer: GroupKFold (grouped by customer).</em></p>
+</details>
+</section>
+
+<!-- ======================= 8 ======================= -->
+<section id="s8">
+<h2><span class="n">8</span>Comparing models fairly</h2>
+
+<h3>Compare on the same rows: paired comparison</h3>
+<div class="box intuition"><span class="tag">Intuition · two runners on the same track</span>
+<p>To see which of two runners is faster, you don't time one on a flat road and the other uphill. You race them on the same track, on the same day. Comparing models works the same way: score both on <strong>the same test rows</strong> and look at the difference row by row. Most rows are easy (both models get them right) and cancel out; the comparison then focuses on the few rows where the models disagree.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.tree import DecisionTreeClassifier
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+pred_a = model.fit(X_tr, y_tr).predict(X_te)                                   # model A
+pred_b = DecisionTreeClassifier(random_state=0).fit(X_tr, y_tr).predict(X_te) # model B
+
+right_a, right_b = (pred_a == y_te), (pred_b == y_te)
+print(f&quot;accuracy A = {right_a.mean():.3f}   accuracy B = {right_b.mean():.3f}&quot;)
+
+diffs = []
+for _ in range(5_000):                                 # paired bootstrap: same rows for both models
+    idx = rng.integers(0, len(y_te), len(y_te))
+    diffs.append(right_a[idx].mean() - right_b[idx].mean())
+lo, hi = np.percentile(diffs, [2.5, 97.5])
+print(f&quot;A − B = {right_a.mean() - right_b.mean():+.3f}   95% interval {lo:+.3f} to {hi:+.3f}&quot;)
+print(f&quot;test rows where they disagree: {(pred_a != pred_b).sum()} of {len(y_te)}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>accuracy A = 0.959   accuracy B = 0.947
+A − B = +0.012   95% interval -0.018 to +0.041
+test rows where they disagree: 6 of 171</pre></div>
+
+<p>Model A looks 1.2 points better, but the paired bootstrap interval runs from −1.8 to +4.1 points, which includes zero. The two models disagree on only 6 of 171 patients, so there just isn't enough evidence yet. The honest conclusion: "no clear winner on this test set". You would need more test data, or repeated cross-validation, to separate them.</p>
+
+<h3>The winner's curse: trying many things</h3>
+<div class="box intuition"><span class="tag">Intuition · a room full of coin-flippers</span>
+<p>Ask 1,000 people to each flip a coin 10 times. Almost certainly, someone will get 9 or 10 heads (each person has about a 1% chance, and there are 1,000 of them). They aren't skilled; you just looked at a lot of people. Trying many models, feature sets or settings and keeping the one with the best test score has the same effect: <strong>the best score is partly luck</strong>, so it overestimates how good the winner really is.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">n_test = 200
+y_hidden = rng.integers(0, 2, n_test)                  # labels nobody can predict
+
+best = []
+for n_models in [1, 10, 100, 1_000]:
+    accs = [(rng.integers(0, 2, n_test) == y_hidden).mean() for _ in range(n_models)]   # random guessers
+    best.append(max(accs))
+    print(f&quot;try {n_models:&gt;5,} useless models → best test accuracy {max(accs):.1%}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>try     1 useless models → best test accuracy 47.5%
+try    10 useless models → best test accuracy 54.5%
+try   100 useless models → best test accuracy 59.0%
+try 1,000 useless models → best test accuracy 60.0%</pre></div>
+
+<p>Every one of those "models" is a random guesser with a true accuracy of 50%. Yet the best of 1,000 scored 60% on the test set. This is why the test set must be used once, at the end: once you start choosing based on test scores, the test score stops being an honest estimate.</p>
+
+<div class="widget" id="w-win">
+<p class="wt">How lucky can a useless model look?</p>
+<p class="wh">Every model here is a coin-flipper (true accuracy 50%). Choose how many you try and how big the test set is, then see the best score.</p>
+<div class="ctrls">
+<label>models tried <input type="range" id="wn-m" min="1" max="500" step="1" value="50"> <b id="wn-mv">50</b></label>
+<label>test-set size <input type="range" id="wn-n" min="20" max="2000" step="10" value="200"> <b id="wn-nv">200</b></label>
+<button class="btn primary" id="wn-go">Run again</button>
+</div>
+<svg class="chart" id="wn-svg"></svg>
+<div class="readout" id="wn-out"></div>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>This is why public leaderboards (Kaggle's public vs private scores) often reshuffle at the end, why heavy hyperparameter searches need a held-out test set, and why "we tried 200 features and kept the significant ones" produces fragile models. The fix is always the same: decide on validation data, confirm once on untouched test data, and prefer simpler choices when differences are within the error bars.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>If a team tested 30 campaign variants and reports the best one's uplift, expect the real uplift to be smaller when it's rolled out. Ask how many variants were tried, and re-test the winner on fresh traffic before scaling it.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> Why is a paired comparison more sensitive than comparing two separate intervals? <em>Answer: it cancels out the rows both models get right (or wrong) and focuses on the differences.</em></p>
+<p><strong>2.</strong> You tried 50 model settings and the best scored 91% on the test set. Is 91% an honest estimate? <em>Answer: no, it's optimistic; you chose it because it scored well on that very set.</em></p>
+</details>
+</section>
+
+<!-- ======================= 9 ======================= -->
+<section id="s9">
+<h2><span class="n">9</span>Baselines and imbalanced data</h2>
+
+<div class="box intuition"><span class="tag">Intuition · the weather forecaster who always says "sunny"</span>
+<p>In a city where it's sunny 95% of the time, a forecaster who always says "sunny" is right 95% of the time, and completely useless on the one day you need an umbrella. A model's score only means something next to a <strong>baseline</strong>: what you'd get with no model at all.</p>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, recall_score
+
+y_fraud = (rng.random(10_000) &lt; 0.05).astype(int)     # 5% of transactions are fraud
+X_any = rng.normal(size=(10_000, 3))
+
+always_no = DummyClassifier(strategy=&quot;most_frequent&quot;).fit(X_any, y_fraud)
+pred = always_no.predict(X_any)
+print(f&quot;accuracy          : {accuracy_score(y_fraud, pred):.1%}   ← sounds great&quot;)
+print(f&quot;balanced accuracy : {balanced_accuracy_score(y_fraud, pred):.1%}&quot;)
+print(f&quot;frauds caught     : {recall_score(y_fraud, pred):.1%}   ← catches none&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>accuracy          : 94.7%   ← sounds great
+balanced accuracy : 50.0%
+frauds caught     : 0.0%   ← catches none</pre></div>
+
+<p>A model that does nothing gets 94.7% accuracy because only about 5% of transactions are fraud. Balanced accuracy (the average of the accuracy on each class) drops to 50%, the coin-flip level, and recall shows it catches zero frauds. Always compute the baseline first; scikit-learn's <code>DummyClassifier</code> and <code>DummyRegressor</code> do it in one line.</p>
+
+<div class="box mathbox"><span class="tag">Better choices when one class is rare</span>
+<ul>
+<li><strong>Metrics:</strong> precision, recall, F1, PR-AUC and balanced accuracy, rather than plain accuracy. (Part 3's Bayes section shows why precision collapses when positives are rare.)</li>
+<li><strong>Splits:</strong> stratified, so every fold has some positives.</li>
+<li><strong>Training:</strong> class weights (<code>class_weight="balanced"</code>), resampling, or simply a different decision threshold than 0.5.</li>
+<li><strong>Error bars:</strong> with 30 frauds in the test set, recall can only move in steps of 1/30 ≈ 3.3 points, and its interval is wide. Count your positives, not just your rows.</li>
+</ul>
+</div>
+
+<div class="box biz"><span class="tag">In business</span>
+<p>Always present a model as "compared with what we do today": the current rules, a simple heuristic, or doing nothing. "Our model catches 70% of fraud at a 2% review rate, versus 35% for the current rules" is a business case. "Our model has 97% accuracy" isn't.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> 2% of customers churn. What accuracy does "predict nobody churns" get? <em>Answer: 98%.</em></p>
+<p><strong>2.</strong> Name two metrics that would expose that useless model. <em>Answer: recall (0%) and balanced accuracy (50%); also F1 or PR-AUC.</em></p>
+</details>
+</section>
+
+<!-- ======================= 10 ======================= -->
+<section id="s10">
+<h2><span class="n">10</span>A/B tests: did the new model really help?</h2>
+
+<p>Offline metrics only predict business impact. The real test is an <strong>A/B test</strong>: show the old model (A) to one random half of users and the new model (B) to the other half, then compare an outcome such as conversion. Random assignment is what makes it an experiment: it breaks hidden common causes (Section 2), so a difference can be credited to the model.</p>
+
+<div class="box intuition"><span class="tag">Intuition · the "innocent until proven guilty" rule</span>
+<p>A court starts by assuming the defendant is innocent, and convicts only if the evidence would be very surprising for an innocent person. A hypothesis test starts by assuming the new model makes <strong>no difference</strong> (the null hypothesis H₀), and only declares a winner if the observed difference would be very surprising if H₀ were true.</p>
+</div>
+
+<div class="box mathbox"><span class="tag">Math, decoded · the p-value, in one sentence</span>
+<p><strong>"If there were truly no difference, how often would random chance alone produce a gap at least as big as the one we saw?"</strong> A small p-value (below α, usually 0.05) means the result would be unusual if there were no real difference, so "it was just luck" becomes hard to believe. It is <em>not</em> the probability that the new model is better, and it says nothing about whether the difference is big enough to matter.</p>
+<div class="eq">z = (p_B − p_A) / SE          how many standard errors apart the two conversion rates are
+|z| ≈ 1.96  ↔  p-value ≈ 0.05</div>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from scipy.stats import norm
+
+# Old recommendation model (A) vs new model (B), shown to random halves of visitors
+buys_a, visits_a = 480, 10_000
+buys_b, visits_b = 540, 10_000
+
+p_a, p_b = buys_a / visits_a, buys_b / visits_b
+p_pool = (buys_a + buys_b) / (visits_a + visits_b)
+se_pool = np.sqrt(p_pool * (1 - p_pool) * (1 / visits_a + 1 / visits_b))
+z = (p_b - p_a) / se_pool
+p_value = 2 * (1 - norm.cdf(abs(z)))                   # two-sided
+
+se_diff = np.sqrt(p_a * (1 - p_a) / visits_a + p_b * (1 - p_b) / visits_b)
+lo, hi = (p_b - p_a) - 1.96 * se_diff, (p_b - p_a) + 1.96 * se_diff
+print(f&quot;conversion A = {p_a:.2%}   B = {p_b:.2%}   lift = {100 * (p_b - p_a):+.2f} percentage points&quot;)
+print(f&quot;z = {z:.2f}   p-value = {p_value:.3f}&quot;)
+print(f&quot;95% interval for the lift: {100 * lo:+.2f} to {100 * hi:+.2f} percentage points&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>conversion A = 4.80%   B = 5.40%   lift = +0.60 percentage points
+z = 1.93   p-value = 0.054
+95% interval for the lift: -0.01 to +1.21 percentage points</pre></div>
+
+<p>The new model lifted conversion from 4.80% to 5.40%. That's a lift of 0.6 <strong>percentage points</strong> (a 12.5% relative increase). Encouraging, but the p-value is 0.054 and the interval for the lift runs from about −0.01 to +1.21 percentage points: it just includes zero. Honest summary: "promising, but not conclusive at the usual 5% level". If the test hasn't yet reached the sample size you planned, let it run to that size; if it has, don't keep extending it until p dips below 0.05 (that's the peeking mistake below). Run a larger, planned follow-up instead. The interval is more useful than the yes/no verdict, because it shows the plausible size of the gain.</p>
+
+<h3>Plan the sample size before you start</h3>
+<p>Small lifts need surprisingly large tests. This rough formula gives the visitors needed per group to detect a lift with 80% probability (called the test's <strong>power</strong>):</p>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">def visitors_needed(p_base, lift, alpha=0.05, power=0.80):
+    &quot;&quot;&quot;Rough visitors per group to detect a lift (two-sided test).&quot;&quot;&quot;
+    z_a, z_b = norm.ppf(1 - alpha / 2), norm.ppf(power)
+    p_new = p_base + lift
+    var = p_base * (1 - p_base) + p_new * (1 - p_new)
+    return int(np.ceil((z_a + z_b) ** 2 * var / lift ** 2))
+
+for lift in [0.002, 0.005, 0.01]:
+    print(f&quot;detect 4.8% → {0.048 + lift:.1%}: about {visitors_needed(0.048, lift):,} visitors per group&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>detect 4.8% → 5.0%: about 182,872 visitors per group
+detect 4.8% → 5.3%: about 30,105 visitors per group
+detect 4.8% → 5.8%: about 7,875 visitors per group</pre></div>
+
+<div class="widget" id="w-ab">
+<p class="wt">A/B test calculator</p>
+<p class="wh">Type the results of your test. The verdict, p-value and interval update instantly.</p>
+<div class="tw" style="max-width:520px"><table>
+<thead><tr><th></th><th>Conversions</th><th>Visitors</th></tr></thead>
+<tbody>
+<tr><td><strong>A</strong> (old)</td><td><input type="number" id="ab-ca" value="480" min="0" style="width:100%;max-width:110px;box-sizing:border-box"></td><td><input type="number" id="ab-na" value="10000" min="1" style="width:100%;max-width:110px;box-sizing:border-box"></td></tr>
+<tr><td><strong>B</strong> (new)</td><td><input type="number" id="ab-cb" value="540" min="0" style="width:100%;max-width:110px;box-sizing:border-box"></td><td><input type="number" id="ab-nb" value="10000" min="1" style="width:100%;max-width:110px;box-sizing:border-box"></td></tr>
+</tbody></table></div>
+<svg class="chart" id="ab-svg"></svg>
+<div class="readout" id="ab-out"></div>
+</div>
+
+<div class="box mistake"><span class="tag">Common A/B mistakes</span>
+<ul>
+<li><strong>Peeking:</strong> checking every day and stopping the moment p &lt; 0.05 inflates false wins badly. Decide the sample size in advance (or use methods built for continuous monitoring).</li>
+<li><strong>Many metrics, one winner:</strong> test 20 metrics where nothing really changed and, on average, one will look "significant" by chance at α = 0.05. Pick the main metric before the test.</li>
+<li><strong>Statistical vs practical significance:</strong> with millions of users, a lift of 0.01 percentage points can be "significant" and still not worth the engineering cost. Look at the interval and the money.</li>
+</ul>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Online experiments are the final judge of recommendation, ranking, pricing and fraud models, because offline metrics (AUC, NDCG) don't always move business metrics. Many teams run a <strong>shadow mode</strong> first (the new model predicts but doesn't act), then a small A/B test, then a gradual rollout.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> p-value = 0.003. Does that mean there's a 99.7% chance model B is better? <em>Answer: no. It means a gap this large would be rare (0.3%) if there were truly no difference.</em></p>
+<p><strong>2.</strong> To detect a lift half as big, roughly how many more visitors do you need? <em>Answer: about four times as many.</em></p>
+</details>
+</section>
+
+<!-- ======================= 11 ======================= -->
+<section id="s11">
+<h2><span class="n">11</span>Is production still like training? Detecting drift</h2>
+
+<div class="box intuition"><span class="tag">Intuition · a map of a city that keeps growing</span>
+<p>A map drawn five years ago is still mostly right, but new roads and flyovers make it slowly wrong. A model is a map of the data it was trained on. When customers, prices or behaviour change, the model's map drifts out of date, often silently: it keeps giving confident answers, just worse ones.</p>
+</div>
+
+<div class="tw"><table>
+<thead><tr><th>Kind of drift</th><th>What changed</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td><strong>Data drift</strong> (covariate shift)</td><td>The inputs' distribution</td><td>A campaign brings in older customers than before</td></tr>
+<tr><td><strong>Concept drift</strong></td><td>The link between inputs and the target</td><td>After a competitor's price cut, the same customers now churn more</td></tr>
+<tr><td><strong>Label drift</strong></td><td>How common each outcome is</td><td>Fraud rate doubles during the festive season</td></tr>
+</tbody></table></div>
+
+<div class="box mathbox"><span class="tag">Two standard drift checks</span>
+<ul>
+<li><strong>Kolmogorov–Smirnov (KS) statistic:</strong> the largest vertical gap between the two cumulative distributions (training vs production), from 0 (identical) to 1 (completely different). <code>scipy.stats.ks_2samp</code> also gives a p-value.</li>
+<li><strong>Population Stability Index (PSI):</strong> bins the feature using training percentiles and compares the shares in each bin (on the binned shares it equals KL divergence from Part 3 measured in both directions and added together). A common industry rule of thumb: below 0.1 stable, 0.1–0.25 worth watching, above 0.25 significant shift.</li>
+</ul>
+</div>
+
+<div class="code"><div class="code-h"><span>Python</span><button>Copy</button></div><pre><code class="language-python">from scipy.stats import ks_2samp
+
+train_age = rng.normal(35, 8, 5_000)                  # customer age when the model was trained
+prod_same = rng.normal(35, 8, 5_000)                  # production, nothing changed
+prod_drift = rng.normal(40, 10, 5_000)                # production after a campaign brought older customers
+
+def psi(expected, actual, bins=10):
+    edges = np.percentile(expected, np.linspace(0, 100, bins + 1))
+    edges[0], edges[-1] = -np.inf, np.inf
+    e = np.histogram(expected, edges)[0] / len(expected)
+    a = np.histogram(actual, edges)[0] / len(actual)
+    e, a = np.clip(e, 1e-6, None), np.clip(a, 1e-6, None)
+    return np.sum((a - e) * np.log(a / e))
+
+for name, prod in [(&quot;no change&quot;, prod_same), (&quot;after the campaign&quot;, prod_drift)]:
+    ks = ks_2samp(train_age, prod)
+    print(f&quot;{name:19s} KS = {ks.statistic:.3f} (p = {ks.pvalue:.3g})   PSI = {psi(train_age, prod):.3f}&quot;)</code></pre></div><div class="out"><div class="code-h"><span>Output</span></div><pre>no change           KS = 0.022 (p = 0.163)   PSI = 0.007
+after the campaign  KS = 0.247 (p = 1.72e-134)   PSI = 0.334</pre></div>
+
+<p>With no change, KS is tiny and PSI is 0.007: stable. After the campaign, PSI is 0.33, well above the 0.25 alarm level. One practical warning: with thousands of rows, KS p-values become tiny even for harmless shifts, so teams usually alert on the size of the change (the KS statistic or PSI), not on the p-value.</p>
+
+<div class="widget" id="w-drift">
+<p class="wt">Training data vs production data</p>
+<p class="wh">Shift the production distribution of customer age and watch the drift scores. The PSI here is computed from the two curves with 10 training-based bins.</p>
+<div class="ctrls">
+<label>production mean <input type="range" id="dr-m" min="25" max="50" step="0.5" value="35"> <b id="dr-mv">35</b></label>
+<label>production spread <input type="range" id="dr-s" min="4" max="16" step="0.5" value="8"> <b id="dr-sv">8</b></label>
+</div>
+<svg class="chart" id="dr-svg"></svg>
+<div class="readout" id="dr-out"></div>
+</div>
+
+<div class="box ml"><span class="tag">In ML</span>
+<p>Drift monitoring is a core MLOps job: track the input distributions, the prediction distribution and (when labels arrive) the real performance, and trigger alerts or retraining when they move. Tools such as Evidently and many cloud ML platforms compute KS, PSI and similar scores per feature on a schedule.</p>
+</div>
+<div class="box biz"><span class="tag">In business</span>
+<p>Drift checks turn "the model seems worse lately" into a dated, measurable alert, often before revenue is hit. They also explain surprises: a sudden jump in loan approvals may be a shift in applicants after a marketing push, not a broken model. Deciding in advance what level of drift triggers a review or a retrain is a simple, high-value policy.</p>
+</div>
+
+<details class="check"><summary>Check yourself</summary>
+<p><strong>1.</strong> A feature's PSI between training and last month is 0.31. What should you do? <em>Answer: investigate; it's a significant shift, and the model may need retraining or a fix upstream.</em></p>
+<p><strong>2.</strong> Inputs look the same as in training, but accuracy has dropped. What kind of drift is that? <em>Answer: most likely concept drift (the relationship between inputs and outcome changed), once you've ruled out a broken data pipeline or labelling change.</em></p>
+</details>
+</section>
+
+<!-- ======================= 12 ======================= -->
+<section id="s12">
+<h2><span class="n">12</span>Bridge to ML/DL, mistakes, quiz and cheat sheet</h2>
+
+<h3>Where you'll meet these ideas next</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea from this article</th><th>Shows up later as…</th></tr></thead>
+<tbody>
+<tr><td>Estimators, bias, variance</td><td>Every reported metric; the bias–variance view of every model</td></tr>
+<tr><td>Skew, log transforms, medians</td><td>Feature engineering, robust imputation, log targets in regression</td></tr>
+<tr><td>Pearson vs Spearman</td><td>Feature screening, ranking metrics, monitoring</td></tr>
+<tr><td>Standard error, bootstrap CIs</td><td>Honest model reports; bagging and random forests</td></tr>
+<tr><td>Bias–variance trade-off</td><td>Choosing tree depth, k, λ, network size, boosting rounds; ensembles; early stopping</td></tr>
+<tr><td>Splits and leakage</td><td>Pipelines, feature stores, time-based backtesting</td></tr>
+<tr><td>Cross-validation</td><td>GridSearchCV, nested CV, model selection</td></tr>
+<tr><td>Paired comparison, winner's curse</td><td>Model selection, leaderboards, hyperparameter search</td></tr>
+<tr><td>Baselines, imbalance</td><td>Precision/recall, PR-AUC, class weights, thresholds</td></tr>
+<tr><td>A/B tests, p-values, power</td><td>Online evaluation, rollout decisions</td></tr>
+<tr><td>KS, PSI, drift types</td><td>MLOps monitoring and retraining triggers</td></tr>
+</tbody></table></div>
+
+<h3>Where each idea earns money</h3>
+<div class="tw"><table>
+<thead><tr><th>Concept</th><th>Business use</th></tr></thead>
+<tbody>
+<tr><td>Sampling bias awareness</td><td>Trustworthy surveys and training data</td></tr>
+<tr><td>Medians and logs</td><td>Honest "typical customer" numbers; better revenue models</td></tr>
+<tr><td>Error bars on metrics</td><td>Fewer over-reactions to noisy dashboard changes</td></tr>
+<tr><td>Bias–variance diagnosis</td><td>Models that perform in production as well as in the demo</td></tr>
+<tr><td>Leakage reviews</td><td>No "95% in testing, useless in production" surprises</td></tr>
+<tr><td>Baselines</td><td>Clear business cases: "versus what we do today"</td></tr>
+<tr><td>A/B tests and sample-size planning</td><td>Launch decisions backed by evidence, with budgets set in advance</td></tr>
+<tr><td>Drift monitoring</td><td>Retraining before performance (and revenue) drops</td></tr>
+</tbody></table></div>
+
+<h3>Common mistakes and fixes</h3>
+<div class="box mistake"><span class="tag">Mistakes and fixes</span>
+<ol>
+<li><strong>Reporting a metric without an error bar.</strong> Add a formula-based or bootstrap interval.</li>
+<li><strong>Preprocessing before splitting.</strong> Put every step inside a Pipeline.</li>
+<li><strong>Using the test set to choose anything.</strong> Choose on validation or CV; test once.</li>
+<li><strong>Shuffling time-series data.</strong> Use time-based splits.</li>
+<li><strong>Calling a 1-point gain "better" on a small test set.</strong> Do a paired comparison first.</li>
+<li><strong>Ignoring the baseline.</strong> Always compare against "no model" and the current process.</li>
+<li><strong>Reading a p-value as "the chance B is better".</strong> It's the chance of a gap at least this big if there were no real difference.</li>
+<li><strong>Peeking at A/B tests.</strong> Fix the sample size first.</li>
+<li><strong>Trusting correlation as causation.</strong> Use experiments to decide what to change.</li>
+</ol>
+</div>
+
+<h3>Quiz</h3>
+<div class="widget quiz" id="quiz"><p class="wt">Ten questions. Click an answer to see why.</p><div id="quiz-body"></div><p class="readout">Score: <span class="score" id="quiz-score">0 / 10</span></p></div>
+
+<h3>Cheat sheet</h3>
+<div class="tw"><table>
+<thead><tr><th>Idea</th><th>One line</th><th>Formula / code</th></tr></thead>
+<tbody>
+<tr><td>Unbiased variance</td><td>Divide by n − 1</td><td><code>np.var(x, ddof=1)</code></td></tr>
+<tr><td>Skew</td><td>Long tail; mean ≠ median</td><td><code>scipy.stats.skew</code>, <code>np.log</code></td></tr>
+<tr><td>Correlation</td><td>Straight-line vs any rising link</td><td><code>pearsonr</code>, <code>spearmanr</code></td></tr>
+<tr><td>SE of accuracy</td><td>Wobble of a proportion</td><td><code>sqrt(p*(1-p)/n)</code></td></tr>
+<tr><td>95% interval</td><td>Estimate ± 1.96 SE</td><td><code>p ± 1.96*se</code></td></tr>
+<tr><td>Bootstrap</td><td>Resample rows with replacement</td><td><code>rng.integers(0, n, n)</code></td></tr>
+<tr><td>Bias–variance</td><td>Error = bias² + variance + noise</td><td>compare train vs validation error</td></tr>
+<tr><td>No leakage</td><td>Fit every step on training folds only</td><td><code>make_pipeline(...)</code></td></tr>
+<tr><td>Cross-validation</td><td>Every row validates once</td><td><code>cross_val_score(model, X, y, cv=5)</code></td></tr>
+<tr><td>Right splitter</td><td>Stratified / Group / TimeSeries</td><td><code>StratifiedKFold</code>, <code>GroupKFold</code>, <code>TimeSeriesSplit</code></td></tr>
+<tr><td>Paired comparison</td><td>Same rows, look at differences</td><td>paired bootstrap of A − B</td></tr>
+<tr><td>Baseline</td><td>What "no model" scores</td><td><code>DummyClassifier()</code></td></tr>
+<tr><td>A/B z-test</td><td>Gap in standard errors</td><td><code>(pB - pA) / se_pool</code></td></tr>
+<tr><td>Sample size</td><td>Half the lift, 4× the visitors</td><td><code>(zα+zβ)² · var / lift²</code></td></tr>
+<tr><td>Drift</td><td>Has the input distribution moved?</td><td><code>ks_2samp</code>, PSI &gt; 0.25</td></tr>
+</tbody></table></div>
+</section>
+
+<div class="recap" id="recap">
+<h2>Quick recap</h2>
+<ul>
+<li><strong>Every metric is an estimate.</strong> An estimator has bias (off-centre) and variance (scatter); good ones are low on both. Divide by n − 1 for an unbiased variance.</li>
+<li><strong>Look before you model:</strong> money is skewed, so medians and logs help; Spearman resists outliers; correlation is not causation.</li>
+<li>A test score wobbles by about <strong>√(p(1 − p)/n)</strong>. The <strong>bootstrap</strong> gives an interval for almost any metric.</li>
+<li><strong>Bias–variance:</strong> too simple underfits, too flexible overfits. Compare training and validation error to tell which.</li>
+<li><strong>Seal the test set.</strong> Do all preprocessing inside pipelines, split by time or group when needed, and cross-validate to choose.</li>
+<li><strong>Compare fairly:</strong> paired, on the same rows, against a baseline, remembering that the best of many tries is partly luck.</li>
+<li>After launch, confirm with an <strong>A/B test</strong> (plan the sample size; read the interval, not just the p-value) and watch for <strong>drift</strong> with KS and PSI.</li>
+</ul>
+</div>
+<div class="next"><div><small>The complete series</small><h3>Mathematics for Machine Learning: Parts 1–4</h3><p>Linear algebra (the shapes), calculus (the engine), probability (the meaning) and statistics (the honesty check). Together they cover the maths behind most ML and deep-learning work.</p></div><a class="cta" href="article1_linear_algebra_for_ml.html">Back to Part 1</a></div>
+
+</article>
+</div>
+
+<footer><b>Mathematics for Machine Learning</b>, Part 4 of 4. Every Python output shown was produced by running the code; interactive figures run in your browser and use fresh random numbers each time.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+/* ---------- progress bar ---------- */
+(function(){var bar=document.getElementById('progress');function p(){var h=document.documentElement.scrollHeight-innerHeight;bar.style.width=(h>0?Math.min(scrollY/h*100,100):0)+'%';}addEventListener('scroll',p,{passive:true});p();})();
+/* ---------- code: highlight + copy ---------- */
+try{ if(window.hljs) document.querySelectorAll('pre code.language-python').forEach(b=>hljs.highlightElement(b)); }catch(e){}
+document.querySelectorAll('.code').forEach(c=>{const b=c.querySelector('button'),code=c.querySelector('code');
+  if(b) b.addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(code.innerText).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200);});});});
+
+/* ---------- helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function fmt(v,d=2){const p=10**d;let r=Math.round(v*p)/p;if(Object.is(r,-0))r=0;return String(r);}
+function pct(v,d=1){return fmt(v*100,d)+'%';}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent,x,y,s,attrs={}){const t=el('text',Object.assign({x,y},attrs),parent);t.textContent=s;return t;}
+function frame(svg,W,H,xr,yr,opts={}){
+  const cw=(svg.parentNode&&svg.parentNode.clientWidth)||W; if(cw<W) W=Math.max(cw,300);   // narrow screens: keep text readable
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML='';
+  const m=Object.assign({l:46,r:14,t:24,b:34},opts.m||{});
+  const X=x=>m.l+(x-xr[0])/(xr[1]-xr[0])*(W-m.l-m.r);
+  const Y=y=>H-m.b-(y-yr[0])/(yr[1]-yr[0])*(H-m.t-m.b);
+  const g=el('g',{},svg);
+  (opts.xt||[]).forEach(v=>{el('line',{x1:X(v),x2:X(v),y1:m.t,y2:H-m.b,class:'gridline'},g);txt(g,X(v),H-m.b+15,String(opts.xf?opts.xf(v):v),{'text-anchor':'middle'});});
+  (opts.yt||[]).forEach(v=>{el('line',{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),class:'gridline'},g);txt(g,m.l-6,Y(v)+4,String(opts.yf?opts.yf(v):v),{'text-anchor':'end'});});
+  if(opts.xl) txt(g,(m.l+W-m.r)/2,H-3,opts.xl,{'text-anchor':'middle'});
+  if(opts.yl) txt(g,m.l,m.t-9,opts.yl,{'text-anchor':'start'});
+  const cid='clip'+Math.random().toString(36).slice(2);
+  const cp=el('clipPath',{id:cid},svg); el('rect',{x:m.l,y:m.t-2,width:W-m.l-m.r,height:H-m.t-m.b+2},cp);
+  const layer=el('g',{'clip-path':`url(#${cid})`},svg), top=el('g',{},svg);
+  return {X,Y,layer,top,m,W,H};
+}
+function niceTicks(max,count=5){const raw=max/count,p=10**Math.floor(Math.log10(raw)),n=raw/p,step=(n<1.5?1:n<3?2:n<7?5:10)*p;const t=[];for(let v=0;v<=max+1e-9;v+=step)t.push(Math.round(v));return t;}
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+const ncdf=(x,mu,sd)=>0.5*(1+erf((x-mu)/(sd*Math.SQRT2)));
+const npdf=(x,mu,sd)=>Math.exp(-0.5*((x-mu)/sd)**2)/(sd*Math.sqrt(2*Math.PI));
+function seg(id,cb){document.querySelectorAll(id+' button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll(id+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b);}));}
+const H2=p=>-p.reduce((s,v)=>s+(v>0?v*Math.log2(v):0),0);
+
+const BV={"fits":{"1":[[0.78,0.755,0.73,0.704,0.679,0.654,0.628,0.603,0.577,0.552,0.527,0.501,0.476,0.451,0.425,0.4,0.375,0.349,0.324,0.299,0.273,0.248,0.222,0.197,0.172,0.146,0.121,0.096,0.07,0.045,0.02,-0.006,-0.031,-0.056,-0.082,-0.107,-0.133,-0.158,-0.183,-0.209,-0.234,-0.259,-0.285,-0.31,-0.335,-0.361,-0.386,-0.411,-0.437,-0.462,-0.488,-0.513,-0.538,-0.564,-0.589,-0.614,-0.64,-0.665,-0.69,-0.716,-0.741],[0.701,0.677,0.654,0.63,0.607,0.584,0.56,0.537,0.514,0.49,0.467,0.444,0.42,0.397,0.373,0.35,0.327,0.303,0.28,0.257,0.233,0.21,0.187,0.163,0.14,0.116,0.093,0.07,0.046,0.023,-0.0,-0.024,-0.047,-0.071,-0.094,-0.117,-0.141,-0.164,-0.187,-0.211,-0.234,-0.257,-0.281,-0.304,-0.328,-0.351,-0.374,-0.398,-0.421,-0.444,-0.468,-0.491,-0.514,-0.538,-0.561,-0.585,-0.608,-0.631,-0.655,-0.678,-0.701],[0.613,0.591,0.569,0.547,0.526,0.504,0.482,0.461,0.439,0.417,0.395,0.374,0.352,0.33,0.308,0.287,0.265,0.243,0.222,0.2,0.178,0.156,0.135,0.113,0.091,0.069,0.048,0.026,0.004,-0.018,-0.039,-0.061,-0.083,-0.104,-0.126,-0.148,-0.17,-0.191,-0.213,-0.235,-0.257,-0.278,-0.3,-0.322,-0.343,-0.365,-0.387,-0.409,-0.43,-0.452,-0.474,-0.496,-0.517,-0.539,-0.561,-0.583,-0.604,-0.626,-0.648,-0.669,-0.691],[0.612,0.588,0.563,0.539,0.514,0.49,0.466,0.441,0.417,0.392,0.368,0.344,0.319,0.295,0.27,0.246,0.222,0.197,0.173,0.148,0.124,0.1,0.075,0.051,0.026,0.002,-0.022,-0.047,-0.071,-0.096,-0.12,-0.144,-0.169,-0.193,-0.218,-0.242,-0.266,-0.291,-0.315,-0.34,-0.364,-0.388,-0.413,-0.437,-0.462,-0.486,-0.51,-0.535,-0.559,-0.584,-0.608,-0.632,-0.657,-0.681,-0.706,-0.73,-0.754,-0.779,-0.803,-0.828,-0.852],[0.968,0.938,0.907,0.877,0.847,0.817,0.786,0.756,0.726,0.696,0.665,0.635,0.605,0.575,0.544,0.514,0.484,0.454,0.423,0.393,0.363,0.333,0.302,0.272,0.242,0.212,0.181,0.151,0.121,0.091,0.061,0.03,0.0,-0.03,-0.06,-0.091,-0.121,-0.151,-0.181,-0.212,-0.242,-0.272,-0.302,-0.333,-0.363,-0.393,-0.423,-0.454,-0.484,-0.514,-0.544,-0.575,-0.605,-0.635,-0.665,-0.696,-0.726,-0.756,-0.786,-0.817,-0.847],[0.736,0.713,0.689,0.665,0.642,0.618,0.595,0.571,0.547,0.524,0.5,0.477,0.453,0.429,0.406,0.382,0.359,0.335,0.311,0.288,0.264,0.24,0.217,0.193,0.17,0.146,0.122,0.099,0.075,0.052,0.028,0.004,-0.019,-0.043,-0.067,-0.09,-0.114,-0.137,-0.161,-0.185,-0.208,-0.232,-0.255,-0.279,-0.303,-0.326,-0.35,-0.373,-0.397,-0.421,-0.444,-0.468,-0.492,-0.515,-0.539,-0.562,-0.586,-0.61,-0.633,-0.657,-0.68],[1.008,0.976,0.945,0.913,0.881,0.849,0.817,0.785,0.754,0.722,0.69,0.658,0.626,0.594,0.563,0.531,0.499,0.467,0.435,0.404,0.372,0.34,0.308,0.276,0.244,0.213,0.181,0.149,0.117,0.085,0.053,0.022,-0.01,-0.042,-0.074,-0.106,-0.138,-0.169,-0.201,-0.233,-0.265,-0.297,-0.329,-0.36,-0.392,-0.424,-0.456,-0.488,-0.52,-0.551,-0.583,-0.615,-0.647,-0.679,-0.711,-0.742,-0.774,-0.806,-0.838,-0.87,-0.902],[0.743,0.718,0.694,0.669,0.644,0.62,0.595,0.57,0.546,0.521,0.496,0.472,0.447,0.422,0.398,0.373,0.348,0.324,0.299,0.274,0.25,0.225,0.2,0.176,0.151,0.126,0.102,0.077,0.052,0.028,0.003,-0.022,-0.046,-0.071,-0.096,-0.12,-0.145,-0.17,-0.194,-0.219,-0.244,-0.268,-0.293,-0.318,-0.342,-0.367,-0.392,-0.416,-0.441,-0.466,-0.49,-0.515,-0.54,-0.564,-0.589,-0.614,-0.638,-0.663,-0.688,-0.712,-0.737],[0.812,0.788,0.763,0.739,0.715,0.69,0.666,0.642,0.618,0.593,0.569,0.545,0.52,0.496,0.472,0.448,0.423,0.399,0.375,0.35,0.326,0.302,0.277,0.253,0.229,0.205,0.18,0.156,0.132,0.107,0.083,0.059,0.034,0.01,-0.014,-0.038,-0.063,-0.087,-0.111,-0.136,-0.16,-0.184,-0.209,-0.233,-0.257,-0.281,-0.306,-0.33,-0.354,-0.379,-0.403,-0.427,-0.452,-0.476,-0.5,-0.524,-0.549,-0.573,-0.597,-0.622,-0.646],[0.723,0.702,0.681,0.66,0.639,0.618,0.597,0.576,0.555,0.533,0.512,0.491,0.47,0.449,0.428,0.407,0.386,0.365,0.344,0.323,0.302,0.281,0.26,0.238,0.217,0.196,0.175,0.154,0.133,0.112,0.091,0.07,0.049,0.028,0.007,-0.014,-0.035,-0.057,-0.078,-0.099,-0.12,-0.141,-0.162,-0.183,-0.204,-0.225,-0.246,-0.267,-0.288,-0.309,-0.33,-0.352,-0.373,-0.394,-0.415,-0.436,-0.457,-0.478,-0.499,-0.52,-0.541],[0.788,0.763,0.738,0.712,0.687,0.662,0.636,0.611,0.586,0.561,0.535,0.51,0.485,0.46,0.434,0.409,0.384,0.359,0.333,0.308,0.283,0.257,0.232,0.207,0.182,0.156,0.131,0.106,0.081,0.055,0.03,0.005,-0.02,-0.046,-0.071,-0.096,-0.122,-0.147,-0.172,-0.197,-0.223,-0.248,-0.273,-0.298,-0.324,-0.349,-0.374,-0.399,-0.425,-0.45,-0.475,-0.501,-0.526,-0.551,-0.576,-0.602,-0.627,-0.652,-0.677,-0.703,-0.728],[0.794,0.771,0.747,0.724,0.701,0.678,0.654,0.631,0.608,0.585,0.561,0.538,0.515,0.492,0.468,0.445,0.422,0.398,0.375,0.352,0.329,0.305,0.282,0.259,0.236,0.212,0.189,0.166,0.143,0.119,0.096,0.073,0.05,0.026,0.003,-0.02,-0.044,-0.067,-0.09,-0.113,-0.137,-0.16,-0.183,-0.206,-0.23,-0.253,-0.276,-0.299,-0.323,-0.346,-0.369,-0.392,-0.416,-0.439,-0.462,-0.486,-0.509,-0.532,-0.555,-0.579,-0.602]],"2":[[0.923,0.897,0.87,0.843,0.817,0.79,0.763,0.737,0.71,0.684,0.658,0.631,0.605,0.578,0.552,0.526,0.5,0.473,0.447,0.421,0.395,0.369,0.343,0.317,0.291,0.265,0.239,0.213,0.187,0.162,0.136,0.11,0.084,0.059,0.033,0.008,-0.018,-0.044,-0.069,-0.094,-0.12,-0.145,-0.171,-0.196,-0.221,-0.246,-0.272,-0.297,-0.322,-0.347,-0.372,-0.397,-0.422,-0.447,-0.472,-0.497,-0.522,-0.547,-0.572,-0.596,-0.621],[0.659,0.635,0.611,0.587,0.562,0.538,0.514,0.489,0.465,0.44,0.415,0.391,0.366,0.341,0.317,0.292,0.267,0.242,0.217,0.192,0.167,0.142,0.117,0.092,0.067,0.041,0.016,-0.009,-0.035,-0.06,-0.085,-0.111,-0.137,-0.162,-0.188,-0.213,-0.239,-0.265,-0.291,-0.317,-0.343,-0.369,-0.395,-0.421,-0.447,-0.473,-0.499,-0.525,-0.552,-0.578,-0.604,-0.631,-0.657,-0.684,-0.71,-0.737,-0.763,-0.79,-0.817,-0.844,-0.87],[0.661,0.632,0.603,0.575,0.547,0.519,0.492,0.465,0.438,0.412,0.386,0.361,0.335,0.311,0.286,0.262,0.238,0.215,0.192,0.169,0.147,0.125,0.103,0.082,0.061,0.04,0.02,0.0,-0.019,-0.038,-0.057,-0.076,-0.094,-0.111,-0.129,-0.146,-0.162,-0.179,-0.194,-0.21,-0.225,-0.24,-0.254,-0.269,-0.282,-0.296,-0.309,-0.322,-0.334,-0.346,-0.357,-0.369,-0.38,-0.39,-0.4,-0.41,-0.42,-0.429,-0.438,-0.446,-0.454],[0.688,0.655,0.623,0.591,0.56,0.529,0.498,0.467,0.437,0.407,0.378,0.348,0.319,0.291,0.263,0.234,0.207,0.179,0.152,0.126,0.099,0.073,0.047,0.022,-0.004,-0.029,-0.053,-0.077,-0.101,-0.125,-0.148,-0.171,-0.194,-0.217,-0.239,-0.26,-0.282,-0.303,-0.324,-0.344,-0.365,-0.384,-0.404,-0.423,-0.442,-0.461,-0.479,-0.497,-0.515,-0.532,-0.55,-0.566,-0.583,-0.599,-0.615,-0.63,-0.646,-0.66,-0.675,-0.689,-0.703],[0.737,0.71,0.683,0.655,0.629,0.602,0.575,0.549,0.523,0.497,0.471,0.446,0.421,0.396,0.371,0.346,0.322,0.297,0.273,0.249,0.226,0.202,0.179,0.156,0.133,0.11,0.088,0.066,0.044,0.022,0.0,-0.021,-0.042,-0.063,-0.084,-0.105,-0.125,-0.145,-0.165,-0.185,-0.205,-0.224,-0.243,-0.262,-0.281,-0.3,-0.318,-0.336,-0.354,-0.372,-0.39,-0.407,-0.424,-0.441,-0.458,-0.475,-0.491,-0.507,-0.523,-0.539,-0.554],[0.689,0.659,0.629,0.598,0.568,0.538,0.508,0.478,0.448,0.418,0.388,0.358,0.328,0.298,0.268,0.238,0.208,0.178,0.148,0.118,0.088,0.058,0.029,-0.001,-0.031,-0.061,-0.091,-0.121,-0.151,-0.181,-0.21,-0.24,-0.27,-0.3,-0.33,-0.359,-0.389,-0.419,-0.449,-0.478,-0.508,-0.538,-0.568,-0.597,-0.627,-0.657,-0.686,-0.716,-0.746,-0.775,-0.805,-0.835,-0.864,-0.894,-0.923,-0.953,-0.983,-1.012,-1.042,-1.071,-1.101],[0.738,0.716,0.694,0.671,0.648,0.626,0.603,0.58,0.556,0.533,0.51,0.486,0.462,0.438,0.414,0.39,0.366,0.341,0.317,0.292,0.267,0.242,0.217,0.192,0.166,0.141,0.115,0.089,0.063,0.037,0.011,-0.015,-0.042,-0.068,-0.095,-0.122,-0.149,-0.176,-0.204,-0.231,-0.259,-0.287,-0.314,-0.342,-0.371,-0.399,-0.427,-0.456,-0.485,-0.513,-0.542,-0.572,-0.601,-0.63,-0.66,-0.689,-0.719,-0.749,-0.779,-0.81,-0.84],[0.763,0.734,0.706,0.678,0.65,0.622,0.594,0.566,0.538,0.511,0.483,0.456,0.428,0.401,0.374,0.347,0.32,0.293,0.266,0.239,0.212,0.186,0.159,0.133,0.106,0.08,0.054,0.028,0.002,-0.024,-0.05,-0.076,-0.101,-0.127,-0.153,-0.178,-0.203,-0.229,-0.254,-0.279,-0.304,-0.329,-0.354,-0.378,-0.403,-0.427,-0.452,-0.476,-0.501,-0.525,-0.549,-0.573,-0.597,-0.621,-0.645,-0.668,-0.692,-0.716,-0.739,-0.762,-0.786],[0.714,0.682,0.649,0.617,0.586,0.554,0.523,0.492,0.461,0.431,0.401,0.371,0.341,0.312,0.283,0.254,0.225,0.197,0.169,0.141,0.113,0.086,0.059,0.032,0.005,-0.021,-0.047,-0.073,-0.099,-0.124,-0.149,-0.174,-0.199,-0.223,-0.247,-0.271,-0.294,-0.318,-0.341,-0.363,-0.386,-0.408,-0.43,-0.452,-0.473,-0.495,-0.516,-0.536,-0.557,-0.577,-0.597,-0.617,-0.636,-0.655,-0.674,-0.693,-0.711,-0.73,-0.747,-0.765,-0.783],[0.906,0.849,0.793,0.739,0.685,0.633,0.582,0.533,0.485,0.437,0.392,0.347,0.303,0.261,0.22,0.181,0.142,0.105,0.069,0.034,0.0,-0.032,-0.063,-0.093,-0.122,-0.149,-0.175,-0.2,-0.224,-0.247,-0.268,-0.288,-0.307,-0.325,-0.341,-0.356,-0.37,-0.383,-0.394,-0.405,-0.414,-0.421,-0.428,-0.433,-0.437,-0.44,-0.442,-0.442,-0.441,-0.439,-0.436,-0.432,-0.426,-0.419,-0.411,-0.401,-0.391,-0.379,-0.366,-0.351,-0.336],[0.992,0.96,0.927,0.895,0.863,0.83,0.798,0.766,0.734,0.702,0.671,0.639,0.608,0.576,0.545,0.513,0.482,0.451,0.42,0.389,0.359,0.328,0.297,0.267,0.237,0.206,0.176,0.146,0.116,0.086,0.056,0.027,-0.003,-0.033,-0.062,-0.091,-0.12,-0.15,-0.179,-0.208,-0.236,-0.265,-0.294,-0.322,-0.351,-0.379,-0.407,-0.436,-0.464,-0.492,-0.519,-0.547,-0.575,-0.602,-0.63,-0.657,-0.685,-0.712,-0.739,-0.766,-0.793],[0.778,0.761,0.744,0.726,0.708,0.689,0.67,0.651,0.631,0.611,0.59,0.569,0.548,0.527,0.505,0.482,0.46,0.437,0.413,0.39,0.366,0.341,0.316,0.291,0.265,0.239,0.213,0.186,0.159,0.132,0.104,0.076,0.047,0.019,-0.011,-0.04,-0.07,-0.101,-0.131,-0.162,-0.194,-0.226,-0.258,-0.29,-0.323,-0.357,-0.39,-0.424,-0.459,-0.493,-0.529,-0.564,-0.6,-0.636,-0.673,-0.71,-0.747,-0.785,-0.823,-0.861,-0.9]],"3":[[-0.289,-0.105,0.062,0.213,0.348,0.467,0.573,0.664,0.742,0.807,0.859,0.9,0.929,0.948,0.957,0.956,0.945,0.927,0.9,0.866,0.825,0.778,0.725,0.666,0.603,0.536,0.465,0.392,0.315,0.237,0.157,0.077,-0.004,-0.084,-0.164,-0.242,-0.319,-0.393,-0.464,-0.531,-0.594,-0.653,-0.707,-0.754,-0.796,-0.831,-0.858,-0.877,-0.888,-0.89,-0.882,-0.864,-0.835,-0.796,-0.744,-0.68,-0.603,-0.513,-0.409,-0.29,-0.156],[0.062,0.224,0.369,0.498,0.612,0.711,0.796,0.867,0.925,0.97,1.004,1.026,1.037,1.038,1.029,1.012,0.985,0.951,0.909,0.86,0.805,0.744,0.679,0.608,0.534,0.456,0.375,0.292,0.207,0.121,0.035,-0.052,-0.138,-0.223,-0.306,-0.387,-0.465,-0.54,-0.611,-0.677,-0.738,-0.794,-0.843,-0.886,-0.921,-0.948,-0.967,-0.976,-0.976,-0.966,-0.945,-0.913,-0.869,-0.812,-0.742,-0.658,-0.561,-0.448,-0.321,-0.177,-0.017],[-0.721,-0.482,-0.265,-0.07,0.104,0.257,0.391,0.507,0.604,0.685,0.749,0.798,0.831,0.851,0.858,0.852,0.835,0.807,0.769,0.721,0.666,0.602,0.532,0.455,0.373,0.287,0.197,0.103,0.008,-0.089,-0.186,-0.283,-0.38,-0.474,-0.566,-0.655,-0.74,-0.819,-0.893,-0.961,-1.022,-1.074,-1.118,-1.152,-1.175,-1.188,-1.188,-1.176,-1.151,-1.111,-1.056,-0.985,-0.897,-0.792,-0.669,-0.527,-0.365,-0.183,0.021,0.247,0.496],[0.035,0.165,0.28,0.382,0.471,0.547,0.611,0.663,0.704,0.735,0.755,0.766,0.767,0.761,0.746,0.723,0.694,0.658,0.616,0.568,0.516,0.459,0.398,0.334,0.266,0.197,0.125,0.053,-0.021,-0.095,-0.169,-0.242,-0.314,-0.384,-0.452,-0.518,-0.58,-0.638,-0.692,-0.741,-0.785,-0.823,-0.855,-0.88,-0.897,-0.907,-0.908,-0.9,-0.883,-0.856,-0.819,-0.77,-0.71,-0.639,-0.554,-0.457,-0.346,-0.221,-0.081,0.074,0.244],[-0.031,0.095,0.208,0.308,0.394,0.469,0.532,0.584,0.625,0.656,0.677,0.689,0.692,0.687,0.674,0.653,0.626,0.592,0.553,0.508,0.458,0.404,0.346,0.285,0.22,0.153,0.084,0.014,-0.057,-0.129,-0.201,-0.273,-0.343,-0.412,-0.479,-0.544,-0.606,-0.664,-0.719,-0.769,-0.815,-0.855,-0.889,-0.917,-0.938,-0.952,-0.959,-0.957,-0.946,-0.926,-0.896,-0.856,-0.806,-0.744,-0.671,-0.586,-0.488,-0.376,-0.252,-0.113,0.041],[-0.047,0.092,0.217,0.329,0.429,0.516,0.591,0.655,0.708,0.75,0.783,0.805,0.819,0.824,0.821,0.811,0.792,0.768,0.736,0.699,0.657,0.609,0.557,0.501,0.441,0.378,0.312,0.244,0.174,0.103,0.031,-0.041,-0.114,-0.186,-0.257,-0.326,-0.394,-0.459,-0.522,-0.582,-0.638,-0.689,-0.736,-0.779,-0.815,-0.846,-0.87,-0.888,-0.898,-0.9,-0.894,-0.879,-0.856,-0.822,-0.779,-0.725,-0.66,-0.584,-0.496,-0.395,-0.282],[-0.158,0.017,0.174,0.316,0.442,0.554,0.651,0.734,0.804,0.861,0.906,0.94,0.962,0.975,0.977,0.97,0.954,0.93,0.898,0.859,0.814,0.762,0.705,0.644,0.578,0.508,0.435,0.359,0.281,0.202,0.122,0.041,-0.039,-0.119,-0.198,-0.275,-0.349,-0.42,-0.488,-0.552,-0.612,-0.666,-0.714,-0.757,-0.792,-0.82,-0.84,-0.852,-0.854,-0.847,-0.83,-0.802,-0.762,-0.711,-0.648,-0.571,-0.481,-0.377,-0.258,-0.124,0.025],[-0.107,0.095,0.276,0.438,0.582,0.707,0.815,0.906,0.981,1.04,1.085,1.116,1.133,1.138,1.13,1.112,1.082,1.043,0.994,0.937,0.872,0.799,0.72,0.635,0.544,0.449,0.35,0.248,0.143,0.036,-0.072,-0.181,-0.289,-0.397,-0.503,-0.607,-0.708,-0.806,-0.9,-0.989,-1.072,-1.149,-1.219,-1.282,-1.336,-1.382,-1.418,-1.444,-1.459,-1.462,-1.453,-1.431,-1.396,-1.346,-1.282,-1.201,-1.105,-0.991,-0.86,-0.71,-0.542],[-0.398,-0.168,0.04,0.227,0.393,0.54,0.668,0.777,0.87,0.945,1.005,1.049,1.079,1.096,1.099,1.091,1.07,1.039,0.998,0.948,0.889,0.823,0.749,0.669,0.584,0.494,0.399,0.302,0.202,0.099,-0.004,-0.107,-0.21,-0.312,-0.413,-0.51,-0.604,-0.694,-0.78,-0.859,-0.933,-0.999,-1.058,-1.108,-1.149,-1.18,-1.2,-1.208,-1.204,-1.188,-1.157,-1.113,-1.053,-0.977,-0.884,-0.774,-0.646,-0.499,-0.332,-0.145,0.064],[-0.38,-0.2,-0.036,0.111,0.243,0.359,0.461,0.55,0.624,0.686,0.736,0.775,0.802,0.819,0.825,0.823,0.812,0.792,0.765,0.731,0.69,0.644,0.592,0.535,0.474,0.41,0.342,0.272,0.2,0.127,0.053,-0.021,-0.095,-0.168,-0.239,-0.308,-0.375,-0.438,-0.498,-0.553,-0.603,-0.647,-0.686,-0.718,-0.742,-0.759,-0.768,-0.767,-0.757,-0.737,-0.706,-0.664,-0.61,-0.543,-0.464,-0.371,-0.264,-0.143,-0.006,0.147,0.316],[-0.412,-0.213,-0.032,0.131,0.276,0.404,0.517,0.613,0.695,0.762,0.816,0.857,0.885,0.902,0.907,0.902,0.887,0.863,0.831,0.79,0.742,0.687,0.626,0.56,0.489,0.414,0.335,0.254,0.17,0.084,-0.002,-0.089,-0.176,-0.261,-0.345,-0.427,-0.507,-0.582,-0.654,-0.721,-0.783,-0.839,-0.888,-0.93,-0.964,-0.989,-1.006,-1.012,-1.008,-0.994,-0.967,-0.929,-0.877,-0.812,-0.732,-0.638,-0.529,-0.403,-0.26,-0.101,0.077],[0.148,0.261,0.362,0.452,0.531,0.598,0.655,0.702,0.74,0.768,0.788,0.799,0.802,0.798,0.786,0.768,0.743,0.713,0.677,0.635,0.59,0.54,0.486,0.428,0.368,0.305,0.24,0.173,0.104,0.035,-0.035,-0.105,-0.175,-0.244,-0.312,-0.378,-0.443,-0.505,-0.565,-0.621,-0.674,-0.723,-0.767,-0.807,-0.841,-0.87,-0.893,-0.909,-0.918,-0.921,-0.915,-0.902,-0.88,-0.849,-0.808,-0.758,-0.698,-0.627,-0.546,-0.452,-0.347]],"4":[[-0.366,-0.184,-0.019,0.129,0.26,0.376,0.477,0.564,0.636,0.696,0.743,0.778,0.802,0.815,0.818,0.812,0.797,0.773,0.742,0.704,0.659,0.609,0.553,0.492,0.428,0.359,0.288,0.215,0.139,0.062,-0.015,-0.093,-0.17,-0.246,-0.321,-0.394,-0.464,-0.531,-0.595,-0.654,-0.708,-0.758,-0.801,-0.838,-0.869,-0.892,-0.907,-0.914,-0.912,-0.901,-0.88,-0.848,-0.806,-0.752,-0.687,-0.609,-0.518,-0.414,-0.297,-0.165,-0.018],[-0.039,0.128,0.276,0.406,0.519,0.615,0.695,0.76,0.811,0.848,0.873,0.886,0.887,0.878,0.859,0.831,0.794,0.75,0.699,0.642,0.579,0.511,0.439,0.363,0.285,0.203,0.121,0.036,-0.048,-0.133,-0.217,-0.299,-0.38,-0.459,-0.535,-0.607,-0.676,-0.739,-0.798,-0.852,-0.899,-0.94,-0.974,-1.001,-1.019,-1.03,-1.031,-1.023,-1.006,-0.979,-0.941,-0.892,-0.832,-0.76,-0.676,-0.58,-0.471,-0.35,-0.214,-0.065,0.098],[-0.446,-0.248,-0.067,0.098,0.247,0.381,0.499,0.603,0.693,0.769,0.833,0.884,0.922,0.95,0.966,0.972,0.968,0.955,0.933,0.903,0.865,0.82,0.769,0.712,0.649,0.582,0.511,0.437,0.359,0.28,0.199,0.117,0.034,-0.047,-0.128,-0.207,-0.283,-0.356,-0.426,-0.491,-0.55,-0.604,-0.651,-0.69,-0.722,-0.744,-0.757,-0.759,-0.75,-0.729,-0.696,-0.649,-0.588,-0.511,-0.419,-0.31,-0.183,-0.038,0.126,0.311,0.516],[-0.26,-0.057,0.124,0.283,0.422,0.541,0.643,0.726,0.794,0.846,0.884,0.909,0.921,0.922,0.913,0.893,0.865,0.829,0.786,0.736,0.68,0.62,0.555,0.487,0.415,0.342,0.266,0.19,0.113,0.036,-0.04,-0.115,-0.189,-0.26,-0.329,-0.396,-0.459,-0.518,-0.574,-0.625,-0.672,-0.714,-0.751,-0.782,-0.808,-0.829,-0.843,-0.852,-0.854,-0.85,-0.84,-0.824,-0.801,-0.772,-0.737,-0.695,-0.648,-0.594,-0.534,-0.468,-0.397],[-0.305,-0.06,0.156,0.343,0.504,0.64,0.753,0.844,0.916,0.969,1.005,1.026,1.032,1.026,1.009,0.981,0.945,0.9,0.849,0.792,0.73,0.664,0.596,0.525,0.453,0.38,0.308,0.236,0.166,0.097,0.031,-0.032,-0.092,-0.149,-0.201,-0.25,-0.294,-0.333,-0.369,-0.399,-0.425,-0.446,-0.463,-0.476,-0.484,-0.489,-0.49,-0.487,-0.482,-0.475,-0.466,-0.455,-0.443,-0.432,-0.421,-0.411,-0.404,-0.399,-0.399,-0.403,-0.413],[-0.246,-0.045,0.136,0.299,0.445,0.573,0.685,0.781,0.862,0.928,0.98,1.018,1.044,1.057,1.058,1.049,1.028,0.998,0.959,0.912,0.856,0.793,0.723,0.648,0.567,0.481,0.392,0.299,0.204,0.107,0.008,-0.091,-0.19,-0.288,-0.384,-0.478,-0.569,-0.656,-0.739,-0.817,-0.888,-0.953,-1.011,-1.06,-1.101,-1.131,-1.152,-1.161,-1.158,-1.142,-1.112,-1.068,-1.009,-0.934,-0.843,-0.733,-0.605,-0.458,-0.291,-0.103,0.106],[-0.398,-0.114,0.139,0.36,0.553,0.718,0.857,0.972,1.063,1.133,1.183,1.215,1.228,1.226,1.209,1.179,1.136,1.081,1.017,0.944,0.863,0.776,0.682,0.584,0.482,0.377,0.27,0.162,0.054,-0.054,-0.16,-0.265,-0.367,-0.466,-0.561,-0.651,-0.736,-0.815,-0.889,-0.955,-1.015,-1.067,-1.112,-1.148,-1.176,-1.195,-1.205,-1.206,-1.198,-1.18,-1.153,-1.116,-1.069,-1.012,-0.946,-0.87,-0.785,-0.69,-0.586,-0.473,-0.35],[0.118,0.21,0.296,0.375,0.448,0.515,0.574,0.627,0.673,0.712,0.744,0.769,0.787,0.798,0.802,0.8,0.791,0.776,0.754,0.727,0.693,0.654,0.61,0.561,0.507,0.448,0.386,0.319,0.25,0.177,0.103,0.026,-0.052,-0.131,-0.211,-0.29,-0.368,-0.446,-0.521,-0.593,-0.662,-0.727,-0.787,-0.842,-0.891,-0.932,-0.965,-0.99,-1.005,-1.01,-1.003,-0.984,-0.951,-0.905,-0.843,-0.765,-0.669,-0.555,-0.421,-0.267,-0.091],[0.068,0.196,0.315,0.424,0.523,0.613,0.693,0.763,0.823,0.873,0.913,0.943,0.964,0.976,0.978,0.971,0.956,0.932,0.899,0.859,0.811,0.756,0.695,0.627,0.553,0.474,0.391,0.303,0.212,0.117,0.021,-0.077,-0.176,-0.275,-0.373,-0.47,-0.565,-0.656,-0.743,-0.825,-0.901,-0.97,-1.031,-1.083,-1.125,-1.156,-1.174,-1.179,-1.168,-1.142,-1.099,-1.037,-0.955,-0.852,-0.727,-0.577,-0.402,-0.2,0.03,0.29,0.582],[0.001,0.153,0.289,0.409,0.515,0.607,0.685,0.751,0.804,0.845,0.876,0.896,0.905,0.906,0.898,0.881,0.857,0.825,0.787,0.743,0.693,0.638,0.579,0.516,0.449,0.38,0.308,0.235,0.16,0.084,0.008,-0.068,-0.143,-0.217,-0.289,-0.36,-0.427,-0.492,-0.553,-0.61,-0.663,-0.71,-0.753,-0.789,-0.819,-0.843,-0.859,-0.868,-0.869,-0.861,-0.844,-0.819,-0.783,-0.737,-0.681,-0.614,-0.536,-0.446,-0.344,-0.229,-0.101],[0.166,0.277,0.382,0.481,0.572,0.656,0.732,0.8,0.86,0.912,0.955,0.99,1.016,1.033,1.042,1.042,1.033,1.016,0.991,0.957,0.916,0.867,0.811,0.748,0.678,0.603,0.522,0.436,0.345,0.25,0.152,0.052,-0.051,-0.154,-0.259,-0.362,-0.465,-0.565,-0.662,-0.755,-0.843,-0.925,-1.0,-1.066,-1.123,-1.169,-1.203,-1.224,-1.23,-1.22,-1.193,-1.147,-1.081,-0.993,-0.882,-0.745,-0.583,-0.392,-0.171,0.082,0.368],[-0.176,0.003,0.164,0.305,0.429,0.536,0.628,0.704,0.765,0.813,0.848,0.871,0.883,0.884,0.876,0.858,0.832,0.798,0.757,0.71,0.657,0.599,0.536,0.47,0.4,0.328,0.253,0.177,0.101,0.023,-0.054,-0.131,-0.206,-0.28,-0.352,-0.421,-0.487,-0.55,-0.609,-0.664,-0.714,-0.758,-0.798,-0.832,-0.859,-0.88,-0.894,-0.901,-0.901,-0.893,-0.876,-0.852,-0.819,-0.777,-0.727,-0.667,-0.598,-0.519,-0.43,-0.332,-0.223]],"5":[[-0.09,-0.199,-0.251,-0.254,-0.218,-0.152,-0.061,0.046,0.163,0.285,0.407,0.526,0.637,0.737,0.825,0.897,0.953,0.99,1.01,1.011,0.994,0.958,0.905,0.836,0.752,0.654,0.544,0.424,0.297,0.163,0.025,-0.114,-0.253,-0.389,-0.519,-0.643,-0.757,-0.859,-0.949,-1.024,-1.083,-1.125,-1.148,-1.153,-1.138,-1.104,-1.051,-0.981,-0.893,-0.79,-0.674,-0.547,-0.414,-0.276,-0.14,-0.01,0.109,0.211,0.287,0.331,0.334],[-0.076,0.054,0.185,0.316,0.443,0.566,0.681,0.788,0.885,0.97,1.044,1.106,1.154,1.189,1.211,1.219,1.214,1.196,1.165,1.123,1.069,1.005,0.932,0.85,0.761,0.665,0.564,0.459,0.351,0.241,0.131,0.022,-0.086,-0.19,-0.29,-0.384,-0.472,-0.553,-0.626,-0.689,-0.743,-0.787,-0.819,-0.841,-0.852,-0.852,-0.84,-0.818,-0.785,-0.743,-0.693,-0.634,-0.57,-0.502,-0.43,-0.359,-0.289,-0.223,-0.165,-0.118,-0.085],[-0.016,0.082,0.193,0.311,0.433,0.555,0.676,0.792,0.901,1.001,1.091,1.169,1.235,1.286,1.324,1.347,1.355,1.348,1.327,1.291,1.243,1.181,1.107,1.023,0.928,0.824,0.713,0.596,0.473,0.347,0.218,0.089,-0.04,-0.166,-0.29,-0.409,-0.522,-0.628,-0.726,-0.815,-0.893,-0.961,-1.018,-1.063,-1.096,-1.117,-1.125,-1.122,-1.108,-1.082,-1.048,-1.004,-0.954,-0.899,-0.842,-0.783,-0.727,-0.676,-0.634,-0.605,-0.593],[-0.075,0.047,0.17,0.294,0.414,0.531,0.641,0.744,0.837,0.921,0.993,1.054,1.103,1.139,1.162,1.173,1.17,1.156,1.129,1.091,1.041,0.981,0.912,0.833,0.747,0.654,0.556,0.452,0.345,0.236,0.125,0.014,-0.096,-0.204,-0.308,-0.408,-0.503,-0.591,-0.672,-0.744,-0.807,-0.861,-0.903,-0.935,-0.955,-0.963,-0.959,-0.943,-0.916,-0.876,-0.825,-0.763,-0.692,-0.611,-0.523,-0.428,-0.329,-0.226,-0.123,-0.021,0.077],[-0.237,-0.105,0.022,0.144,0.259,0.367,0.467,0.558,0.639,0.709,0.77,0.82,0.858,0.886,0.903,0.91,0.905,0.891,0.867,0.833,0.791,0.74,0.682,0.616,0.545,0.468,0.386,0.3,0.211,0.12,0.028,-0.065,-0.157,-0.248,-0.337,-0.423,-0.505,-0.582,-0.654,-0.72,-0.779,-0.831,-0.874,-0.909,-0.934,-0.95,-0.956,-0.952,-0.937,-0.912,-0.876,-0.83,-0.773,-0.706,-0.63,-0.545,-0.451,-0.35,-0.241,-0.127,-0.009],[-0.205,-0.066,0.071,0.205,0.333,0.455,0.568,0.671,0.763,0.844,0.913,0.968,1.011,1.04,1.056,1.059,1.049,1.027,0.992,0.946,0.889,0.823,0.747,0.664,0.573,0.476,0.374,0.269,0.16,0.051,-0.06,-0.169,-0.276,-0.38,-0.48,-0.574,-0.662,-0.743,-0.815,-0.878,-0.931,-0.974,-1.006,-1.026,-1.034,-1.03,-1.014,-0.986,-0.946,-0.894,-0.831,-0.758,-0.676,-0.586,-0.489,-0.387,-0.281,-0.173,-0.067,0.036,0.133],[0.02,0.174,0.313,0.438,0.549,0.647,0.732,0.805,0.867,0.918,0.959,0.99,1.011,1.023,1.027,1.023,1.011,0.991,0.965,0.932,0.893,0.848,0.798,0.743,0.683,0.619,0.551,0.48,0.405,0.328,0.249,0.169,0.087,0.004,-0.079,-0.161,-0.243,-0.323,-0.402,-0.478,-0.55,-0.619,-0.683,-0.742,-0.795,-0.841,-0.879,-0.909,-0.929,-0.939,-0.937,-0.923,-0.895,-0.852,-0.793,-0.717,-0.623,-0.509,-0.373,-0.215,-0.033],[-0.521,-0.092,0.255,0.53,0.741,0.897,1.006,1.073,1.106,1.11,1.091,1.052,0.999,0.934,0.862,0.784,0.704,0.623,0.543,0.465,0.39,0.32,0.254,0.193,0.136,0.085,0.037,-0.006,-0.047,-0.084,-0.12,-0.154,-0.188,-0.222,-0.258,-0.295,-0.335,-0.378,-0.424,-0.473,-0.526,-0.583,-0.643,-0.705,-0.769,-0.834,-0.897,-0.958,-1.013,-1.061,-1.098,-1.121,-1.126,-1.108,-1.064,-0.986,-0.869,-0.708,-0.493,-0.218,0.126],[-0.048,0.073,0.195,0.317,0.435,0.548,0.654,0.752,0.84,0.918,0.984,1.038,1.079,1.108,1.123,1.126,1.115,1.093,1.058,1.012,0.955,0.888,0.812,0.728,0.637,0.54,0.437,0.331,0.222,0.112,0.001,-0.108,-0.216,-0.32,-0.42,-0.514,-0.602,-0.682,-0.754,-0.817,-0.869,-0.912,-0.942,-0.962,-0.969,-0.965,-0.949,-0.921,-0.882,-0.831,-0.771,-0.702,-0.624,-0.54,-0.45,-0.358,-0.264,-0.171,-0.082,0.001,0.074],[-0.092,-0.021,0.062,0.153,0.249,0.348,0.447,0.544,0.637,0.725,0.805,0.878,0.942,0.996,1.038,1.07,1.09,1.098,1.095,1.079,1.053,1.014,0.966,0.906,0.838,0.76,0.674,0.581,0.482,0.377,0.269,0.157,0.043,-0.072,-0.187,-0.3,-0.411,-0.518,-0.621,-0.717,-0.807,-0.889,-0.962,-1.026,-1.079,-1.121,-1.151,-1.168,-1.173,-1.164,-1.142,-1.106,-1.057,-0.995,-0.919,-0.831,-0.732,-0.621,-0.5,-0.37,-0.234],[-0.065,0.013,0.107,0.212,0.324,0.441,0.557,0.671,0.779,0.88,0.971,1.051,1.118,1.172,1.211,1.235,1.245,1.239,1.217,1.181,1.131,1.067,0.991,0.903,0.804,0.696,0.58,0.456,0.328,0.196,0.061,-0.074,-0.209,-0.341,-0.47,-0.593,-0.71,-0.818,-0.918,-1.007,-1.085,-1.151,-1.204,-1.243,-1.268,-1.279,-1.276,-1.259,-1.229,-1.186,-1.131,-1.065,-0.99,-0.908,-0.821,-0.732,-0.643,-0.557,-0.479,-0.412,-0.36],[0.188,0.281,0.372,0.459,0.542,0.62,0.691,0.755,0.81,0.858,0.896,0.925,0.945,0.955,0.955,0.946,0.927,0.899,0.861,0.815,0.761,0.698,0.628,0.552,0.469,0.381,0.287,0.19,0.09,-0.013,-0.118,-0.223,-0.328,-0.432,-0.535,-0.634,-0.73,-0.822,-0.908,-0.988,-1.06,-1.125,-1.181,-1.227,-1.263,-1.289,-1.302,-1.303,-1.292,-1.267,-1.229,-1.176,-1.109,-1.028,-0.932,-0.82,-0.694,-0.553,-0.397,-0.227,-0.044]],"6":[[0.224,0.189,0.192,0.225,0.282,0.356,0.441,0.532,0.626,0.719,0.806,0.887,0.958,1.018,1.065,1.099,1.119,1.124,1.115,1.091,1.053,1.001,0.937,0.861,0.773,0.676,0.57,0.457,0.337,0.212,0.083,-0.048,-0.18,-0.312,-0.443,-0.571,-0.695,-0.814,-0.926,-1.032,-1.129,-1.216,-1.293,-1.359,-1.412,-1.452,-1.477,-1.487,-1.481,-1.458,-1.417,-1.356,-1.274,-1.171,-1.045,-0.893,-0.715,-0.508,-0.271,-0.001,0.305],[-0.225,0.193,0.519,0.767,0.948,1.072,1.149,1.188,1.196,1.179,1.142,1.091,1.029,0.961,0.887,0.812,0.736,0.66,0.587,0.516,0.448,0.383,0.321,0.262,0.206,0.152,0.099,0.048,-0.002,-0.051,-0.1,-0.149,-0.198,-0.248,-0.297,-0.347,-0.397,-0.446,-0.494,-0.541,-0.585,-0.627,-0.666,-0.7,-0.729,-0.752,-0.768,-0.776,-0.775,-0.766,-0.747,-0.718,-0.679,-0.63,-0.571,-0.504,-0.43,-0.351,-0.268,-0.184,-0.103],[0.158,0.067,0.051,0.092,0.177,0.291,0.424,0.565,0.708,0.845,0.971,1.082,1.173,1.244,1.292,1.317,1.319,1.298,1.256,1.193,1.111,1.014,0.901,0.777,0.644,0.504,0.359,0.212,0.065,-0.08,-0.22,-0.353,-0.479,-0.596,-0.702,-0.797,-0.88,-0.95,-1.008,-1.053,-1.087,-1.108,-1.119,-1.119,-1.11,-1.094,-1.07,-1.04,-1.006,-0.967,-0.926,-0.883,-0.837,-0.79,-0.741,-0.688,-0.63,-0.566,-0.492,-0.404,-0.298],[0.652,0.655,0.663,0.676,0.693,0.713,0.736,0.76,0.785,0.811,0.835,0.857,0.876,0.891,0.901,0.906,0.904,0.895,0.879,0.855,0.822,0.781,0.731,0.673,0.607,0.533,0.452,0.364,0.27,0.171,0.068,-0.039,-0.147,-0.256,-0.364,-0.471,-0.574,-0.672,-0.764,-0.849,-0.924,-0.99,-1.045,-1.087,-1.116,-1.132,-1.133,-1.12,-1.092,-1.051,-0.996,-0.929,-0.852,-0.766,-0.675,-0.581,-0.488,-0.401,-0.324,-0.265,-0.228],[0.291,0.194,0.165,0.189,0.253,0.345,0.456,0.577,0.699,0.818,0.929,1.026,1.107,1.171,1.214,1.237,1.24,1.222,1.184,1.128,1.055,0.966,0.865,0.752,0.631,0.502,0.37,0.235,0.101,-0.031,-0.159,-0.281,-0.395,-0.5,-0.595,-0.678,-0.748,-0.807,-0.852,-0.884,-0.903,-0.91,-0.905,-0.89,-0.865,-0.831,-0.791,-0.745,-0.696,-0.645,-0.594,-0.545,-0.5,-0.46,-0.426,-0.401,-0.385,-0.379,-0.384,-0.399,-0.423],[-0.02,0.073,0.183,0.304,0.427,0.549,0.665,0.771,0.866,0.946,1.01,1.058,1.089,1.103,1.101,1.083,1.051,1.005,0.947,0.878,0.8,0.714,0.621,0.525,0.424,0.323,0.22,0.118,0.018,-0.08,-0.174,-0.264,-0.35,-0.431,-0.507,-0.578,-0.644,-0.705,-0.761,-0.813,-0.861,-0.904,-0.944,-0.981,-1.014,-1.043,-1.069,-1.09,-1.106,-1.115,-1.116,-1.107,-1.085,-1.047,-0.988,-0.905,-0.791,-0.64,-0.444,-0.195,0.117],[0.404,0.393,0.414,0.459,0.519,0.59,0.665,0.741,0.814,0.881,0.94,0.988,1.026,1.051,1.064,1.064,1.052,1.029,0.994,0.95,0.896,0.834,0.765,0.691,0.613,0.531,0.447,0.363,0.279,0.196,0.115,0.037,-0.038,-0.108,-0.174,-0.235,-0.291,-0.343,-0.389,-0.43,-0.467,-0.499,-0.526,-0.55,-0.57,-0.586,-0.599,-0.608,-0.614,-0.616,-0.614,-0.606,-0.593,-0.572,-0.541,-0.499,-0.443,-0.368,-0.272,-0.149,0.006],[-0.114,0.043,0.201,0.357,0.506,0.646,0.774,0.889,0.99,1.075,1.143,1.196,1.232,1.253,1.259,1.251,1.23,1.196,1.152,1.097,1.034,0.964,0.888,0.807,0.723,0.635,0.547,0.457,0.368,0.28,0.193,0.109,0.027,-0.052,-0.128,-0.201,-0.271,-0.337,-0.399,-0.459,-0.515,-0.569,-0.619,-0.667,-0.711,-0.752,-0.79,-0.824,-0.852,-0.875,-0.891,-0.898,-0.895,-0.879,-0.846,-0.794,-0.719,-0.616,-0.479,-0.303,-0.08],[0.023,0.254,0.432,0.567,0.669,0.744,0.798,0.837,0.864,0.882,0.894,0.902,0.906,0.907,0.906,0.901,0.893,0.88,0.863,0.84,0.811,0.774,0.73,0.677,0.615,0.544,0.464,0.376,0.279,0.174,0.062,-0.055,-0.176,-0.3,-0.424,-0.548,-0.668,-0.782,-0.889,-0.985,-1.07,-1.139,-1.193,-1.228,-1.243,-1.238,-1.211,-1.163,-1.094,-1.005,-0.899,-0.779,-0.648,-0.513,-0.38,-0.257,-0.153,-0.081,-0.054,-0.087,-0.197],[0.114,-0.019,-0.078,-0.08,-0.038,0.034,0.127,0.231,0.339,0.445,0.544,0.631,0.705,0.762,0.802,0.825,0.829,0.816,0.787,0.742,0.684,0.614,0.535,0.447,0.352,0.254,0.153,0.052,-0.048,-0.145,-0.239,-0.327,-0.41,-0.486,-0.555,-0.616,-0.67,-0.717,-0.757,-0.79,-0.818,-0.84,-0.858,-0.871,-0.882,-0.89,-0.896,-0.9,-0.902,-0.902,-0.898,-0.889,-0.873,-0.847,-0.808,-0.752,-0.672,-0.562,-0.414,-0.219,0.034],[-0.131,0.06,0.218,0.35,0.458,0.546,0.618,0.675,0.72,0.754,0.779,0.795,0.804,0.806,0.801,0.789,0.771,0.746,0.716,0.679,0.636,0.587,0.532,0.471,0.405,0.333,0.257,0.176,0.092,0.005,-0.083,-0.173,-0.263,-0.352,-0.438,-0.521,-0.599,-0.67,-0.735,-0.791,-0.837,-0.873,-0.896,-0.908,-0.906,-0.891,-0.863,-0.822,-0.769,-0.704,-0.631,-0.55,-0.464,-0.378,-0.295,-0.22,-0.16,-0.12,-0.109,-0.136,-0.212],[-0.554,-0.267,-0.04,0.139,0.278,0.388,0.474,0.543,0.598,0.645,0.684,0.719,0.751,0.78,0.806,0.83,0.851,0.867,0.879,0.885,0.885,0.876,0.858,0.831,0.794,0.745,0.686,0.615,0.533,0.441,0.339,0.227,0.109,-0.017,-0.146,-0.278,-0.411,-0.542,-0.668,-0.788,-0.899,-0.998,-1.083,-1.152,-1.203,-1.234,-1.244,-1.232,-1.198,-1.142,-1.066,-0.972,-0.862,-0.741,-0.615,-0.49,-0.374,-0.278,-0.213,-0.193,-0.234]],"7":[[-0.181,-0.033,0.098,0.214,0.317,0.41,0.492,0.566,0.631,0.688,0.738,0.781,0.816,0.843,0.862,0.874,0.877,0.871,0.857,0.833,0.801,0.759,0.709,0.649,0.581,0.505,0.421,0.331,0.234,0.132,0.027,-0.082,-0.192,-0.302,-0.412,-0.518,-0.62,-0.715,-0.804,-0.883,-0.951,-1.008,-1.051,-1.079,-1.092,-1.088,-1.068,-1.032,-0.979,-0.91,-0.826,-0.73,-0.624,-0.511,-0.394,-0.279,-0.17,-0.075,-0.0,0.045,0.05],[0.017,-0.111,-0.133,-0.078,0.031,0.175,0.337,0.505,0.668,0.818,0.95,1.06,1.145,1.204,1.237,1.244,1.227,1.189,1.13,1.054,0.964,0.861,0.75,0.633,0.511,0.388,0.266,0.146,0.03,-0.081,-0.186,-0.284,-0.374,-0.456,-0.53,-0.597,-0.655,-0.706,-0.749,-0.786,-0.817,-0.841,-0.86,-0.874,-0.883,-0.887,-0.887,-0.881,-0.871,-0.857,-0.837,-0.812,-0.783,-0.748,-0.708,-0.665,-0.619,-0.571,-0.524,-0.481,-0.446],[0.22,0.359,0.445,0.495,0.521,0.532,0.535,0.537,0.541,0.549,0.563,0.583,0.608,0.637,0.669,0.702,0.733,0.76,0.782,0.796,0.801,0.795,0.778,0.747,0.703,0.645,0.574,0.49,0.393,0.286,0.17,0.045,-0.085,-0.219,-0.354,-0.488,-0.618,-0.743,-0.859,-0.965,-1.058,-1.136,-1.198,-1.242,-1.267,-1.273,-1.259,-1.224,-1.17,-1.097,-1.006,-0.898,-0.777,-0.643,-0.499,-0.348,-0.193,-0.037,0.118,0.268,0.412],[-0.661,-0.35,-0.067,0.186,0.406,0.596,0.755,0.886,0.991,1.072,1.132,1.172,1.197,1.208,1.206,1.195,1.175,1.147,1.113,1.072,1.026,0.974,0.917,0.853,0.783,0.706,0.621,0.529,0.428,0.32,0.204,0.08,-0.051,-0.187,-0.327,-0.47,-0.613,-0.753,-0.888,-1.014,-1.129,-1.228,-1.307,-1.364,-1.395,-1.396,-1.366,-1.303,-1.206,-1.076,-0.916,-0.729,-0.524,-0.308,-0.096,0.097,0.249,0.335,0.323,0.178,-0.146],[-0.188,-0.134,-0.023,0.121,0.281,0.443,0.596,0.733,0.85,0.944,1.014,1.061,1.086,1.091,1.079,1.052,1.014,0.967,0.914,0.856,0.797,0.736,0.676,0.616,0.557,0.5,0.442,0.385,0.327,0.267,0.204,0.137,0.066,-0.01,-0.091,-0.177,-0.268,-0.363,-0.46,-0.558,-0.654,-0.746,-0.831,-0.906,-0.966,-1.009,-1.031,-1.029,-1.001,-0.945,-0.861,-0.749,-0.614,-0.46,-0.297,-0.135,0.008,0.112,0.15,0.09,-0.109],[-0.024,-0.067,-0.051,0.012,0.11,0.232,0.369,0.513,0.656,0.792,0.917,1.026,1.116,1.185,1.231,1.254,1.254,1.231,1.187,1.123,1.042,0.944,0.834,0.714,0.587,0.454,0.321,0.188,0.059,-0.065,-0.18,-0.285,-0.38,-0.462,-0.531,-0.586,-0.629,-0.658,-0.676,-0.683,-0.68,-0.67,-0.654,-0.635,-0.613,-0.592,-0.572,-0.555,-0.542,-0.533,-0.526,-0.521,-0.513,-0.498,-0.469,-0.418,-0.332,-0.199,-0.001,0.283,0.678],[-0.092,-0.134,-0.083,0.027,0.171,0.327,0.482,0.623,0.744,0.841,0.911,0.955,0.973,0.969,0.946,0.907,0.855,0.795,0.729,0.661,0.593,0.527,0.464,0.406,0.353,0.303,0.258,0.215,0.173,0.131,0.087,0.039,-0.014,-0.075,-0.143,-0.22,-0.305,-0.4,-0.502,-0.61,-0.723,-0.836,-0.948,-1.054,-1.149,-1.23,-1.292,-1.329,-1.338,-1.315,-1.259,-1.167,-1.04,-0.883,-0.701,-0.505,-0.308,-0.131,0.001,0.056,-0.008],[0.382,0.378,0.419,0.491,0.582,0.682,0.784,0.881,0.97,1.048,1.111,1.161,1.195,1.213,1.218,1.209,1.186,1.153,1.109,1.056,0.994,0.926,0.852,0.772,0.689,0.601,0.511,0.418,0.323,0.226,0.128,0.03,-0.068,-0.167,-0.264,-0.359,-0.451,-0.539,-0.622,-0.699,-0.768,-0.829,-0.878,-0.915,-0.938,-0.947,-0.939,-0.915,-0.874,-0.817,-0.744,-0.658,-0.563,-0.462,-0.362,-0.272,-0.202,-0.166,-0.178,-0.259,-0.432],[0.185,0.009,-0.027,0.035,0.161,0.324,0.504,0.683,0.85,0.996,1.116,1.208,1.269,1.3,1.304,1.283,1.24,1.179,1.103,1.015,0.919,0.817,0.713,0.608,0.504,0.402,0.303,0.208,0.115,0.026,-0.062,-0.147,-0.231,-0.315,-0.399,-0.483,-0.568,-0.654,-0.74,-0.824,-0.906,-0.984,-1.056,-1.118,-1.169,-1.204,-1.222,-1.219,-1.192,-1.139,-1.059,-0.952,-0.82,-0.666,-0.495,-0.318,-0.146,0.002,0.107,0.139,0.064],[-0.193,-0.122,-0.038,0.056,0.158,0.264,0.372,0.479,0.584,0.682,0.774,0.856,0.928,0.988,1.036,1.07,1.09,1.096,1.088,1.066,1.031,0.983,0.924,0.854,0.775,0.688,0.593,0.494,0.39,0.284,0.178,0.071,-0.033,-0.134,-0.23,-0.321,-0.405,-0.482,-0.55,-0.61,-0.66,-0.701,-0.733,-0.755,-0.768,-0.771,-0.766,-0.753,-0.732,-0.704,-0.669,-0.627,-0.578,-0.523,-0.461,-0.391,-0.312,-0.221,-0.117,0.005,0.149],[0.035,0.297,0.481,0.608,0.697,0.761,0.81,0.852,0.89,0.928,0.966,1.005,1.044,1.079,1.111,1.135,1.151,1.155,1.147,1.124,1.085,1.031,0.96,0.874,0.773,0.659,0.533,0.399,0.257,0.112,-0.035,-0.18,-0.32,-0.452,-0.574,-0.684,-0.778,-0.857,-0.918,-0.961,-0.985,-0.992,-0.981,-0.955,-0.915,-0.864,-0.805,-0.74,-0.673,-0.606,-0.542,-0.484,-0.432,-0.387,-0.347,-0.31,-0.269,-0.217,-0.141,-0.027,0.147],[0.22,0.232,0.302,0.406,0.528,0.655,0.777,0.888,0.982,1.057,1.112,1.147,1.164,1.165,1.15,1.123,1.087,1.042,0.992,0.939,0.883,0.826,0.769,0.712,0.655,0.597,0.539,0.48,0.418,0.353,0.284,0.21,0.131,0.045,-0.047,-0.145,-0.248,-0.356,-0.467,-0.578,-0.689,-0.794,-0.893,-0.98,-1.052,-1.105,-1.136,-1.14,-1.116,-1.061,-0.973,-0.853,-0.703,-0.527,-0.333,-0.131,0.066,0.239,0.363,0.41,0.344]],"8":[[0.318,0.44,0.532,0.602,0.655,0.698,0.734,0.767,0.798,0.827,0.856,0.884,0.91,0.932,0.951,0.963,0.969,0.966,0.953,0.93,0.896,0.85,0.793,0.725,0.645,0.557,0.459,0.355,0.246,0.133,0.019,-0.094,-0.204,-0.309,-0.407,-0.496,-0.576,-0.645,-0.702,-0.746,-0.779,-0.8,-0.811,-0.813,-0.808,-0.798,-0.785,-0.772,-0.761,-0.753,-0.752,-0.756,-0.765,-0.776,-0.786,-0.786,-0.767,-0.713,-0.606,-0.42,-0.126],[0.112,-0.429,-0.639,-0.626,-0.473,-0.243,0.017,0.275,0.509,0.707,0.86,0.97,1.037,1.066,1.063,1.035,0.989,0.93,0.864,0.795,0.727,0.661,0.599,0.541,0.487,0.435,0.383,0.33,0.273,0.211,0.142,0.064,-0.022,-0.118,-0.222,-0.333,-0.449,-0.569,-0.688,-0.804,-0.913,-1.012,-1.096,-1.163,-1.209,-1.234,-1.236,-1.215,-1.171,-1.109,-1.029,-0.939,-0.842,-0.744,-0.652,-0.572,-0.507,-0.459,-0.426,-0.402,-0.375],[-0.042,-0.02,0.078,0.218,0.378,0.54,0.692,0.828,0.942,1.032,1.1,1.144,1.168,1.174,1.164,1.141,1.107,1.063,1.012,0.953,0.889,0.819,0.743,0.662,0.576,0.483,0.385,0.28,0.17,0.055,-0.065,-0.188,-0.314,-0.44,-0.565,-0.686,-0.801,-0.907,-1.002,-1.084,-1.149,-1.197,-1.225,-1.232,-1.217,-1.182,-1.127,-1.053,-0.963,-0.861,-0.75,-0.636,-0.523,-0.418,-0.324,-0.247,-0.191,-0.156,-0.142,-0.144,-0.154],[0.089,0.196,0.288,0.375,0.462,0.55,0.639,0.727,0.812,0.888,0.955,1.007,1.044,1.062,1.062,1.042,1.002,0.944,0.87,0.781,0.68,0.57,0.454,0.335,0.216,0.1,-0.011,-0.114,-0.208,-0.291,-0.364,-0.425,-0.475,-0.515,-0.546,-0.569,-0.587,-0.602,-0.615,-0.629,-0.646,-0.667,-0.692,-0.723,-0.76,-0.8,-0.844,-0.887,-0.928,-0.961,-0.983,-0.989,-0.974,-0.934,-0.865,-0.766,-0.637,-0.48,-0.305,-0.123,0.046],[-0.198,0.001,0.168,0.305,0.417,0.507,0.578,0.634,0.678,0.711,0.737,0.757,0.772,0.783,0.791,0.795,0.795,0.792,0.784,0.772,0.754,0.73,0.699,0.662,0.616,0.563,0.503,0.435,0.36,0.279,0.192,0.101,0.006,-0.09,-0.188,-0.284,-0.378,-0.467,-0.552,-0.63,-0.7,-0.762,-0.814,-0.857,-0.89,-0.912,-0.926,-0.93,-0.926,-0.915,-0.896,-0.872,-0.841,-0.803,-0.756,-0.699,-0.626,-0.532,-0.407,-0.239,-0.013],[0.633,0.47,0.405,0.409,0.462,0.546,0.648,0.756,0.862,0.959,1.044,1.113,1.164,1.196,1.209,1.201,1.175,1.131,1.07,0.994,0.904,0.801,0.688,0.566,0.437,0.304,0.167,0.029,-0.108,-0.242,-0.372,-0.495,-0.61,-0.716,-0.811,-0.893,-0.962,-1.017,-1.058,-1.085,-1.098,-1.097,-1.084,-1.059,-1.026,-0.986,-0.94,-0.892,-0.844,-0.797,-0.754,-0.716,-0.681,-0.65,-0.618,-0.58,-0.528,-0.45,-0.328,-0.141,0.138],[0.486,0.596,0.629,0.622,0.598,0.576,0.564,0.569,0.591,0.63,0.683,0.745,0.811,0.876,0.936,0.985,1.021,1.041,1.042,1.024,0.986,0.929,0.855,0.764,0.66,0.545,0.421,0.292,0.16,0.028,-0.102,-0.228,-0.348,-0.46,-0.564,-0.659,-0.744,-0.82,-0.886,-0.944,-0.993,-1.034,-1.066,-1.09,-1.106,-1.113,-1.11,-1.095,-1.068,-1.026,-0.967,-0.892,-0.798,-0.685,-0.557,-0.418,-0.274,-0.137,-0.024,0.042,0.029],[-0.113,-0.377,-0.473,-0.448,-0.342,-0.184,0.002,0.198,0.391,0.572,0.735,0.875,0.992,1.084,1.152,1.197,1.221,1.227,1.215,1.188,1.148,1.096,1.035,0.964,0.885,0.8,0.708,0.611,0.509,0.404,0.295,0.184,0.072,-0.04,-0.152,-0.262,-0.368,-0.468,-0.562,-0.648,-0.724,-0.788,-0.84,-0.877,-0.9,-0.908,-0.901,-0.878,-0.842,-0.792,-0.732,-0.662,-0.586,-0.506,-0.426,-0.348,-0.275,-0.209,-0.149,-0.096,-0.047],[0.159,-0.068,-0.118,-0.06,0.057,0.198,0.339,0.464,0.566,0.642,0.691,0.718,0.726,0.721,0.706,0.687,0.667,0.648,0.632,0.619,0.61,0.603,0.597,0.589,0.576,0.558,0.53,0.492,0.442,0.38,0.304,0.216,0.118,0.01,-0.103,-0.219,-0.334,-0.445,-0.547,-0.636,-0.71,-0.766,-0.801,-0.814,-0.807,-0.781,-0.737,-0.681,-0.617,-0.55,-0.487,-0.432,-0.39,-0.363,-0.35,-0.344,-0.332,-0.291,-0.188,0.026,0.417],[0.283,0.376,0.402,0.401,0.399,0.412,0.449,0.513,0.601,0.708,0.828,0.954,1.077,1.19,1.288,1.364,1.415,1.438,1.432,1.397,1.334,1.246,1.136,1.009,0.868,0.717,0.563,0.408,0.257,0.113,-0.02,-0.141,-0.248,-0.341,-0.42,-0.485,-0.538,-0.582,-0.619,-0.65,-0.679,-0.708,-0.74,-0.774,-0.813,-0.855,-0.9,-0.945,-0.987,-1.022,-1.043,-1.047,-1.026,-0.975,-0.891,-0.772,-0.617,-0.435,-0.235,-0.038,0.125],[-0.344,-0.326,-0.19,0.007,0.228,0.443,0.636,0.796,0.918,1.003,1.052,1.069,1.062,1.034,0.992,0.942,0.886,0.829,0.774,0.72,0.669,0.621,0.574,0.527,0.478,0.425,0.366,0.3,0.226,0.141,0.047,-0.057,-0.169,-0.287,-0.411,-0.535,-0.658,-0.775,-0.883,-0.979,-1.058,-1.118,-1.156,-1.171,-1.162,-1.13,-1.077,-1.005,-0.918,-0.822,-0.723,-0.627,-0.54,-0.468,-0.415,-0.382,-0.368,-0.363,-0.354,-0.316,-0.212],[-0.043,0.285,0.48,0.589,0.647,0.681,0.706,0.734,0.769,0.813,0.866,0.924,0.984,1.041,1.091,1.13,1.155,1.163,1.153,1.123,1.075,1.008,0.925,0.827,0.718,0.6,0.476,0.349,0.222,0.097,-0.022,-0.135,-0.24,-0.336,-0.422,-0.499,-0.568,-0.629,-0.683,-0.732,-0.777,-0.82,-0.861,-0.901,-0.942,-0.981,-1.019,-1.054,-1.083,-1.104,-1.113,-1.107,-1.082,-1.035,-0.964,-0.867,-0.748,-0.61,-0.465,-0.328,-0.222]],"9":[[-0.412,-0.566,-0.443,-0.181,0.127,0.422,0.674,0.867,1.002,1.083,1.12,1.125,1.108,1.079,1.045,1.01,0.977,0.946,0.917,0.888,0.856,0.818,0.773,0.717,0.651,0.574,0.487,0.392,0.291,0.188,0.087,-0.011,-0.101,-0.18,-0.248,-0.304,-0.347,-0.38,-0.406,-0.427,-0.449,-0.475,-0.51,-0.557,-0.619,-0.694,-0.781,-0.875,-0.968,-1.048,-1.102,-1.115,-1.074,-0.965,-0.786,-0.54,-0.251,0.033,0.232,0.217,-0.197],[0.363,-0.053,-0.054,0.157,0.444,0.721,0.941,1.083,1.146,1.138,1.075,0.976,0.857,0.737,0.625,0.532,0.462,0.417,0.394,0.389,0.397,0.411,0.423,0.427,0.418,0.392,0.344,0.275,0.185,0.077,-0.046,-0.179,-0.316,-0.451,-0.579,-0.693,-0.791,-0.867,-0.92,-0.95,-0.958,-0.946,-0.918,-0.878,-0.831,-0.782,-0.735,-0.693,-0.657,-0.625,-0.595,-0.559,-0.511,-0.441,-0.343,-0.211,-0.049,0.128,0.288,0.372,0.285],[0.216,0.371,0.424,0.441,0.459,0.497,0.561,0.646,0.746,0.851,0.952,1.039,1.107,1.151,1.171,1.166,1.138,1.091,1.029,0.956,0.878,0.797,0.716,0.639,0.564,0.494,0.425,0.357,0.286,0.21,0.126,0.031,-0.076,-0.196,-0.329,-0.474,-0.626,-0.783,-0.938,-1.084,-1.214,-1.321,-1.398,-1.438,-1.437,-1.392,-1.305,-1.179,-1.021,-0.844,-0.661,-0.489,-0.346,-0.25,-0.214,-0.242,-0.326,-0.437,-0.519,-0.474,-0.156],[0.103,-0.263,-0.325,-0.204,0.013,0.262,0.501,0.703,0.853,0.948,0.988,0.981,0.936,0.864,0.774,0.677,0.58,0.491,0.414,0.352,0.305,0.272,0.251,0.239,0.23,0.221,0.205,0.18,0.141,0.085,0.011,-0.082,-0.194,-0.321,-0.461,-0.608,-0.758,-0.905,-1.04,-1.159,-1.256,-1.324,-1.36,-1.363,-1.331,-1.268,-1.176,-1.064,-0.94,-0.815,-0.702,-0.611,-0.555,-0.542,-0.575,-0.649,-0.75,-0.847,-0.89,-0.804,-0.484],[0.443,0.457,0.509,0.582,0.662,0.742,0.818,0.886,0.947,0.999,1.044,1.082,1.113,1.138,1.157,1.169,1.175,1.173,1.162,1.142,1.11,1.066,1.01,0.94,0.855,0.757,0.646,0.522,0.386,0.241,0.088,-0.07,-0.23,-0.39,-0.546,-0.696,-0.835,-0.962,-1.073,-1.165,-1.238,-1.288,-1.315,-1.318,-1.298,-1.254,-1.189,-1.104,-1.003,-0.887,-0.761,-0.628,-0.494,-0.363,-0.239,-0.127,-0.033,0.04,0.086,0.101,0.081],[-0.418,0.039,0.287,0.416,0.487,0.536,0.587,0.648,0.721,0.804,0.892,0.978,1.057,1.124,1.174,1.205,1.217,1.209,1.182,1.14,1.082,1.013,0.934,0.848,0.755,0.658,0.556,0.45,0.34,0.226,0.108,-0.014,-0.141,-0.27,-0.401,-0.531,-0.658,-0.779,-0.888,-0.983,-1.059,-1.111,-1.137,-1.134,-1.1,-1.038,-0.949,-0.84,-0.718,-0.593,-0.477,-0.382,-0.323,-0.307,-0.341,-0.421,-0.531,-0.636,-0.674,-0.553,-0.133],[0.232,0.217,0.324,0.478,0.636,0.77,0.869,0.931,0.962,0.968,0.959,0.943,0.927,0.915,0.912,0.917,0.93,0.948,0.968,0.985,0.993,0.989,0.968,0.928,0.865,0.779,0.671,0.541,0.394,0.232,0.06,-0.115,-0.29,-0.457,-0.612,-0.75,-0.868,-0.962,-1.031,-1.075,-1.096,-1.095,-1.077,-1.045,-1.006,-0.963,-0.922,-0.886,-0.86,-0.843,-0.834,-0.83,-0.826,-0.813,-0.78,-0.717,-0.612,-0.457,-0.249,0.009,0.298],[-0.186,0.077,0.257,0.381,0.467,0.529,0.575,0.612,0.642,0.668,0.689,0.706,0.717,0.722,0.72,0.711,0.693,0.666,0.631,0.588,0.537,0.479,0.414,0.344,0.269,0.19,0.108,0.024,-0.061,-0.147,-0.232,-0.318,-0.402,-0.484,-0.565,-0.642,-0.717,-0.787,-0.853,-0.914,-0.969,-1.016,-1.056,-1.087,-1.108,-1.118,-1.116,-1.103,-1.076,-1.036,-0.984,-0.919,-0.842,-0.754,-0.657,-0.552,-0.44,-0.324,-0.205,-0.083,0.044],[-0.117,0.119,0.416,0.706,0.952,1.136,1.256,1.317,1.329,1.304,1.256,1.194,1.129,1.065,1.008,0.958,0.915,0.877,0.839,0.8,0.755,0.701,0.635,0.557,0.465,0.36,0.246,0.123,-0.004,-0.13,-0.253,-0.367,-0.47,-0.558,-0.629,-0.683,-0.721,-0.745,-0.758,-0.763,-0.767,-0.775,-0.79,-0.819,-0.863,-0.925,-1.003,-1.092,-1.186,-1.274,-1.343,-1.379,-1.366,-1.289,-1.141,-0.92,-0.64,-0.334,-0.067,0.06,-0.106],[-0.201,0.482,0.774,0.84,0.797,0.718,0.646,0.604,0.597,0.623,0.673,0.736,0.8,0.856,0.896,0.913,0.907,0.875,0.82,0.746,0.658,0.56,0.457,0.355,0.258,0.169,0.09,0.022,-0.037,-0.087,-0.131,-0.172,-0.214,-0.259,-0.311,-0.373,-0.445,-0.527,-0.62,-0.72,-0.823,-0.925,-1.02,-1.102,-1.164,-1.201,-1.207,-1.18,-1.119,-1.026,-0.906,-0.767,-0.622,-0.483,-0.368,-0.29,-0.263,-0.292,-0.372,-0.482,-0.574],[-0.108,0.36,0.62,0.762,0.843,0.898,0.947,0.998,1.051,1.104,1.151,1.186,1.206,1.207,1.187,1.146,1.085,1.008,0.916,0.814,0.707,0.597,0.488,0.382,0.281,0.187,0.098,0.015,-0.064,-0.141,-0.218,-0.296,-0.377,-0.463,-0.554,-0.648,-0.746,-0.845,-0.941,-1.031,-1.111,-1.178,-1.226,-1.253,-1.257,-1.238,-1.196,-1.136,-1.063,-0.984,-0.91,-0.849,-0.811,-0.801,-0.819,-0.855,-0.884,-0.862,-0.712,-0.324,0.464],[0.322,0.175,0.142,0.193,0.3,0.443,0.602,0.762,0.912,1.044,1.151,1.231,1.281,1.301,1.293,1.258,1.201,1.124,1.03,0.925,0.81,0.691,0.569,0.447,0.328,0.213,0.103,-0.001,-0.099,-0.19,-0.275,-0.356,-0.432,-0.504,-0.573,-0.641,-0.707,-0.771,-0.835,-0.896,-0.955,-1.01,-1.06,-1.103,-1.137,-1.16,-1.169,-1.162,-1.139,-1.096,-1.034,-0.953,-0.854,-0.74,-0.615,-0.487,-0.363,-0.255,-0.177,-0.144,-0.178]],"10":[[0.197,-0.519,-0.537,-0.228,0.181,0.559,0.845,1.021,1.098,1.097,1.045,0.967,0.885,0.812,0.758,0.724,0.71,0.708,0.713,0.716,0.71,0.69,0.651,0.592,0.513,0.417,0.307,0.188,0.067,-0.053,-0.164,-0.265,-0.352,-0.425,-0.483,-0.528,-0.563,-0.592,-0.618,-0.645,-0.673,-0.705,-0.739,-0.773,-0.802,-0.821,-0.821,-0.798,-0.744,-0.657,-0.537,-0.39,-0.226,-0.065,0.072,0.157,0.165,0.075,-0.113,-0.369,-0.614],[-0.046,1.136,1.385,1.2,0.882,0.597,0.418,0.359,0.402,0.514,0.659,0.803,0.922,1.002,1.034,1.022,0.972,0.896,0.805,0.711,0.625,0.554,0.502,0.47,0.455,0.451,0.453,0.451,0.437,0.406,0.351,0.27,0.162,0.029,-0.122,-0.286,-0.453,-0.614,-0.759,-0.88,-0.971,-1.029,-1.054,-1.048,-1.018,-0.973,-0.923,-0.878,-0.845,-0.831,-0.834,-0.847,-0.854,-0.834,-0.763,-0.619,-0.393,-0.104,0.179,0.307,0.009],[0.356,0.913,1.062,0.993,0.835,0.668,0.54,0.47,0.464,0.514,0.606,0.725,0.855,0.98,1.089,1.173,1.225,1.243,1.227,1.179,1.102,1.002,0.885,0.756,0.621,0.486,0.354,0.228,0.111,0.005,-0.091,-0.177,-0.255,-0.326,-0.392,-0.455,-0.517,-0.58,-0.643,-0.708,-0.774,-0.839,-0.902,-0.959,-1.008,-1.044,-1.064,-1.064,-1.04,-0.99,-0.913,-0.807,-0.674,-0.517,-0.343,-0.16,0.02,0.181,0.305,0.367,0.338],[0.129,0.713,0.91,0.888,0.768,0.627,0.516,0.457,0.458,0.516,0.618,0.75,0.894,1.035,1.159,1.255,1.314,1.334,1.313,1.252,1.155,1.03,0.882,0.72,0.55,0.38,0.217,0.065,-0.072,-0.193,-0.295,-0.381,-0.45,-0.507,-0.553,-0.592,-0.627,-0.66,-0.693,-0.727,-0.763,-0.798,-0.832,-0.863,-0.887,-0.904,-0.911,-0.908,-0.897,-0.879,-0.861,-0.848,-0.847,-0.863,-0.897,-0.944,-0.985,-0.983,-0.871,-0.546,0.154],[-0.248,-0.55,-0.478,-0.215,0.119,0.445,0.72,0.923,1.051,1.11,1.114,1.077,1.016,0.943,0.869,0.802,0.748,0.707,0.679,0.661,0.649,0.637,0.621,0.595,0.556,0.5,0.427,0.337,0.229,0.108,-0.023,-0.159,-0.296,-0.428,-0.549,-0.657,-0.747,-0.817,-0.865,-0.893,-0.903,-0.896,-0.876,-0.85,-0.82,-0.792,-0.768,-0.751,-0.74,-0.734,-0.726,-0.71,-0.678,-0.618,-0.525,-0.392,-0.223,-0.035,0.139,0.235,0.156],[-0.207,0.116,0.499,0.825,1.046,1.157,1.177,1.136,1.063,0.985,0.921,0.88,0.867,0.879,0.909,0.947,0.981,1.003,1.003,0.976,0.92,0.834,0.722,0.59,0.444,0.293,0.145,0.006,-0.117,-0.221,-0.305,-0.369,-0.416,-0.452,-0.483,-0.516,-0.556,-0.611,-0.682,-0.772,-0.878,-0.996,-1.116,-1.228,-1.319,-1.377,-1.39,-1.35,-1.252,-1.102,-0.911,-0.7,-0.499,-0.342,-0.264,-0.288,-0.418,-0.611,-0.755,-0.632,0.13],[0.489,0.205,0.267,0.477,0.718,0.926,1.076,1.164,1.198,1.191,1.16,1.116,1.068,1.022,0.981,0.944,0.908,0.871,0.828,0.777,0.716,0.643,0.559,0.466,0.367,0.264,0.161,0.062,-0.031,-0.115,-0.189,-0.254,-0.31,-0.361,-0.408,-0.457,-0.509,-0.569,-0.638,-0.718,-0.807,-0.903,-1.001,-1.095,-1.176,-1.238,-1.272,-1.272,-1.233,-1.155,-1.043,-0.906,-0.76,-0.623,-0.517,-0.462,-0.467,-0.524,-0.591,-0.576,-0.307],[-0.46,-0.294,-0.059,0.187,0.411,0.6,0.752,0.872,0.967,1.045,1.112,1.172,1.228,1.281,1.328,1.368,1.396,1.41,1.405,1.379,1.331,1.26,1.166,1.051,0.918,0.769,0.611,0.446,0.28,0.116,-0.04,-0.186,-0.319,-0.437,-0.54,-0.625,-0.696,-0.751,-0.794,-0.825,-0.847,-0.861,-0.869,-0.871,-0.869,-0.861,-0.849,-0.831,-0.807,-0.777,-0.74,-0.698,-0.653,-0.606,-0.559,-0.514,-0.471,-0.423,-0.358,-0.247,-0.047],[0.071,0.165,0.301,0.437,0.556,0.65,0.72,0.771,0.809,0.838,0.862,0.883,0.902,0.918,0.931,0.939,0.941,0.936,0.922,0.9,0.87,0.833,0.79,0.742,0.69,0.635,0.577,0.516,0.45,0.379,0.301,0.213,0.114,0.001,-0.125,-0.265,-0.418,-0.582,-0.751,-0.921,-1.084,-1.231,-1.354,-1.444,-1.492,-1.492,-1.441,-1.338,-1.19,-1.005,-0.801,-0.597,-0.418,-0.287,-0.225,-0.242,-0.326,-0.433,-0.469,-0.268,0.435],[-0.135,0.126,0.23,0.272,0.306,0.36,0.442,0.551,0.678,0.811,0.939,1.051,1.14,1.201,1.233,1.236,1.213,1.168,1.106,1.033,0.953,0.871,0.79,0.713,0.64,0.571,0.505,0.44,0.373,0.301,0.221,0.132,0.031,-0.082,-0.206,-0.341,-0.482,-0.625,-0.766,-0.897,-1.013,-1.107,-1.173,-1.206,-1.204,-1.165,-1.091,-0.986,-0.857,-0.714,-0.57,-0.439,-0.336,-0.273,-0.26,-0.299,-0.384,-0.492,-0.58,-0.58,-0.387],[-0.293,-0.081,0.173,0.405,0.587,0.714,0.792,0.836,0.857,0.869,0.879,0.892,0.908,0.927,0.943,0.952,0.95,0.931,0.895,0.838,0.762,0.669,0.563,0.448,0.331,0.217,0.111,0.017,-0.06,-0.119,-0.16,-0.184,-0.196,-0.2,-0.201,-0.206,-0.221,-0.251,-0.302,-0.374,-0.469,-0.585,-0.715,-0.853,-0.988,-1.111,-1.207,-1.267,-1.28,-1.241,-1.148,-1.006,-0.826,-0.627,-0.433,-0.273,-0.172,-0.152,-0.215,-0.33,-0.42],[-0.473,-0.401,-0.216,-0.013,0.162,0.292,0.38,0.438,0.482,0.525,0.579,0.65,0.74,0.847,0.962,1.08,1.189,1.281,1.346,1.377,1.369,1.32,1.231,1.103,0.943,0.757,0.554,0.342,0.13,-0.072,-0.257,-0.419,-0.553,-0.658,-0.732,-0.778,-0.799,-0.8,-0.786,-0.766,-0.744,-0.728,-0.721,-0.728,-0.749,-0.784,-0.831,-0.884,-0.938,-0.984,-1.017,-1.028,-1.013,-0.969,-0.897,-0.801,-0.688,-0.567,-0.448,-0.336,-0.225]],"11":[[-0.073,0.601,0.732,0.657,0.562,0.53,0.583,0.706,0.869,1.037,1.183,1.284,1.33,1.321,1.261,1.164,1.043,0.914,0.791,0.685,0.602,0.546,0.515,0.503,0.503,0.505,0.499,0.474,0.423,0.34,0.223,0.074,-0.103,-0.3,-0.506,-0.709,-0.897,-1.057,-1.181,-1.261,-1.296,-1.287,-1.243,-1.173,-1.092,-1.016,-0.961,-0.937,-0.951,-0.999,-1.068,-1.133,-1.157,-1.097,-0.913,-0.579,-0.103,0.44,0.869,0.841,-0.217],[-0.078,-0.039,0.096,0.262,0.426,0.575,0.706,0.821,0.923,1.015,1.096,1.166,1.223,1.264,1.286,1.286,1.264,1.219,1.152,1.065,0.962,0.847,0.726,0.602,0.481,0.367,0.263,0.171,0.092,0.026,-0.028,-0.072,-0.108,-0.141,-0.173,-0.208,-0.248,-0.295,-0.351,-0.416,-0.49,-0.57,-0.655,-0.742,-0.828,-0.908,-0.979,-1.039,-1.084,-1.111,-1.12,-1.106,-1.07,-1.007,-0.916,-0.792,-0.632,-0.431,-0.19,0.089,0.39],[-0.386,-0.237,-0.122,0.004,0.154,0.321,0.491,0.646,0.774,0.865,0.917,0.932,0.916,0.876,0.823,0.765,0.71,0.664,0.629,0.607,0.594,0.588,0.584,0.574,0.553,0.516,0.458,0.377,0.272,0.146,0.002,-0.154,-0.315,-0.473,-0.62,-0.748,-0.853,-0.93,-0.978,-0.998,-0.996,-0.978,-0.955,-0.936,-0.934,-0.956,-1.008,-1.093,-1.202,-1.324,-1.437,-1.512,-1.514,-1.408,-1.168,-0.783,-0.277,0.272,0.702,0.732,-0.082],[-0.06,-0.571,-0.594,-0.352,0.007,0.386,0.731,1.014,1.228,1.376,1.468,1.516,1.533,1.53,1.515,1.494,1.47,1.443,1.411,1.372,1.322,1.258,1.177,1.077,0.959,0.823,0.671,0.507,0.336,0.163,-0.005,-0.163,-0.305,-0.427,-0.525,-0.597,-0.645,-0.669,-0.673,-0.662,-0.643,-0.623,-0.608,-0.604,-0.616,-0.645,-0.692,-0.749,-0.809,-0.857,-0.876,-0.847,-0.751,-0.572,-0.302,0.049,0.448,0.826,1.063,0.969,0.262],[-0.386,-0.339,-0.175,0.046,0.281,0.502,0.694,0.849,0.965,1.043,1.089,1.109,1.109,1.095,1.073,1.046,1.018,0.991,0.964,0.938,0.911,0.88,0.842,0.796,0.738,0.666,0.579,0.476,0.357,0.224,0.078,-0.077,-0.236,-0.394,-0.548,-0.69,-0.817,-0.924,-1.008,-1.065,-1.096,-1.1,-1.081,-1.041,-0.988,-0.925,-0.861,-0.802,-0.753,-0.719,-0.701,-0.697,-0.705,-0.715,-0.719,-0.708,-0.676,-0.625,-0.571,-0.56,-0.672],[-0.058,0.4,0.331,0.166,0.094,0.162,0.344,0.585,0.832,1.041,1.186,1.26,1.269,1.228,1.154,1.068,0.986,0.917,0.868,0.836,0.817,0.803,0.782,0.747,0.689,0.604,0.49,0.352,0.195,0.028,-0.139,-0.296,-0.433,-0.546,-0.629,-0.685,-0.718,-0.736,-0.749,-0.768,-0.802,-0.859,-0.938,-1.037,-1.143,-1.239,-1.304,-1.313,-1.246,-1.092,-0.852,-0.548,-0.226,0.048,0.191,0.124,-0.195,-0.717,-1.216,-1.172,0.403],[-0.287,-1.863,-1.828,-1.094,-0.194,0.595,1.158,1.48,1.595,1.562,1.439,1.277,1.114,0.975,0.87,0.802,0.763,0.747,0.74,0.735,0.724,0.7,0.662,0.61,0.545,0.471,0.392,0.311,0.23,0.15,0.073,-0.004,-0.08,-0.159,-0.242,-0.33,-0.424,-0.522,-0.622,-0.72,-0.811,-0.892,-0.957,-1.001,-1.024,-1.024,-1.003,-0.964,-0.914,-0.857,-0.796,-0.734,-0.667,-0.587,-0.481,-0.335,-0.139,0.094,0.314,0.395,0.089],[-0.034,1.741,1.971,1.572,1.048,0.64,0.426,0.393,0.491,0.653,0.825,0.965,1.049,1.07,1.032,0.948,0.836,0.712,0.592,0.487,0.404,0.343,0.302,0.277,0.259,0.242,0.219,0.185,0.137,0.074,-0.001,-0.086,-0.176,-0.265,-0.351,-0.429,-0.498,-0.56,-0.615,-0.668,-0.724,-0.785,-0.856,-0.936,-1.022,-1.108,-1.185,-1.241,-1.265,-1.245,-1.178,-1.067,-0.929,-0.789,-0.687,-0.664,-0.749,-0.933,-1.127,-1.098,-0.382],[0.409,0.713,0.808,0.802,0.758,0.711,0.677,0.663,0.667,0.689,0.724,0.768,0.819,0.872,0.924,0.971,1.01,1.038,1.051,1.047,1.024,0.981,0.919,0.837,0.739,0.628,0.506,0.379,0.25,0.124,0.005,-0.106,-0.206,-0.294,-0.371,-0.439,-0.5,-0.556,-0.609,-0.663,-0.718,-0.775,-0.831,-0.883,-0.927,-0.956,-0.966,-0.951,-0.909,-0.839,-0.749,-0.648,-0.554,-0.487,-0.466,-0.505,-0.597,-0.698,-0.7,-0.398,0.563],[0.265,-0.202,-0.191,0.036,0.326,0.6,0.821,0.976,1.07,1.108,1.102,1.061,0.993,0.907,0.81,0.708,0.607,0.513,0.433,0.37,0.327,0.307,0.308,0.329,0.365,0.409,0.454,0.491,0.511,0.506,0.47,0.397,0.286,0.138,-0.042,-0.246,-0.464,-0.683,-0.889,-1.068,-1.21,-1.304,-1.345,-1.332,-1.271,-1.172,-1.047,-0.913,-0.787,-0.684,-0.611,-0.569,-0.545,-0.516,-0.448,-0.308,-0.069,0.258,0.596,0.744,0.31],[-0.091,-0.611,-0.243,0.337,0.8,1.034,1.046,0.9,0.675,0.443,0.257,0.147,0.122,0.177,0.293,0.446,0.612,0.769,0.9,0.992,1.042,1.049,1.018,0.955,0.869,0.767,0.656,0.54,0.421,0.3,0.175,0.045,-0.093,-0.239,-0.391,-0.546,-0.698,-0.839,-0.958,-1.046,-1.095,-1.098,-1.053,-0.966,-0.844,-0.705,-0.568,-0.456,-0.388,-0.378,-0.429,-0.527,-0.638,-0.708,-0.671,-0.461,-0.041,0.55,1.122,1.233,0.037],[0.28,0.732,0.711,0.511,0.303,0.172,0.146,0.221,0.369,0.559,0.759,0.943,1.092,1.193,1.245,1.25,1.214,1.148,1.062,0.967,0.869,0.776,0.691,0.613,0.54,0.468,0.393,0.309,0.211,0.095,-0.038,-0.188,-0.352,-0.523,-0.694,-0.854,-0.995,-1.108,-1.185,-1.222,-1.218,-1.176,-1.102,-1.008,-0.909,-0.818,-0.75,-0.718,-0.726,-0.77,-0.837,-0.899,-0.92,-0.852,-0.651,-0.284,0.245,0.867,1.404,1.506,0.579]],"12":[[-0.525,-1.252,-0.648,0.138,0.664,0.855,0.803,0.642,0.486,0.404,0.421,0.525,0.684,0.857,1.007,1.108,1.146,1.123,1.05,0.947,0.835,0.735,0.66,0.619,0.61,0.625,0.65,0.669,0.663,0.618,0.523,0.374,0.175,-0.063,-0.324,-0.588,-0.833,-1.041,-1.196,-1.288,-1.316,-1.284,-1.204,-1.092,-0.962,-0.827,-0.695,-0.566,-0.434,-0.291,-0.129,0.045,0.205,0.295,0.232,-0.081,-0.707,-1.591,-2.403,-2.284,0.54],[0.436,2.251,2.166,1.415,0.649,0.15,-0.02,0.084,0.364,0.714,1.048,1.308,1.466,1.517,1.477,1.371,1.228,1.076,0.939,0.83,0.757,0.717,0.704,0.704,0.704,0.691,0.652,0.581,0.473,0.331,0.161,-0.029,-0.229,-0.425,-0.608,-0.77,-0.906,-1.013,-1.093,-1.15,-1.19,-1.218,-1.238,-1.25,-1.251,-1.233,-1.185,-1.095,-0.953,-0.757,-0.516,-0.257,-0.027,0.109,0.076,-0.191,-0.709,-1.385,-1.924,-1.685,0.507],[-0.078,-4.35,-3.644,-1.581,0.21,1.221,1.501,1.312,0.937,0.592,0.395,0.379,0.512,0.729,0.957,1.134,1.22,1.2,1.083,0.897,0.676,0.46,0.279,0.155,0.095,0.093,0.132,0.188,0.233,0.245,0.206,0.109,-0.041,-0.231,-0.437,-0.632,-0.79,-0.889,-0.918,-0.878,-0.784,-0.665,-0.554,-0.49,-0.502,-0.606,-0.795,-1.037,-1.274,-1.432,-1.438,-1.239,-0.834,-0.299,0.197,0.407,0.065,-0.956,-2.37,-2.993,0.001],[-0.365,-3.134,-2.503,-0.986,0.304,1.033,1.253,1.157,0.946,0.769,0.704,0.766,0.926,1.131,1.325,1.462,1.514,1.473,1.351,1.17,0.963,0.762,0.595,0.48,0.423,0.421,0.458,0.515,0.567,0.59,0.567,0.485,0.342,0.146,-0.088,-0.34,-0.586,-0.803,-0.974,-1.087,-1.142,-1.146,-1.112,-1.06,-1.008,-0.968,-0.946,-0.933,-0.911,-0.853,-0.738,-0.555,-0.329,-0.125,-0.058,-0.276,-0.908,-1.951,-3.067,-3.249,-0.292],[-0.548,-2.627,-2.429,-1.362,-0.194,0.719,1.267,1.479,1.442,1.26,1.027,0.811,0.655,0.579,0.581,0.647,0.757,0.886,1.013,1.118,1.189,1.218,1.204,1.15,1.059,0.94,0.801,0.649,0.49,0.33,0.173,0.022,-0.122,-0.258,-0.385,-0.501,-0.605,-0.695,-0.77,-0.828,-0.867,-0.887,-0.889,-0.876,-0.852,-0.823,-0.795,-0.774,-0.765,-0.768,-0.783,-0.8,-0.807,-0.788,-0.722,-0.598,-0.412,-0.19,0.001,0.032,-0.324],[0.407,-4.404,-4.005,-2.022,-0.167,0.962,1.342,1.199,0.812,0.412,0.147,0.079,0.201,0.461,0.79,1.115,1.38,1.548,1.607,1.562,1.435,1.256,1.055,0.86,0.69,0.555,0.455,0.382,0.321,0.257,0.176,0.067,-0.073,-0.241,-0.426,-0.612,-0.781,-0.916,-1.001,-1.029,-1.001,-0.926,-0.82,-0.705,-0.602,-0.53,-0.497,-0.501,-0.525,-0.544,-0.528,-0.457,-0.332,-0.193,-0.121,-0.237,-0.656,-1.402,-2.231,-2.348,0.06],[0.778,1.456,1.392,1.074,0.756,0.549,0.48,0.527,0.654,0.819,0.988,1.136,1.25,1.323,1.357,1.354,1.323,1.27,1.2,1.118,1.026,0.926,0.818,0.703,0.582,0.456,0.329,0.203,0.082,-0.028,-0.125,-0.206,-0.269,-0.316,-0.351,-0.378,-0.405,-0.44,-0.493,-0.57,-0.676,-0.811,-0.972,-1.149,-1.325,-1.48,-1.591,-1.634,-1.589,-1.445,-1.201,-0.879,-0.517,-0.177,0.066,0.133,-0.029,-0.411,-0.876,-1.07,-0.293],[-0.163,-0.135,0.148,0.43,0.614,0.693,0.697,0.666,0.636,0.628,0.654,0.711,0.79,0.877,0.958,1.022,1.06,1.068,1.046,0.997,0.928,0.846,0.756,0.666,0.579,0.496,0.417,0.339,0.26,0.174,0.077,-0.033,-0.158,-0.295,-0.442,-0.591,-0.735,-0.865,-0.971,-1.045,-1.081,-1.076,-1.031,-0.953,-0.851,-0.738,-0.63,-0.543,-0.487,-0.469,-0.486,-0.526,-0.563,-0.563,-0.488,-0.302,0.006,0.404,0.779,0.889,0.308],[0.218,0.629,0.645,0.512,0.368,0.282,0.272,0.333,0.446,0.586,0.733,0.871,0.987,1.078,1.141,1.18,1.196,1.195,1.179,1.15,1.109,1.056,0.989,0.906,0.805,0.686,0.548,0.394,0.227,0.052,-0.125,-0.298,-0.46,-0.606,-0.731,-0.832,-0.91,-0.966,-1.004,-1.028,-1.046,-1.062,-1.08,-1.102,-1.128,-1.151,-1.163,-1.155,-1.115,-1.036,-0.915,-0.76,-0.589,-0.436,-0.345,-0.363,-0.524,-0.816,-1.133,-1.2,-0.463],[-0.053,-0.851,-0.68,-0.236,0.179,0.476,0.666,0.791,0.89,0.988,1.092,1.197,1.288,1.351,1.376,1.358,1.3,1.208,1.094,0.97,0.849,0.738,0.644,0.565,0.498,0.437,0.371,0.293,0.195,0.073,-0.073,-0.238,-0.415,-0.593,-0.758,-0.899,-1.006,-1.073,-1.1,-1.091,-1.058,-1.015,-0.979,-0.966,-0.987,-1.047,-1.139,-1.248,-1.347,-1.406,-1.392,-1.287,-1.091,-0.837,-0.59,-0.447,-0.507,-0.814,-1.252,-1.366,-0.089],[0.019,0.332,0.374,0.279,0.153,0.068,0.059,0.134,0.281,0.476,0.69,0.895,1.068,1.193,1.261,1.273,1.233,1.153,1.045,0.923,0.799,0.684,0.584,0.504,0.442,0.395,0.357,0.322,0.282,0.23,0.161,0.072,-0.039,-0.169,-0.314,-0.47,-0.628,-0.781,-0.922,-1.044,-1.143,-1.216,-1.261,-1.279,-1.272,-1.243,-1.196,-1.132,-1.056,-0.969,-0.873,-0.773,-0.676,-0.591,-0.531,-0.509,-0.533,-0.591,-0.628,-0.508,0.048],[0.608,5.426,5.112,3.197,1.353,0.179,-0.281,-0.22,0.117,0.522,0.862,1.074,1.154,1.132,1.054,0.963,0.891,0.854,0.853,0.874,0.898,0.905,0.877,0.805,0.686,0.528,0.343,0.149,-0.035,-0.196,-0.323,-0.414,-0.475,-0.516,-0.554,-0.604,-0.68,-0.79,-0.932,-1.097,-1.262,-1.402,-1.489,-1.497,-1.414,-1.244,-1.01,-0.76,-0.554,-0.456,-0.519,-0.754,-1.11,-1.452,-1.56,-1.16,-0.017,1.875,3.968,4.62,0.279]]},"curve":[[1,0.319,0.317],[2,0.3163,0.3206],[3,0.0701,0.1182],[4,0.0656,0.1217],[5,0.0538,0.1206],[6,0.047,0.1245],[7,0.0407,0.1317],[8,0.0366,0.1411],[9,0.029,0.1553],[10,0.0229,0.1778],[11,0.0183,0.2445],[12,0.0126,0.5711]],"xg":[0.0,0.017,0.033,0.05,0.067,0.083,0.1,0.117,0.133,0.15,0.167,0.183,0.2,0.217,0.233,0.25,0.267,0.283,0.3,0.317,0.333,0.35,0.367,0.383,0.4,0.417,0.433,0.45,0.467,0.483,0.5,0.517,0.533,0.55,0.567,0.583,0.6,0.617,0.633,0.65,0.667,0.683,0.7,0.717,0.733,0.75,0.767,0.783,0.8,0.817,0.833,0.85,0.867,0.883,0.9,0.917,0.933,0.95,0.967,0.983,1.0],"xt":[0.0,0.071,0.143,0.214,0.286,0.357,0.429,0.5,0.571,0.643,0.714,0.786,0.857,0.929,1.0]};
+
+/* ---------- extra helpers (Part 4) ---------- */
+const randn=()=>{let u=0;while(!u)u=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*Math.random());};
+const rupee=v=>'₹'+Math.round(v).toLocaleString('en-IN');
+function ticks(lo,hi,count=5){const raw=(hi-lo)/count,p=10**Math.floor(Math.log10(raw)),n=raw/p,step=(n<1.5?1:n<3?2:n<7?5:10)*p;const t=[];for(let v=Math.ceil(lo/step)*step;v<=hi+1e-9;v+=step)t.push(+v.toFixed(6));return t;}
+function lgam(x){const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];x-=1;let a=c[0];const t=x+7.5;for(let i=1;i<9;i++)a+=c[i]/(x+i);return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);}
+function pathOf(F,xs,ys){let d='';xs.forEach((x,i)=>{d+=(i?'L':'M')+F.X(x).toFixed(1)+','+F.Y(clamp(ys[i],-1e4,1e4)).toFixed(1)+' ';});return d;}
+
+/* ---------- W-samp: sampling distribution ---------- */
+(function(){
+  const MU=7,SG=0.6,TM=Math.exp(MU+SG*SG/2),TMED=Math.exp(MU);
+  let est='mean',ests=[];
+  const median=a=>{const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2;};
+  function go(){const n=+$('#sp-n').value;ests=[];
+    for(let k=0;k<500;k++){const s=[];for(let i=0;i<n;i++)s.push(Math.exp(MU+SG*randn()));ests.push(est==='mean'?s.reduce((a,b)=>a+b,0)/n:median(s));}
+    draw();}
+  function draw(){
+    const n=+$('#sp-n').value;$('#sp-nv').textContent=n;
+    const lo=200,hi=3000,bw=50,nb=(hi-lo)/bw,cnt=Array(nb).fill(0);
+    ests.forEach(v=>{cnt[Math.floor((clamp(v,lo,hi-1e-6)-lo)/bw)]++;});
+    const mx=Math.max(20,...cnt);
+    const F=frame($('#sp-svg'),640,250,[lo,hi],[0,mx*1.18],{xt:[500,1000,1500,2000,2500],xf:v=>'₹'+v.toLocaleString('en-IN'),yt:niceTicks(mx*1.1,4),xl:'the estimate from one sample',yl:'how many of the 500 samples'});
+    const w=F.X(lo+bw)-F.X(lo);
+    cnt.forEach((c,i)=>{if(c)el('rect',{x:F.X(lo+i*bw)+1,y:F.Y(c),width:Math.max(w-2,1),height:F.Y(0)-F.Y(c),fill:'var(--lagoon)',opacity:.85,rx:1.5},F.layer);});
+    const tv=est==='mean'?TM:TMED;
+    el('line',{x1:F.X(tv),x2:F.X(tv),y1:F.Y(0),y2:F.Y(mx*1.18),stroke:'var(--indigo)','stroke-width':2,'stroke-dasharray':'6 5'},F.layer);
+    txt(F.top,F.X(tv)+6,F.m.t+12,(est==='mean'?'true mean ':'true median ')+rupee(tv),{fill:'var(--indigo)','font-weight':700});
+    const m=ests.reduce((a,b)=>a+b,0)/ests.length,sd=Math.sqrt(ests.reduce((a,b)=>a+(b-m)**2,0)/(ests.length-1));
+    const srt=[...ests].sort((a,b)=>a-b),q=p=>srt[Math.floor(p*(srt.length-1))];
+    $('#sp-out').innerHTML=`<p><span class="k">average of the 500 ${est==='mean'?'sample means':'sample medians'}</span> <b>${rupee(m)}</b> &nbsp; <span class="k">true value</span> <b>${rupee(tv)}</b></p>
+      <p><span class="k">spread of the estimates (SD)</span> <span class="big" style="color:var(--coral)">${rupee(sd)}</span> &nbsp; <span class="k">middle 95%</span> ${rupee(q(0.025))} to ${rupee(q(0.975))}</p>
+      <div class="verdict ${n<10?'zero':'pos'}">${est==='mean'
+        ?(n<10?`With only ${n} orders per sample the estimates scatter widely, though they still centre on the truth (unbiased, high variance).`:`Unbiased and steadier: the estimates centre on the true mean, and their spread shrinks as n grows. Try n = 40 vs n = 160: the spread halves.`)
+        :`The median targets the typical order (${rupee(TMED)}), not the average one (${rupee(TM)}). Neither is wrong; they answer different questions.`}</div>`;
+  }
+  seg('#sp-est',b=>{est=b.dataset.e;go();});
+  $('#sp-n').addEventListener('input',go); $('#sp-go').onclick=go; go();
+})();
+
+/* ---------- W-corr: Pearson vs Spearman ---------- */
+(function(){
+  let seed=7;const rng=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+  const gauss=()=>{const u=Math.max(rng(),1e-9),v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+  let Z=[];const fresh=()=>{Z=[];for(let i=0;i<50;i++)Z.push([gauss(),gauss()]);};
+  const pear=(x,y)=>{const n=x.length,mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx)*(y[i]-my);sxx+=(x[i]-mx)**2;syy+=(y[i]-my)**2;}return sxy/Math.sqrt(sxx*syy);};
+  const rank=a=>{const r=Array(a.length);a.map((v,i)=>[v,i]).sort((p,q)=>p[0]-q[0]).forEach((p,k)=>r[p[1]]=k+1);return r;};
+  const spear=(x,y)=>pear(rank(x),rank(y));
+  const sg=v=>{const r=Math.round(v*100)/100;return r===0?'0':(r>0?'+':'−')+fmt(Math.abs(r),2);};
+  function draw(){
+    const r=+$('#cr-r').value;$('#cr-rv').textContent=r;
+    const out=$('#cr-out').checked,cur=$('#cr-curve').checked,f=v=>cur?Math.exp(0.9*v):v;
+    const base=Z.map(z=>[z[0],f(r*z[0]+Math.sqrt(1-r*r)*z[1])]);
+    const pts=base.slice();
+    if(out){const ymax=Math.max(...base.map(p=>p[1])),ymin=Math.min(...base.map(p=>p[1]));pts.push([5,cur?ymax+1.5*(ymax-ymin):5]);}
+    const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+    const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),px=(x1-x0)*0.08,py=(y1-y0)*0.08;
+    const F=frame($('#cr-svg'),420,330,[x0-px,x1+px],[y0-py,y1+py],{xt:ticks(x0-px,x1+px,5),yt:ticks(y0-py,y1+py,5),xl:'feature x',yl:'feature y',m:{l:40}});
+    base.forEach(p=>el('circle',{cx:F.X(p[0]),cy:F.Y(p[1]),r:4,fill:'var(--lagoon)',opacity:.7},F.layer));
+    if(out){const o=pts[pts.length-1];el('circle',{cx:F.X(o[0]),cy:F.Y(o[1]),r:7,fill:'var(--coral)',stroke:'#fff','stroke-width':2},F.top);txt(F.top,F.X(o[0])-10,F.Y(o[1])+4,'outlier',{'text-anchor':'end',fill:'var(--coral)','font-weight':700});}
+    const P=pear(xs,ys),S=spear(xs,ys),P0=pear(base.map(p=>p[0]),base.map(p=>p[1])),S0=spear(base.map(p=>p[0]),base.map(p=>p[1]));
+    let v,cls;
+    if(out){v=`One point moved Pearson from ${sg(P0)} to ${sg(P)}, but Spearman only from ${sg(S0)} to ${sg(S)}. Check outliers before trusting r.`;cls=Math.abs(P-P0)>0.15?'neg':'zero';}
+    else if(cur&&Math.abs(r)>=0.5){v=`The pattern bends but always ${r>0?'rises':'falls'}. Spearman (${sg(S)}) captures that better than Pearson (${sg(P)}), which only measures straight lines.`;cls='zero';}
+    else if(r===0){v=`There is no real link here, yet 50 points still show a correlation of ${sg(P)} by chance. Press "New sample" a few times.`;cls='zero';}
+    else {v='A straight-line pattern with no outliers: both measures agree and sit near the true value.';cls='pos';}
+    $('#cr-out-r').innerHTML=`<p><span class="k">true correlation (setting)</span> <b>${sg(r)}</b></p>
+      <p><span class="k">Pearson r</span> <span class="big" style="color:var(--coral)">${sg(P)}</span></p>
+      <p><span class="k">Spearman ρ</span> <span class="big" style="color:var(--indigo)">${sg(S)}</span></p>
+      <div class="verdict ${cls}">${v}</div>`;
+  }
+  ['#cr-r','#cr-out','#cr-curve'].forEach(s=>$(s).addEventListener('input',draw));
+  $('#cr-new').onclick=()=>{fresh();draw();};
+  fresh();draw();
+})();
+
+/* ---------- W-test: test-set size vs margin ---------- */
+(function(){
+  function draw(){
+    const p=+$('#ts-p').value,n=Math.round(10**(+$('#ts-n').value));
+    $('#ts-pv').textContent=p;$('#ts-nv').textContent=n.toLocaleString('en-IN');
+    const lo=0.2,hi=1.0,bw=0.01,nb=Math.round((hi-lo)/bw)+1,bins=Array(nb).fill(0);
+    const lc=lgam(n+1),lp=Math.log(p),lq=Math.log(1-p);
+    for(let k=0;k<=n;k++){const pr=Math.exp(lc-lgam(k+1)-lgam(n-k+1)+k*lp+(n-k)*lq);if(pr<1e-12)continue;bins[clamp(Math.round((k/n-lo)/bw),0,nb-1)]+=pr;}
+    const mx=Math.max(...bins);
+    const F=frame($('#ts-svg'),640,250,[lo-0.01,hi+0.01],[0,mx*1.18],{xt:[0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],xf:v=>Math.round(v*100)+'%',yt:ticks(0,mx*1.1,4),yf:v=>pct(v,0),xl:'accuracy measured on the test set',yl:'chance of getting this score'});
+    const w=F.X(lo+bw)-F.X(lo);
+    bins.forEach((b,i)=>{if(b>mx*0.002)el('rect',{x:F.X(lo+i*bw)-w/2+0.5,y:F.Y(b),width:Math.max(w-1,1),height:F.Y(0)-F.Y(b),fill:'var(--lagoon)',opacity:.85,rx:1},F.layer);});
+    const se=Math.sqrt(p*(1-p)/n),a=Math.max(0,p-1.96*se),b=Math.min(1,p+1.96*se);
+    el('line',{x1:F.X(p),x2:F.X(p),y1:F.Y(0),y2:F.Y(mx*1.18),stroke:'var(--indigo)','stroke-width':2,'stroke-dasharray':'6 5'},F.layer);
+    const yb=F.Y(mx*1.08);
+    el('line',{x1:F.X(a),x2:F.X(b),y1:yb,y2:yb,stroke:'var(--coral)','stroke-width':3},F.top);
+    [a,b].forEach(v=>el('line',{x1:F.X(v),x2:F.X(v),y1:yb-6,y2:yb+6,stroke:'var(--coral)','stroke-width':3},F.top));
+    txt(F.top,F.X(b)+6,yb+4,'95% range',{fill:'var(--coral)','font-weight':700});
+    const margin=1.96*se;
+    $('#ts-out').innerHTML=`<p><span class="k">standard error</span> <b>${fmt(se,3)}</b> &nbsp; <span class="k">95% of test sets score between</span> <span class="big" style="color:var(--coral)">${pct(a,1)} and ${pct(b,1)}</span></p>
+      <div class="verdict ${margin<=0.01?'pos':(margin<=0.03?'zero':'neg')}">${margin<=0.01?`Precise: ±${fmt(margin*100,1)} points. A 1-point gain between models could start to show up here.`:(margin<=0.03?`Usable for big differences, but ±${fmt(margin*100,1)} points is too wide to separate models that differ by 1 point.`:`Very wobbly: ±${fmt(margin*100,1)} points. On a test set this small, "87% vs 86%" means nothing.`)}</div>
+      ${n*p*(1-p)<10?'<p class="k">With so few errors expected (n × p × (1 − p) below about 10), the ± formula is only rough; the bars show the exact chances.</p>':''}`;
+  }
+  ['#ts-p','#ts-n'].forEach(s=>$(s).addEventListener('input',draw)); draw();
+})();
+
+/* ---------- W-bv: bias–variance ---------- */
+(function(){
+  const xg=BV.xg,xt=BV.xt,truth=xg.map(x=>Math.sin(2*Math.PI*x));
+  function draw(){
+    const d=+$('#bv-d').value;$('#bv-dv').textContent=d;
+    const fits=BV.fits[String(d)];
+    const F=frame($('#bv-fit'),400,290,[0,1],[-2,2],{xt:[0,0.25,0.5,0.75,1],yt:[-2,-1,0,1,2],xl:'time of year (scaled 0 to 1)',yl:'12 models, 12 training samples'});
+    fits.forEach(f=>el('path',{d:pathOf(F,xg,f),fill:'none',stroke:'var(--lagoon)','stroke-width':1.2,opacity:.45},F.layer));
+    const avg=xg.map((_,i)=>fits.reduce((s,f)=>s+f[i],0)/fits.length);
+    el('path',{d:pathOf(F,xg,truth),fill:'none',stroke:'var(--ink)','stroke-width':2,'stroke-dasharray':'6 5'},F.layer);
+    el('path',{d:pathOf(F,xg,avg),fill:'none',stroke:'var(--coral)','stroke-width':3.2},F.layer);
+    xt.forEach(x=>el('line',{x1:F.X(x),x2:F.X(x),y1:F.Y(-2),y2:F.Y(-2)-7,stroke:'var(--indigo)','stroke-width':2},F.top));
+    const bias2=avg.reduce((s,v,i)=>s+(v-truth[i])**2,0)/xg.length;
+    const vari=xg.reduce((s,_,i)=>{const m=avg[i];return s+fits.reduce((t,f)=>t+(f[i]-m)**2,0)/(fits.length-1);},0)/xg.length;
+    const G=frame($('#bv-err'),400,290,[0.5,12.5],[0,0.6],{xt:[1,2,3,4,5,6,7,8,9,10,11,12],yt:[0,0.1,0.2,0.3,0.4,0.5,0.6],xl:'polynomial degree (flexibility)',yl:'average error (MSE)'});
+    el('line',{x1:G.X(0.5),x2:G.X(12.5),y1:G.Y(0.09),y2:G.Y(0.09),stroke:'var(--axis)','stroke-dasharray':'4 4'},G.layer);
+    txt(G.top,G.X(12.4),G.Y(0.09)-5,'noise floor 0.09',{'text-anchor':'end'});
+    el('rect',{x:G.X(d-0.5),y:G.Y(0.6),width:G.X(1)-G.X(0),height:G.Y(0)-G.Y(0.6),fill:'var(--saffron)',opacity:.18},G.layer);
+    const C=BV.curve;
+    el('path',{d:pathOf(G,C.map(c=>c[0]),C.map(c=>c[1])),fill:'none',stroke:'var(--lagoon)','stroke-width':2.6},G.layer);
+    el('path',{d:pathOf(G,C.map(c=>c[0]),C.map(c=>c[2])),fill:'none',stroke:'var(--coral)','stroke-width':2.6},G.layer);
+    const c=C[d-1];
+    el('circle',{cx:G.X(d),cy:G.Y(c[1]),r:5,fill:'var(--lagoon)',stroke:'#fff','stroke-width':2},G.top);
+    el('circle',{cx:G.X(d),cy:G.Y(c[2]),r:5,fill:'var(--coral)',stroke:'#fff','stroke-width':2},G.top);
+    const verdict=d<=2?['neg','Underfitting (high bias): a model this simple can\'t bend to follow the seasons. Every sample gives nearly the same wrong curve, so training and test error are both high.']
+      :d<=6?['pos','A good fit: the average model follows the true pattern, the 12 models agree fairly well, and test error is near its lowest.']
+      :d<=9?['zero','Starting to overfit: training error keeps falling, but the models disagree more and test error creeps up.']
+      :['neg','Overfitting (high variance): each model chases the noise in its own sample, so they swing wildly between the training points. Training error is tiny; test error is the worst.'];
+    $('#bv-out').innerHTML=`<div class="lg"><span><i style="background:var(--lagoon)"></i>one model per sample / training error</span><span><i style="background:var(--coral)"></i>average model / test error</span><span><i style="background:var(--ink)"></i>true pattern (dashed)</span></div>
+      <p><span class="k">degree ${d}:</span> <span class="k">training error</span> <b>${fmt(c[1],3)}</b> &nbsp; <span class="k">test error</span> <span class="big" style="color:var(--coral)">${fmt(c[2],3)}</span> &nbsp; <span class="k">rough bias²</span> ${fmt(bias2,3)} &nbsp; <span class="k">rough variance</span> ${fmt(vari,3)}</p>
+      <div class="verdict ${verdict[0]}">${verdict[1]}</div>
+      <p class="k">Small ticks on the left chart mark the 15 training x positions. Bias² and variance here come from just the 12 models shown, so they are rough.</p>`;
+  }
+  $('#bv-d').addEventListener('input',draw); draw();
+  addEventListener('resize',()=>{clearTimeout(window.__bvT);window.__bvT=setTimeout(draw,150);});
+})();
+
+/* ---------- W-kf: k-fold animator ---------- */
+(function(){
+  const N=24;let mode='kfold',fold=0;
+  let s=5;const rng=()=>{s=(s*16807)%2147483647;return (s-1)/2147483646;};
+  const perm=[...Array(N).keys()];for(let i=N-1;i>0;i--){const j=Math.floor(rng()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]];}
+  function roles(k){
+    const r=Array(N).fill('un');
+    if(mode==='kfold'){perm.forEach((row,i)=>{r[row]=Math.floor(i*k/N)===fold?'va':'tr';});}
+    else{const ts=Math.floor(N/(k+1)),st=N-(k-fold)*ts;for(let i=0;i<N;i++)r[i]=i<st?'tr':(i<st+ts?'va':'un');}
+    return r;
+  }
+  function draw(){
+    const k=+$('#kf-k').value;$('#kf-kv').textContent=k;fold=((fold%k)+k)%k;
+    const svg=$('#kf-svg'),W=Math.max(300,Math.min(640,svg.parentNode.clientWidth||640)),H=130;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML='';
+    const pad=14,cell=(W-2*pad)/N,sz=cell-3,y=46;
+    const col={tr:'var(--lagoon)',va:'var(--coral)',un:'var(--line)'};
+    const r=roles(k);
+    txt(svg,pad,22,`Fold ${fold+1} of ${k}`,{'font-weight':700,fill:'var(--ink)'});
+    txt(svg,W-pad,22,'older rows → newer rows',{'text-anchor':'end'});
+    r.forEach((role,i)=>{el('rect',{x:pad+i*cell+1.5,y,width:sz,height:sz,rx:3,fill:col[role]},svg);});
+    for(let i=0;i<N;i+=N/6)txt(svg,pad+i*cell+cell/2,y+sz+16,'row '+(i+1),{'text-anchor':'middle'});
+    const lgY=y+sz+38;let lx=pad;
+    [['tr','train'],['va','validate'],['un','not used']].forEach(([c,l])=>{el('rect',{x:lx,y:lgY-10,width:12,height:12,rx:2,fill:col[c]},svg);txt(svg,lx+17,lgY,l);lx+=l.length*7.5+40;});
+    const nt=r.filter(v=>v==='tr').length,nv=r.filter(v=>v==='va').length,firstVa=r.indexOf('va'),fut=r.filter((v,i)=>v==='tr'&&i>firstVa).length;
+    $('#kf-out').innerHTML=`<p><span class="k">train on</span> <b>${nt}</b> rows &nbsp; <span class="k">validate on</span> <b>${nv}</b> rows${mode==='ts'?` &nbsp; <span class="k">not used this fold</span> <b>${N-nt-nv}</b>`:''}</p>`+
+      (mode==='kfold'
+        ?`<div class="verdict zero">Shuffled k-fold: every row is validated exactly once across the ${k} folds. But in this fold ${fut} training rows are newer than the first validation row: on time-ordered data, the model would be learning from the future.</div>`
+        :`<div class="verdict pos">Time-series split: training always ends before validation starts, just as in real use. The training window grows with each fold; the earliest rows are never validated.</div>`);
+  }
+  seg('#kf-mode',b=>{mode=b.dataset.m;fold=0;draw();});
+  $('#kf-k').addEventListener('input',()=>{fold=0;draw();});
+  $('#kf-next').onclick=()=>{fold++;draw();}; $('#kf-prev').onclick=()=>{fold--;draw();};
+  draw(); addEventListener('resize',()=>{clearTimeout(window.__kfT);window.__kfT=setTimeout(draw,150);});
+})();
+
+/* ---------- W-win: winner's curse ---------- */
+(function(){
+  let scores=[];
+  function sim(){const m=+$('#wn-m').value,n=+$('#wn-n').value;scores=[];
+    for(let i=0;i<m;i++){let c=0;for(let j=0;j<n;j++)if(Math.random()<0.5)c++;scores.push(c/n);}draw();}
+  function draw(){
+    const m=+$('#wn-m').value,n=+$('#wn-n').value;$('#wn-mv').textContent=m;$('#wn-nv').textContent=n.toLocaleString('en-IN');
+    const lo=0.2,hi=0.8,bw=0.01,nb=Math.round((hi-lo)/bw)+1,cnt=Array(nb).fill(0);
+    scores.forEach(v=>cnt[clamp(Math.round((v-lo)/bw),0,nb-1)]++);
+    const best=Math.max(...scores),bi=clamp(Math.round((best-lo)/bw),0,nb-1),mx=Math.max(4,...cnt);
+    const F=frame($('#wn-svg'),640,240,[lo-0.01,hi+0.01],[0,mx*1.2],{xt:[0.2,0.3,0.4,0.5,0.6,0.7,0.8],xf:v=>Math.round(v*100)+'%',yt:ticks(0,mx*1.15,4).filter(v=>Number.isInteger(v)),xl:'test-set accuracy of each useless model',yl:'number of models'});
+    const w=F.X(lo+bw)-F.X(lo);
+    cnt.forEach((c,i)=>{if(c)el('rect',{x:F.X(lo+i*bw)-w/2+0.5,y:F.Y(c),width:Math.max(w-1,1),height:F.Y(0)-F.Y(c),fill:i===bi?'var(--coral)':'var(--lagoon)',opacity:.85,rx:1},F.layer);});
+    el('line',{x1:F.X(0.5),x2:F.X(0.5),y1:F.Y(0),y2:F.Y(mx*1.2),stroke:'var(--indigo)','stroke-width':2,'stroke-dasharray':'6 5'},F.layer);
+    txt(F.top,F.X(0.5)-6,F.m.t+12,'true accuracy 50%',{'text-anchor':'end',fill:'var(--indigo)','font-weight':700});
+    const bx=F.X(clamp(best,lo,hi)),by=F.m.t+34;el('line',{x1:bx,x2:bx,y1:by+6,y2:F.Y(cnt[bi])-3,stroke:'var(--coral)','stroke-width':1.5,'stroke-dasharray':'3 3'},F.top);txt(F.top,bx+5,by,'best: '+pct(best,1),{fill:'var(--coral)','font-weight':700});
+    const gap=(best-0.5)*100;
+    $('#wn-out').innerHTML=`<p><span class="k">best of ${m} model${m>1?'s':''}</span> <span class="big" style="color:var(--coral)">${pct(best,1)}</span> &nbsp; <span class="k">average model</span> <b>${pct(scores.reduce((a,b)=>a+b,0)/scores.length,1)}</b></p>
+      <div class="verdict ${gap>5?'neg':(gap>2?'zero':'pos')}">${m===1?'With one model there is nothing to pick, so its score is an honest (if noisy) estimate.':`The "winner" looks ${fmt(gap,1)} points better than it really is. More models tried means more luck in the best score; a bigger test set shrinks that luck.`}</div>`;
+  }
+  ['#wn-m','#wn-n'].forEach(s=>$(s).addEventListener('input',sim)); $('#wn-go').onclick=sim; sim();
+})();
+
+/* ---------- W-ab: A/B test calculator ---------- */
+(function(){
+  const ids=['ca','na','cb','nb'];ids.forEach(i=>$('#ab-'+i).addEventListener('input',draw));
+  function draw(){
+    const ca=+$('#ab-ca').value,na=+$('#ab-na').value,cb=+$('#ab-cb').value,nb=+$('#ab-nb').value;
+    if(!(na>0&&nb>0&&ca>=0&&cb>=0&&ca<=na&&cb<=nb)||ca+cb===0||ca+cb===na+nb){$('#ab-out').innerHTML='<div class="verdict zero">Enter conversions between 0 and the number of visitors for each group.</div>';$('#ab-svg').innerHTML='';return;}
+    const pa=ca/na,pb=cb/nb,d=pb-pa,pp=(ca+cb)/(na+nb),se0=Math.sqrt(pp*(1-pp)*(1/na+1/nb)),z=d/se0,p=2*(1-ncdf(Math.abs(z),0,1));
+    const se1=Math.sqrt(pa*(1-pa)/na+pb*(1-pb)/nb),lo=d-1.96*se1,hi=d+1.96*se1;
+    const R=Math.max(4*se0,Math.abs(d)*1.3,hi*1.12,-lo*1.12)*100,top=npdf(0,0,se0*100)*1.25;
+    const F=frame($('#ab-svg'),640,250,[-R,R],[0,top],{xt:ticks(-R,R,6),xf:v=>(v>0?'+':'')+fmt(v,2),xl:'difference in conversion, B − A (percentage points)',yl:'if there were no real difference…'});
+    const S=se0*100,D=d*100,xs=[...Array(241).keys()].map(i=>-R+2*R*i/240);
+    ['L','R'].forEach(side=>{let pts=xs.filter(x=>side==='L'?x<=-Math.abs(D):x>=Math.abs(D));if(pts.length<2)return;
+      let dd=`M${F.X(pts[0])},${F.Y(0)} `;pts.forEach(x=>dd+=`L${F.X(x)},${F.Y(npdf(x,0,S))} `);dd+=`L${F.X(pts[pts.length-1])},${F.Y(0)} Z`;el('path',{d:dd,fill:'var(--coral)',opacity:.3},F.layer);});
+    el('path',{d:pathOf(F,xs,xs.map(x=>npdf(x,0,S))),class:'c-line'},F.layer);
+    el('line',{x1:F.X(D),x2:F.X(D),y1:F.Y(0),y2:F.Y(top*0.72),stroke:'var(--coral)','stroke-width':2.5},F.layer);
+    const rgt=F.X(D)<F.W*0.62;txt(F.top,F.X(D)+(rgt?6:-6),F.Y(top*0.72)+4,'your result '+(D>=0?'+':'')+fmt(D,2)+' pts',{'text-anchor':rgt?'start':'end',fill:'var(--coral)','font-weight':700,stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
+    const yb=F.Y(top*0.9);
+    el('line',{x1:F.X(lo*100),x2:F.X(hi*100),y1:yb,y2:yb,stroke:'var(--indigo)','stroke-width':3},F.top);
+    [lo,hi].forEach(v=>el('line',{x1:F.X(v*100),x2:F.X(v*100),y1:yb-6,y2:yb+6,stroke:'var(--indigo)','stroke-width':3},F.top));
+    txt(F.top,(F.X(lo*100)+F.X(hi*100))/2,yb-9,'95% interval for the lift',{'text-anchor':'middle',fill:'var(--indigo)','font-weight':700});
+    const need=Math.ceil((1.959964+0.841621)**2*(pa*(1-pa)+pb*(1-pb))/(d*d||1e-12));
+    let cls,msg;
+    if(p<0.05){cls=d>0?'pos':'neg';msg=d>0?'Significant at the 5% level: chance alone rarely produces a gap this big. Now ask whether the size of the lift (see the interval) is worth it.':'Significant, but in the wrong direction: B converts worse than A.';}
+    else if(p<0.1){cls='zero';msg='Suggestive but not conclusive at the 5% level. If the test has not reached its planned size, let it finish; do not keep extending it just to chase p &lt; 0.05.';}
+    else{cls='zero';msg='No clear evidence of a difference. That is not proof they are equal: the interval shows how big a difference is still plausible.';}
+    $('#ab-out').innerHTML=`<p><span class="k">A</span> <b>${pct(pa,2)}</b> &nbsp; <span class="k">B</span> <b>${pct(pb,2)}</b> &nbsp; <span class="k">lift</span> <b>${D>=0?'+':''}${fmt(D,2)} points</b> (${pa>0?(d>=0?'+':'')+fmt(d/pa*100,1)+'% relative':'n/a'})</p>
+      <p><span class="k">z</span> <b>${fmt(z,2)}</b> &nbsp; <span class="k">p-value</span> <span class="big" style="color:var(--coral)">${p<0.001?'&lt; 0.001':fmt(p,3)}</span> &nbsp; <span class="k">95% interval for the lift</span> <b>${fmt(lo*100,2)} to ${hi>=0?'+':''}${fmt(hi*100,2)} points</b></p>
+      <div class="verdict ${cls}">${msg}</div>
+      <p class="k">The shaded tails are the p-value: how often chance alone gives a gap at least as big as yours.${Math.abs(d)>0?` To detect a lift this size reliably (80% power) you'd plan for about ${need.toLocaleString('en-IN')} visitors per group.`:''}</p>`;
+  }
+  draw();
+})();
+
+/* ---------- W-drift: KS and PSI ---------- */
+(function(){
+  const M0=35,S0=8,zq=[-1.281552,-0.841621,-0.524401,-0.253347,0,0.253347,0.524401,0.841621,1.281552];
+  ['#dr-m','#dr-s'].forEach(s=>$(s).addEventListener('input',draw));
+  function draw(){
+    const m=+$('#dr-m').value,sd=+$('#dr-s').value;$('#dr-mv').textContent=m;$('#dr-sv').textContent=sd;
+    const xs=[...Array(321).keys()].map(i=>i*0.25);
+    const top=Math.max(npdf(M0,M0,S0),npdf(m,m,sd))*1.2;
+    const F=frame($('#dr-svg'),640,250,[0,80],[0,top],{xt:[0,10,20,30,40,50,60,70,80],xl:'customer age',yl:'share of customers'});
+    const edges=zq.map(z=>M0+S0*z);
+    edges.forEach(e=>el('line',{x1:F.X(e),x2:F.X(e),y1:F.Y(0),y2:F.Y(top),stroke:'var(--saffron)','stroke-width':1.4,'stroke-dasharray':'3 4'},F.layer));
+    const tp=pathOf(F,xs,xs.map(x=>npdf(x,M0,S0)));el('path',{d:tp+`L${F.X(80)},${F.Y(0)} L${F.X(0)},${F.Y(0)} Z`,fill:'var(--lagoon)',opacity:.22},F.layer);el('path',{d:tp,fill:'none',stroke:'var(--lagoon)','stroke-width':2.6},F.layer);
+    el('path',{d:pathOf(F,xs,xs.map(x=>npdf(x,m,sd))),fill:'none',stroke:'var(--coral)','stroke-width':2.6},F.layer);
+    let ks=0,kx=M0;for(let x=-20;x<=120;x+=0.05){const g=Math.abs(ncdf(x,M0,S0)-ncdf(x,m,sd));if(g>ks){ks=g;kx=x;}}
+    if(ks>0.01&&kx>0&&kx<80){el('line',{x1:F.X(kx),x2:F.X(kx),y1:F.Y(0),y2:F.Y(top*0.9),stroke:'var(--indigo)','stroke-width':1.6,'stroke-dasharray':'4 4'},F.layer);txt(F.top,F.X(kx)+5,F.Y(top*0.9)+4,'biggest gap in the cumulative shares',{fill:'var(--indigo)'});}
+    const cut=[-Infinity,...edges,Infinity];let psi=0;
+    for(let i=0;i<10;i++){const e=0.1,a=Math.max(ncdf(cut[i+1],m,sd)-ncdf(cut[i],m,sd),1e-6);psi+=(a-e)*Math.log(a/e);}
+    const cls=psi<0.1?'pos':(psi<0.25?'zero':'neg');
+    $('#dr-out').innerHTML=`<div class="lg"><span><i style="background:var(--lagoon)"></i>training: mean 35, spread 8</span><span><i style="background:var(--coral)"></i>production: mean ${m}, spread ${sd}</span><span><i style="background:var(--saffron)"></i>PSI bin edges (training deciles)</span></div>
+      <p><span class="k">KS statistic</span> <b>${ks.toFixed(3)}</b> &nbsp; <span class="k">PSI</span> <span class="big" style="color:var(--coral)">${psi.toFixed(3)}</span></p>
+      <div class="verdict ${cls}">${psi<0.1?'Stable (PSI below 0.1): production looks like training.':(psi<0.25?'Moderate shift (PSI 0.1–0.25): keep an eye on it and check model performance.':'Significant shift (PSI above 0.25): investigate, and consider retraining.')}</div>
+      <p class="k">These scores are computed from the two smooth curves, so they show the size of the shift without sampling noise.</p>`;
+  }
+  draw();
+})();
+
+/* ---------- quiz ---------- */
+(function(){
+  const Q=[
+    ['An estimator\'s guesses average out to the true value but vary a lot from sample to sample. It is…',['biased, low variance','unbiased, high variance','biased, high variance','unbiased, low variance'],1,'Centred on the truth (unbiased) but widely scattered (high variance).'],
+    ['Order values: mean ₹1,314, median ₹1,097. The data is…',['symmetric','left-skewed','right-skewed','impossible'],2,'A long tail of big orders pulls the mean above the median: right-skewed.'],
+    ['Accuracy 0.9 on 400 test examples. The standard error is about…',['0.0015','0.015','0.15','0.9'],1,'√(0.9 × 0.1 / 400) = √0.000225 = 0.015, so roughly 0.87 to 0.93.'],
+    ['To halve the error bar on a test score, you need a test set…',['twice as big','four times as big','half the size','ten times as big'],1,'The error shrinks like 1 ÷ √n, so halving it needs 4× the data.'],
+    ['Training accuracy 99%, validation accuracy 70%. This is mostly…',['underfitting','overfitting','data drift','a good fit'],1,'A big gap between training and validation error is the sign of high variance.'],
+    ['You fit a StandardScaler on the full dataset, then run cross-validation. The problem is…',['nothing','data leakage','underfitting','class imbalance'],1,'The scaler saw the validation folds. Put it inside a Pipeline so it is fitted on training folds only.'],
+    ['Which splitter suits daily sales forecasting?',['KFold with shuffle','StratifiedKFold','TimeSeriesSplit','LeaveOneOut'],2,'Always train on the past and validate on the future.'],
+    ['Only 3% of transactions are fraud. "Never fraud" scores 97% accuracy. Its balanced accuracy is…',['97%','50%','3%','0%'],1,'100% on the honest class, 0% on fraud: the average is 50%, coin-flip level.'],
+    ['An A/B test gives p = 0.01. This means…',['B is better with 99% probability','a gap this large would be rare if there were no real difference','the lift is 1%','the test should be stopped'],1,'A p-value is about the data assuming no difference, not the probability that B is better.'],
+    ['A feature\'s PSI between training and last month is 0.31. You should…',['ignore it','investigate the shift and consider retraining','delete the feature','lower the threshold'],1,'Above 0.25 is the usual "significant shift" alarm level.']
+  ];
+  const body=$('#quiz-body');let score=0;
+  Q.forEach((q,qi)=>{const d=document.createElement('div');d.className='q';
+    d.innerHTML=`<p>${qi+1}. ${q[0]}</p><div class="opts">${q[1].map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><div class="fb">${q[3]}</div>`;
+    const btns=d.querySelectorAll('button');let done=false;
+    btns.forEach(b=>b.addEventListener('click',()=>{if(done)return;done=true;const i=+b.dataset.i;btns[q[2]].classList.add('right');if(i!==q[2])b.classList.add('wrong');else score++;d.querySelector('.fb').style.display='block';$('#quiz-score').textContent=`${score} / ${Q.length}`;}));
+    body.appendChild(d);});
+})();
+
+</script>
+</body>
+</html>
